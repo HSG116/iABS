@@ -1,0 +1,139 @@
+
+import React, { useState } from 'react';
+import { ViewState } from '../types';
+import { ChatWidget } from './ChatWidget';
+import { 
+  MessageSquare, X, Settings2, ChevronRight, 
+  Maximize2, Minimize2, PanelRightClose,
+  LayoutGrid, ArrowLeftRight
+} from 'lucide-react';
+
+interface LayoutProps {
+  children: React.ReactNode;
+  currentView: ViewState;
+  onChangeView: (view: ViewState) => void;
+}
+
+export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeView }) => {
+  const [chatOpen, setChatOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(450); // Default Width
+
+  const viewBg = (view: ViewState) => {
+    switch (view) {
+      case 'FAWAZIR_GAME':
+        return "url('https://i.ibb.co/pjDLM8Hq/1000126047.png')";
+      default:
+        return "url('https://i.ibb.co/kWJRhSN/1000126060.png')";
+    }
+  };
+
+  const handleResize = (amount: number) => {
+    setSidebarWidth(prev => {
+      const next = prev + amount;
+      return Math.min(Math.max(next, 350), 650); // Limits: 350px to 650px
+    });
+  };
+
+  const isHome = currentView === 'HOME' || (currentView as string) === 'ADMIN_LOGIN';
+
+  return (
+    <div className="h-screen w-screen flex bg-black overflow-hidden font-sans" dir="rtl">
+
+      {/* Sidebar Container */}
+      <aside
+        style={{ width: chatOpen ? `${sidebarWidth}px` : '0px' }}
+        className={`h-full transition-all duration-500 ease-in-out border-l border-white/10 flex-shrink-0 z-50 flex flex-col bg-[#050505] shadow-[20px_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden`}
+      >
+        {/* --- MODERN COMMAND BAR (ABOVE CHAT) --- */}
+        <div className="h-16 shrink-0 bg-gradient-to-l from-red-600/10 via-black to-black border-b border-white/10 flex items-center justify-between px-4 z-30">
+           <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-600 rounded-xl shadow-[0_0_15px_rgba(255,0,0,0.4)]">
+                 <LayoutGrid size={16} className="text-white" />
+              </div>
+              <span className="text-[10px] font-black text-white uppercase tracking-widest italic">نظام التحكم</span>
+           </div>
+
+           <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/10">
+              {/* Resize Controls */}
+              <button 
+                onClick={() => handleResize(-50)}
+                title="تصغير الشات"
+                className="p-2 hover:bg-white/10 text-gray-400 hover:text-white transition-all rounded-xl border border-transparent hover:border-white/10 active:scale-90"
+              >
+                <Minimize2 size={16} />
+              </button>
+              
+              <div className="w-px h-4 bg-white/10 mx-1"></div>
+
+              <button 
+                onClick={() => handleResize(50)}
+                title="تكبير الشات"
+                className="p-2 hover:bg-white/10 text-gray-400 hover:text-white transition-all rounded-xl border border-transparent hover:border-white/10 active:scale-90"
+              >
+                <Maximize2 size={16} />
+              </button>
+
+              <div className="w-px h-4 bg-white/10 mx-1"></div>
+
+              {/* Hide Button */}
+              <button 
+                onClick={() => setChatOpen(false)}
+                title="إخفاء الجانب"
+                className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white transition-all rounded-xl border border-red-600/20 active:scale-90"
+              >
+                <PanelRightClose size={16} className="rotate-180" />
+              </button>
+           </div>
+        </div>
+
+        {/* Top Section: Chat Content */}
+        <div className="flex-[1.2] min-h-0 overflow-hidden flex flex-col">
+           <ChatWidget lang="ar" />
+        </div>
+
+        {/* Bottom Section: Game Controls */}
+        {!isHome && (
+          <div className="flex-1 border-t-2 border-white/10 bg-gradient-to-b from-black/60 to-red-950/10 backdrop-blur-3xl flex flex-col relative">
+             <div className="p-5 border-b border-white/10 flex items-center gap-4 bg-black/40">
+                <div className="p-2 bg-red-600 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)]">
+                   <Settings2 size={20} className="text-white animate-spin-slow" />
+                </div>
+                <span className="text-sm font-black text-white uppercase tracking-[0.2em]">إعدادات الـمـيـدان</span>
+             </div>
+             <div id="game-sidebar-portal" className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                {/* Game-specific controls teleported here */}
+             </div>
+             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-red-600 to-transparent shadow-[0_0_20px_red]"></div>
+          </div>
+        )}
+      </aside>
+
+      {/* Main Game Area */}
+      <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-black">
+        {/* Global Background Layer */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none opacity-40 transition-all duration-1000 bg-center bg-no-repeat blur-[2px]"
+          style={{
+            backgroundImage: viewBg(currentView),
+            backgroundSize: 'cover'
+          }}
+        ></div>
+
+        {/* Content Container */}
+        <div className="flex-1 w-full h-full relative z-10 overflow-y-auto overflow-x-hidden p-4 md:p-8 flex flex-col items-center">
+          {children}
+        </div>
+      </main>
+
+      {/* Re-Open Chat Button (Visible only when chat is closed) */}
+      {!chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-10 left-10 z-[100] p-6 bg-red-600 text-white rounded-[2rem] shadow-[0_0_50px_rgba(255,0,0,0.6)] hover:scale-110 active:scale-95 transition-all border-2 border-white/20 animate-in slide-in-from-left-20 duration-500"
+        >
+          <MessageSquare size={32} strokeWidth={3} className="drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+        </button>
+      )}
+    </div>
+  );
+};
