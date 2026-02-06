@@ -84,6 +84,8 @@ const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, userna
 };
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(true);
   const [currentView, setCurrentView] = useState<ViewState | 'ADMIN_LOGIN' | 'ADMIN_PANEL'>('HOME');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -92,7 +94,18 @@ const App: React.FC = () => {
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  const [globalPasswordInput, setGlobalPasswordInput] = useState('');
+  const [globalLoginError, setGlobalLoginError] = useState('');
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
+
+  useEffect(() => {
+    const authStatus = sessionStorage.getItem('iabs_auth');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+    setIsAuthenticating(false);
+  }, []);
 
   const playNotificationSound = () => {
     try {
@@ -155,6 +168,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGlobalLogin = async () => {
+    const isValid = await leaderboardService.verifyAdminPassword(globalPasswordInput);
+    if (isValid) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('iabs_auth', 'true');
+      setGlobalPasswordInput('');
+      setGlobalLoginError('');
+    } else {
+      setGlobalLoginError('كود الدخول غير صحيح');
+    }
+  };
+
   const handleGoHome = () => setCurrentView('HOME');
 
   const PremiumGameButton = ({ title, icon: Icon, onClick, isPrimary = false }: any) => (
@@ -177,6 +202,60 @@ const App: React.FC = () => {
         {title}
       </span>
     </button>
+  );
+
+  const GlobalLoginPage = () => (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black overflow-hidden font-sans rtl" dir="rtl">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/20 via-black to-black"></div>
+
+      {/* Background Animated Elements */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-600/30 blur-[120px] rounded-full animate-float"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-600/20 blur-[150px] rounded-full animate-pulse"></div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-xl px-6">
+        <div className="bg-[#050505] border-2 border-red-600/30 rounded-[3rem] p-12 shadow-[0_0_100px_rgba(255,0,0,0.2)] backdrop-blur-3xl relative overflow-hidden animate-in zoom-in duration-700">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+
+          <div className="text-center mb-12">
+            <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 mx-auto mb-8 drop-shadow-[0_0_30px_rgba(255,0,0,0.5)] animate-float" alt="Logo" />
+            <h1 className="text-5xl font-black text-white italic tracking-tighter uppercase mb-2">نظام الحـماية</h1>
+            <p className="text-red-500 font-bold tracking-[0.3em] text-[10px] uppercase">Sovereign Protection Layer</p>
+          </div>
+
+          <div className="space-y-6 relative z-30">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-red-600/50 to-red-900/50 rounded-2xl blur opacity-25 group-focus-within:opacity-100 transition duration-500"></div>
+              <input
+                type="password"
+                value={globalPasswordInput}
+                onChange={(e) => setGlobalPasswordInput(e.target.value)}
+                placeholder="أدخل كود التصريح للدخول..."
+                className="relative w-full bg-black/80 border-2 border-white/5 rounded-2xl p-6 text-center text-white text-2xl font-black placeholder:text-white/10 focus:border-red-600/50 focus:outline-none transition-all"
+                onKeyDown={(e) => e.key === 'Enter' && handleGlobalLogin()}
+              />
+            </div>
+
+            {globalLoginError && (
+              <div className="flex items-center justify-center gap-3 text-red-500 font-bold animate-pulse text-sm">
+                <AlertTriangle size={18} />
+                <span>{globalLoginError}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleGlobalLogin}
+              className="group relative w-full bg-red-600 text-white font-black py-6 rounded-2xl text-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_rgba(255,0,0,0.3)] overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-white/20 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 skew-x-[-20deg]"></div>
+              فحص التصريح
+            </button>
+            <p className="text-center text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]">iABS Engineering Division</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
   const WelcomeGate = () => (
