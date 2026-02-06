@@ -105,15 +105,20 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Real-time listener for announcements
+    // Better Real-time listener
     const channel = supabase
-      .channel('public:announcements')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
-        console.log('Real-time announcement received:', payload);
-        setActiveAnnouncement(payload.new.content);
-        playNotificationSound();
-      })
-      .subscribe();
+      .channel('announcements_realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'announcements' },
+        (payload) => {
+          console.log('SURPRISE! New announcement:', payload.new.content);
+          setActiveAnnouncement(payload.new.content);
+          playNotificationSound();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Announcement subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

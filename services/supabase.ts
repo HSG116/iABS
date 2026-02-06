@@ -49,7 +49,9 @@ export const adminService = {
   },
 
   async addAnnouncement(content: string) {
-    return await supabase.from('announcements').insert([{ content, is_active: true }]);
+    return await supabase.from('announcements').insert([
+      { content, is_active: true, created_at: new Date().toISOString() }
+    ]);
   },
 
   async deleteAnnouncement(id: string) {
