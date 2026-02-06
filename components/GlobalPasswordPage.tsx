@@ -121,10 +121,10 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
             scanSound.current.play().catch(() => { });
         }
 
-        // Simulate 3s scan
+        // Simulate 5s scan
         setTimeout(() => {
             finishScan();
-        }, 2500);
+        }, 5000);
     };
 
     const finishScan = () => {
@@ -209,37 +209,59 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
 
                 {/* --- FINGERPRINT / SCANNING STEP --- */}
                 {(step === 'FINGERPRINT' || step === 'SCANNING') && (
-                    <div className="flex flex-col items-center animate-in fade-in zoom-in duration-1000">
-                        <div className="mb-12 text-center space-y-4">
-                            <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                    <div className="flex flex-col items-center animate-in fade-in zoom-in duration-1000 w-full relative">
+
+                        <div className="mb-20 text-center space-y-4 relative z-20">
+                            <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400 drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
                                 {userType === 'NEW' ? 'تأكيد الهوية' : 'المصادقة البيومترية'}
                             </h2>
-                            <p className="text-white/50 text-base md:text-lg font-bold tracking-[0.3em] uppercase">
-                                {step === 'SCANNING' ? 'SCANNING BIOMETRIC DATA...' : 'TOUCH SENSOR TO PROCEED'}
+                            <p className="text-white/60 text-lg md:text-xl font-bold tracking-[0.5em] uppercase animate-pulse">
+                                {step === 'SCANNING' ? 'ANALYZING BIOMETRIC DATA...' : 'TOUCH SENSOR TO PROCEED'}
                             </p>
                         </div>
 
                         <button
                             onClick={startScan}
                             disabled={step === 'SCANNING'}
-                            className="relative group cursor-pointer active:scale-95 transition-transform duration-200 outline-none"
+                            className="relative group cursor-pointer outline-none tap-highlight-transparent"
                         >
-                            {/* Glow Effect */}
-                            <div className={`absolute inset-0 bg-red-600/30 blur-[60px] rounded-full transition-all duration-500 ${step === 'SCANNING' ? 'scale-150 opacity-100' : 'scale-100 opacity-50 group-hover:scale-125 group-hover:opacity-80'}`}></div>
+                            {/* Outer Rings & Effects */}
+                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-red-500/10 transition-all duration-1000 ${step === 'SCANNING' ? 'scale-100 opacity-100 animate-spin-slow' : 'scale-50 opacity-0'}`}></div>
+                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-red-500/20 border-dashed transition-all duration-1000 ${step === 'SCANNING' ? 'scale-100 opacity-100 animate-reverse-spin' : 'scale-50 opacity-0'}`}></div>
 
-                            {/* Fingerprint Icon - No Container, Just Icon */}
-                            <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center">
+                            {/* Core Glow */}
+                            <div className={`absolute inset-0 bg-red-600/20 blur-[100px] rounded-full transition-all duration-500 ${step === 'SCANNING' ? 'scale-150 opacity-100' : 'scale-75 opacity-30 group-hover:scale-100 group-hover:opacity-50'}`}></div>
+
+                            {/* Fingerprint Icon - Massive & Detailed */}
+                            <div className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center">
                                 <Fingerprint
-                                    size={180}
-                                    className={`relative z-10 transition-all duration-500 ${step === 'SCANNING' ? 'text-red-500 drop-shadow-[0_0_30px_rgba(255,0,0,0.8)]' : 'text-white/30 group-hover:text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]'}`}
+                                    size={350}
+                                    className={`relative z-10 transition-all duration-700 ${step === 'SCANNING'
+                                        ? 'text-red-500 drop-shadow-[0_0_50px_rgba(220,38,38,0.8)] scale-110'
+                                        : 'text-white/20 group-hover:text-white/80 group-hover:scale-105 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]'
+                                        }`}
                                     strokeWidth={0.5}
                                 />
 
-                                {/* Modern Scanning Grid */}
+                                {/* Advanced Scanning Beam - Boundless */}
                                 {step === 'SCANNING' && (
                                     <>
-                                        <div className="absolute inset-0 z-20 bg-[linear-gradient(transparent_50%,rgba(255,0,0,0.2)_50%)] bg-[size:100%_4px] animate-scan-grid pointer-events-none"></div>
-                                        <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500 shadow-[0_0_25px_#ef4444] z-30 animate-scan"></div>
+                                        {/* Main Laser Beam */}
+                                        <div className="absolute top-0 left-[-50%] w-[200%] h-[10px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_50px_#ef4444] z-50 animate-scan-beam blur-sm"></div>
+                                        <div className="absolute top-0 left-[-50%] w-[200%] h-[2px] bg-gradient-to-r from-transparent via-white to-transparent z-50 animate-scan-beam"></div>
+
+                                        {/* Digital Grid Overlay - Moves with beam */}
+                                        <div className="absolute inset-0 z-20 overflow-hidden rounded-full opacity-30">
+                                            <div className="w-full h-full bg-[linear-gradient(transparent_2px,#ff0000_2px)] bg-[size:100%_40px] animate-scan-grid"></div>
+                                        </div>
+
+                                        {/* Random Data Particles */}
+                                        <div className="absolute inset-0 z-30 flex items-center justify-center">
+                                            <div className="w-full text-center text-red-500 font-mono text-xs opacity-60 animate-pulse tracking-widest">
+                                                ID: {Math.random().toString(36).substring(7).toUpperCase()} <br />
+                                                MATCHING... {(Math.random() * 100).toFixed(1)}%
+                                            </div>
+                                        </div>
                                     </>
                                 )}
                             </div>
@@ -249,30 +271,32 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
 
                 {/* --- SUCCESS STEP --- */}
                 {step === 'SUCCESS' && (
-                    <div className="flex flex-col items-center animate-in zoom-in duration-700 text-center">
-                        <div className="relative mb-8">
-                            <div className="absolute inset-0 bg-green-500/30 blur-[80px] rounded-full animate-pulse"></div>
-                            <Unlock size={100} className="text-green-500 relative z-10 drop-shadow-[0_0_40px_rgba(34,197,94,0.8)] animate-bounce" />
+                    <div className="flex flex-col items-center animate-in zoom-in duration-700 text-center relative z-20">
+                        <div className="relative mb-10">
+                            <div className="absolute inset-0 bg-green-500/30 blur-[100px] rounded-full animate-pulse"></div>
+                            <div className="relative z-10 p-10 bg-green-500/10 rounded-full border border-green-500/30 shadow-[0_0_50px_rgba(34,197,94,0.3)]">
+                                <Unlock size={120} className="text-green-500 drop-shadow-[0_0_30px_rgba(34,197,94,0.8)] animate-bounce" />
+                            </div>
                         </div>
 
-                        <h2 className="text-5xl md:text-7xl font-black italic text-white mb-4 tracking-tighter drop-shadow-2xl">
-                            {userType === 'NEW' ? 'تم حفظ الهوية' : 'مرحباً بك مجدداً'}
+                        <h2 className="text-6xl md:text-8xl font-black italic text-white mb-6 tracking-tighter drop-shadow-2xl">
+                            {userType === 'NEW' ? 'تمت العملية' : 'أهلاً بك'}
                         </h2>
-                        <p className="text-green-500 font-bold tracking-[0.5em] text-xl uppercase drop-shadow-[0_0_15px_rgba(34,197,94,0.6)]">
-                            ACCESS GRANTED
+                        <p className="text-green-500 font-bold tracking-[0.6em] text-2xl uppercase drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] animate-pulse">
+                            ACCESS AUTHORIZED
                         </p>
                     </div>
                 )}
 
             </div>
 
-            <div className="absolute bottom-10 opacity-40 flex items-center gap-3 animate-pulse">
-                <Sparkles size={18} className="text-white" />
-                <span className="text-xs text-white uppercase tracking-[0.5em] font-bold">SECURED BY iABS</span>
+            <div className="absolute bottom-10 opacity-30 flex items-center gap-3 animate-pulse pointer-events-none">
+                <Sparkles size={20} className="text-white" />
+                <span className="text-sm text-white uppercase tracking-[0.6em] font-bold">SECURED BY iABS SYSTEM</span>
             </div>
 
             <style>{`
-        @keyframes scan {
+        @keyframes scan-beam {
           0% { top: 0%; opacity: 0; }
           10% { opacity: 1; }
           90% { opacity: 1; }
@@ -282,14 +306,14 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
             0% { background-position: 0 0; }
             100% { background-position: 0 100%; }
         }
-        .animate-scan {
-          animation: scan 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        .animate-scan-beam {
+          animation: scan-beam 5s ease-in-out infinite; 
         }
         .animate-scan-grid {
-            animation: scan-grid 1s linear infinite;
+            animation: scan-grid 5s linear infinite;
         }
         .animate-pulse-slow {
-          animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          animation: pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -297,6 +321,9 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
           75% { transform: translateX(10px); }
         }
         .animate-shake { animation: shake 0.4s ease-in-out; }
+        .animate-spin-slow { animation: spin 10s linear infinite; }
+        .animate-reverse-spin { animation: spin 15s linear infinite reverse; }
+        @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
       `}</style>
         </div>
     );
