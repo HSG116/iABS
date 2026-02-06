@@ -15,6 +15,7 @@ import { GridHunt } from './components/GridHunt';
 import { CupShuffle } from './components/CupShuffle';
 import { TerritoryWar } from './components/TerritoryWar';
 import { AdminDashboard } from './components/AdminDashboard';
+import { GlobalAnnouncement } from './components/GlobalAnnouncement';
 import { ViewState } from './types';
 import {
   Trophy, Play, Lock, User, Swords, Image as ImageIcon,
@@ -91,6 +92,33 @@ const App: React.FC = () => {
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
+
+  const playNotificationSound = () => {
+    try {
+      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+      audio.volume = 0.6;
+      audio.play().catch(e => console.warn("Sound play blocked:", e));
+    } catch (e) {
+      console.warn("Audio failed:", e);
+    }
+  };
+
+  useEffect(() => {
+    // Real-time listener for announcements
+    const channel = supabase
+      .channel('public:announcements')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
+        console.log('Real-time announcement received:', payload);
+        setActiveAnnouncement(payload.new.content);
+        playNotificationSound();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const loadLeaderboard = () => {
     setIsLoadingLeaderboard(true);
@@ -437,6 +465,13 @@ const App: React.FC = () => {
     <Layout currentView={currentView as ViewState} onChangeView={(v) => setCurrentView(v)}>
       {showWelcome && <WelcomeGate />}
       {renderContent()}
+
+      {activeAnnouncement && (
+        <GlobalAnnouncement
+          message={activeAnnouncement}
+          onClose={() => setActiveAnnouncement(null)}
+        />
+      )}
     </Layout>
   );
 };

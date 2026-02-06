@@ -138,8 +138,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`w-full flex items-center gap-5 px-6 py-5 rounded-[1.5rem] transition-all relative group ${activeTab === tab.id
-                  ? 'bg-iabs-red text-white shadow-[0_15px_30px_rgba(255,0,0,0.2)]'
-                  : 'text-zinc-500 hover:text-white hover:bg-white/5'
+                ? 'bg-iabs-red text-white shadow-[0_15px_30px_rgba(255,0,0,0.2)]'
+                : 'text-zinc-500 hover:text-white hover:bg-white/5'
                 }`}
             >
               <tab.icon size={22} className={activeTab === tab.id ? 'text-white' : tab.color} />
@@ -415,20 +415,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   <textarea
                     value={newAnnouncement}
                     onChange={(e) => setNewAnnouncement(e.target.value)}
-                    placeholder="اكتب رسالة البث العام هنا... ستظهر للجميع فوراً!"
-                    className="w-full bg-black/40 border-4 border-white/[0.03] rounded-[3rem] p-12 text-3xl text-white font-black focus:border-orange-500 outline-none transition-all min-h-[300px] shadow-inner text-center leading-relaxed italic"
+                    placeholder="اكتب رسالة البث العام هنا... ستظهر للجميع فوراً بصوت وتصميم فاخر!"
+                    className="w-full bg-black/40 border-4 border-white/[0.03] rounded-[3rem] p-12 text-3xl text-white font-black focus:border-red-600 outline-none transition-all min-h-[300px] shadow-inner text-center leading-relaxed italic placeholder:text-zinc-800"
                   />
                   <button
                     onClick={async () => {
                       if (!newAnnouncement) return;
-                      await adminService.addAnnouncement(newAnnouncement);
-                      setNewAnnouncement('');
-                      showStatus('تم البث بنجاح');
-                      fetchData();
+                      setIsLoading(true);
+                      const { error } = await adminService.addAnnouncement(newAnnouncement);
+                      setIsLoading(false);
+                      if (!error) {
+                        setNewAnnouncement('');
+                        showStatus('تم إطلاق البث المباشر بنجاح!');
+                        fetchData();
+                      } else {
+                        showStatus('فشل إرسال البث', true);
+                      }
                     }}
-                    className="w-full py-8 bg-orange-600 text-white font-black text-3xl rounded-[3rem] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_25px_80px_rgba(234,88,12,0.4)] flex items-center justify-center gap-4 italic uppercase"
+                    disabled={isLoading}
+                    className="w-full py-8 bg-gradient-to-r from-red-600 to-orange-600 text-white font-black text-3xl rounded-[3rem] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_25px_80px_rgba(255,0,0,0.4)] flex items-center justify-center gap-4 italic uppercase disabled:opacity-50"
                   >
-                    <Radio size={40} className="animate-pulse" /> Initiate Global Pulse
+                    <Radio size={40} className={isLoading ? 'animate-spin' : 'animate-pulse'} />
+                    {isLoading ? 'Processing...' : 'TRANSMIT REAL-TIME PULSE'}
                   </button>
                 </div>
               </div>
