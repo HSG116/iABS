@@ -177,21 +177,10 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
       participantsRef.current = participants;
    }, [phase, config, participants]);
 
-   const getUniqueChairIds = (count: number, survivorsCount: number, diff: Difficulty): string[] => {
-      if (diff === 'EASY') {
-         return Array.from({ length: count }, (_, i) => (i + 1).toString());
-      }
-
-      let pool: string[] = [];
-      if (diff === 'MEDIUM') {
-         const maxRange = Math.max(300, survivorsCount);
-         pool = Array.from({ length: maxRange }, (_, i) => (i + 1).toString());
-      } else if (diff === 'HARD') {
-         pool = Array.from({ length: 9000 }, (_, i) => (1000 + i).toString());
-      } else if (diff === 'RANDOM') {
-         const maxRange = Math.max(10000, survivorsCount * 10);
-         pool = Array.from({ length: maxRange }, (_, i) => (i + 1).toString());
-      }
+   const getUniqueChairIds = (count: number, survivorsCount: number): string[] => {
+      // Always use MEDIUM logic: shuffled numbers from 1 to 300 (or survivors count if more)
+      const maxRange = Math.max(300, survivorsCount);
+      const pool = Array.from({ length: maxRange }, (_, i) => (i + 1).toString());
 
       const result = [...pool];
       for (let i = result.length - 1; i > 0; i--) {
@@ -321,7 +310,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
       // التأكد من استبعاد شخص واحد على الأقل إذا كان هناك أكثر من متسابق
       if (survivorsCount > 1 && chairsCount >= survivorsCount) chairsCount = survivorsCount - 1;
 
-      const chairIds = getUniqueChairIds(chairsCount, survivorsCount, config.difficulty);
+      const chairIds = getUniqueChairIds(chairsCount, survivorsCount);
       const luckyIndex = config.luckyChair ? Math.floor(Math.random() * chairsCount) : -1;
       const newChairs = chairIds.map((id, i) => {
          // توليد موقع عشوائي داخل حلبة دائرية
@@ -565,18 +554,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
                               <input type="range" min="2" max="2000" step="1" value={config.maxPlayers} onChange={e => setConfig({ ...config, maxPlayers: +e.target.value })} className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-red-600" />
                            </div>
 
-                           <div className="space-y-3">
-                              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                 <Gauge size={12} className="text-red-600" /> مستوى الصعوبة
-                              </label>
-                              <div className="grid grid-cols-2 gap-2">
-                                 {(['EASY', 'MEDIUM', 'HARD', 'RANDOM'] as Difficulty[]).map(d => (
-                                    <button key={d} onClick={() => setConfig({ ...config, difficulty: d })} className={`py-3 rounded-2xl font-black text-[10px] transition-all border-2 ${config.difficulty === d ? 'bg-red-600 text-white border-red-600 shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'bg-white/5 text-gray-500 border-white/5 hover:bg-white/10'}`}>
-                                       {d === 'EASY' ? 'سهل' : d === 'MEDIUM' ? 'متوسط' : d === 'HARD' ? 'صعب' : 'عشوائي'}
-                                    </button>
-                                 ))}
-                              </div>
-                           </div>
+
 
                            <div className="space-y-4">
                               <div className="flex items-center justify-between">
