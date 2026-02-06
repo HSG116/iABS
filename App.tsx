@@ -241,22 +241,18 @@ const App: React.FC = () => {
       }
     };
 
-    // Robust Focus Management
+    // Focus Management
+    const focusInput = () => {
+      if (inputRef.current && !isLoginSuccess) {
+        inputRef.current.focus();
+      }
+    };
+
     useEffect(() => {
-      const focusInput = () => {
-        if (!isLoginSuccess) inputRef.current?.focus();
-      };
-
       focusInput();
-
-      // Listen to both click and touch for mobile reliability
-      window.addEventListener('click', focusInput);
-      window.addEventListener('touchstart', focusInput);
-
-      return () => {
-        window.removeEventListener('click', focusInput);
-        window.removeEventListener('touchstart', focusInput);
-      };
+      // Keep trying to focus on mount to beat browser delays
+      const timer = setTimeout(focusInput, 100);
+      return () => clearTimeout(timer);
     }, []);
 
     // Reset pin on error
@@ -267,12 +263,15 @@ const App: React.FC = () => {
     }, [globalLoginError]);
 
     return (
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl selection:bg-transparent" dir="rtl">
+      <div
+        className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl cursor-text"
+        dir="rtl"
+        onClick={focusInput}
+      >
         {/* Deep Cinematic Background */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
           <div className="absolute inset-0 bg-[#020202] [mask-image:radial-gradient(circle_at_center,transparent_0%,black_100%)] opacity-80"></div>
-
           {/* Subtle Cyber Grid */}
           <div className="absolute inset-0 opacity-[0.02]"
             style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
@@ -280,12 +279,12 @@ const App: React.FC = () => {
           <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
         </div>
 
-        {/* The MASTER Input - Transparent but captures everything */}
+        {/* The MASTER Input - Improved visibility for browser focus support */}
         <input
           ref={inputRef}
           type="text"
           autoFocus
-          autoComplete="off"
+          autoComplete="one-time-code"
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck="false"
@@ -293,7 +292,8 @@ const App: React.FC = () => {
           value={pin}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          className="absolute inset-0 w-full h-full opacity-0 z-[100] cursor-default caret-transparent"
+          // We use absolute positioning but keep it "real" for the browser
+          className="absolute opacity-[0.01] pointer-events-auto z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[100px] text-[40px]"
         />
 
         {/* UI Layer */}
