@@ -231,6 +231,7 @@ const App: React.FC = () => {
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Direct numeric filter
       const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
       setPinValue(val);
       setGlobalPasswordInput(val);
@@ -240,16 +241,21 @@ const App: React.FC = () => {
       }
     };
 
-    // Auto focus on mount
+    // Force focus every few seconds if not focused
     useEffect(() => {
-      setTimeout(() => inputRef.current?.focus(), 800);
-    }, []);
+      const interval = setInterval(() => {
+        if (document.activeElement !== inputRef.current && !isLoginSuccess) {
+          inputRef.current?.focus();
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }, [isLoginSuccess]);
 
-    // Clear PIN if error happens and user wants to retry
     useEffect(() => {
       if (globalLoginError) {
         setPinValue('');
         setGlobalPasswordInput('');
+        inputRef.current?.focus();
       }
     }, [globalLoginError]);
 
@@ -257,180 +263,135 @@ const App: React.FC = () => {
 
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="rtl" onClick={handleContainerClick}>
-        {/* Deep Space Background */}
+        {/* Cinematic Backdrop */}
         <div className="absolute inset-0">
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/5'}`}></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(20,20,20,0)_0%,_#000_100%)]"></div>
 
-          {/* Moving Star-field / Grid */}
-          <div className="absolute inset-0 opacity-10 animate-[pulse_4s_infinite]"
+          {/* Static Tech Grid */}
+          <div className="absolute inset-0 opacity-[0.05]"
             style={{
-              backgroundImage: `linear-gradient(${isLoginSuccess ? '#22c55e' : '#dc2626'} 0.5px, transparent 0.5px), linear-gradient(90deg, ${isLoginSuccess ? '#22c55e' : '#dc2626'} 0.5px, transparent 0.5px)`,
-              backgroundSize: '100px 100px',
-              perspective: '1000px',
-              transform: 'rotateX(60deg) translateY(-200px) scale(2)'
+              backgroundImage: `linear-gradient(${isLoginSuccess ? '#22c55e' : '#dc2626'} 1px, transparent 1px), linear-gradient(90deg, ${isLoginSuccess ? '#22c55e' : '#dc2626'} 1px, transparent 1px)`,
+              backgroundSize: '60px 60px'
             }}></div>
 
-          <div className="absolute h-full w-full bg-[radial-gradient(ellipse_at_center,_transparent_0%,_#000_80%)]"></div>
-
-          {/* Bio-Organic Glows */}
-          <div className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] blur-[120px] rounded-full animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/15' : 'bg-red-600/10'}`}></div>
-          <div className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] blur-[120px] rounded-full animate-float transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-900/15' : 'bg-red-900/10'}`}></div>
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full blur-[150px] opacity-20 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
         </div>
 
-        {/* Hidden Input for Real Functionality */}
+        {/* The Real Input - Small but always focusable */}
         <input
           ref={inputRef}
           type="tel"
           pattern="[0-9]*"
           value={pinValue}
           onChange={handleInputChange}
-          className="absolute opacity-0 pointer-events-none"
-          autoFocus={true}
+          className="fixed top-[-100px] left-[-100px] w-10 h-10 opacity-0 pointer-events-none"
+          autoFocus
         />
 
         {/* Main Interface Content */}
-        <div className="relative z-10 w-full max-w-4xl px-8" onClick={(e) => e.stopPropagation()}>
-          <div className="relative animate-in zoom-in duration-1000">
+        <div className="relative z-10 w-full max-w-5xl px-4 md:px-8" onClick={(e) => e.stopPropagation()}>
+          <div className="relative animate-in zoom-in slide-in-from-bottom-10 duration-1000">
             {/* Outer Protection Glow */}
-            <div className={`absolute -inset-20 blur-[120px] rounded-[5rem] animate-pulse transition-all duration-1000 ${isLoginSuccess ? 'bg-green-500/20' : 'bg-red-600/10'}`}></div>
+            <div className={`absolute -inset-10 md:-inset-20 blur-[100px] rounded-[5rem] transition-all duration-1000 ${isLoginSuccess ? 'bg-green-500/20' : 'bg-red-600/10'}`}></div>
 
-            <div className={`bg-black/90 border-t-2 border-x-2 rounded-[5rem] p-16 md:p-24 shadow-2xl backdrop-blur-2xl relative overflow-hidden group transition-all duration-700 ${isLoginSuccess ? 'border-green-500 shadow-green-500/30' : 'border-white/10 shadow-red-600/20'}`}>
+            <div className={`bg-black/95 border-b border-x border-white/10 rounded-[4rem] md:rounded-[6rem] p-10 md:p-20 shadow-[0_0_100px_rgba(0,0,0,1)] backdrop-blur-3xl relative overflow-hidden transition-all duration-700 ${isLoginSuccess ? 'border-green-500 shadow-green-500/20 scale-105' : 'border-white/10 shadow-red-600/5'}`}>
 
-              {/* Scanline Overlay */}
-              <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-40 bg-[length:100%_2px,3px_100%]"></div>
+              {/* Scanline Effect */}
+              <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-40 bg-[length:100%_2px,3px_100%]"></div>
 
               {/* Success Overlay Layer */}
               {isLoginSuccess && (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-700">
                   <div className="relative mb-12">
-                    <div className="absolute inset-0 bg-green-500 blur-[80px] animate-pulse opacity-60 scale-150"></div>
-                    <div className="relative p-10 bg-green-500/10 rounded-full border-4 border-green-500/50 shadow-[0_0_80px_rgba(34,197,94,0.5)]">
-                      <ShieldCheck size={160} className="text-green-400 animate-[success-pop_0.8s_cubic-bezier(0.34,1.56,0.64,1)_forwards]" />
+                    <div className="absolute inset-0 bg-green-500 blur-3xl animate-pulse opacity-60 scale-150"></div>
+                    <div className="relative p-8 bg-green-500/10 rounded-full border-2 border-green-500/50 shadow-[0_0_60px_rgba(34,197,94,0.4)]">
+                      <ShieldCheck size={140} className="text-green-400 animate-[success-pop_0.6s_ease-out_forwards]" />
                     </div>
                   </div>
-                  <h2 className="text-9xl font-black text-white italic tracking-tighter mb-6 animate-in slide-in-from-bottom duration-700">تـم الـتـصـريح</h2>
-                  <div className="flex items-center gap-6 text-green-400 font-black tracking-[1em] text-sm uppercase">
-                    <div className="w-16 h-[2px] bg-green-500/40"></div>
-                    Access Granted
-                    <div className="w-16 h-[2px] bg-green-500/40"></div>
-                  </div>
-                  <div className="mt-20 w-96 h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
-                    <div className="h-full bg-gradient-to-r from-green-600 via-green-400 to-green-600 animate-[unlock-load_1.8s_ease-in-out_forwards]"></div>
-                  </div>
+                  <h2 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter mb-4 scale-in-center">تـم الـتـصـريح</h2>
+                  <p className="text-green-500 font-black tracking-[0.8em] text-[10px] md:text-xs uppercase animate-pulse">System Sovereign Access Granted</p>
                 </div>
               )}
 
-              {/* Technical HUD Overlay */}
-              {!isLoginSuccess && (
-                <div className="absolute top-10 left-10 right-10 flex justify-between opacity-20 font-mono text-[10px] text-red-600 tracking-widest hidden md:flex">
-                  <div className="flex gap-10">
-                    <div>[ SYSTEM CORE V4.2 ]</div>
-                    <div>[ CRYPTO_SSL: ENABLED ]</div>
-                  </div>
-                  <div className="animate-pulse">AWAITING_INPUT_SIGNAL...</div>
-                </div>
-              )}
-
-              {/* Header section with Floating Logo */}
-              <div className="text-center mb-20 relative">
-                <div className="relative inline-block mb-10 group/logo">
-                  <div className={`absolute inset-0 blur-[60px] rounded-full scale-150 animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/40' : 'bg-red-600/30'}`}></div>
-                  <img
-                    src="https://i.ibb.co/pvCN1NQP/95505180312.png"
-                    className="h-44 mx-auto relative z-10 drop-shadow-[0_0_50px_rgba(220,38,38,0.7)] animate-float cursor-pointer hover:scale-110 transition-transform duration-500"
-                    alt="Logo"
-                    onClick={() => inputRef.current?.focus()}
-                  />
+              {/* Header section */}
+              <div className="text-center mb-12 md:mb-16 relative">
+                <div className="relative inline-block mb-8 group/logo">
+                  <div className={`absolute inset-0 blur-[50px] rounded-full scale-150 animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/40' : 'bg-red-600/30'}`}></div>
+                  <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 md:h-44 mx-auto relative z-10 drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] animate-float" alt="Logo" />
                 </div>
 
-                <h1 className="text-8xl font-black text-white italic tracking-tighter uppercase mb-4 drop-shadow-[0_10px_40px_rgba(0,0,0,0.8)]">دخول النـظام</h1>
-                <div className="flex items-center justify-center gap-8">
-                  <div className="h-[2px] w-24 bg-gradient-to-l from-transparent via-red-600/40 to-transparent"></div>
-                  <p className="text-red-500 font-black tracking-[0.8em] text-xs uppercase italic animate-pulse">Sovereign Protection Hub</p>
-                  <div className="h-[2px] w-24 bg-gradient-to-r from-transparent via-red-600/40 to-transparent"></div>
+                <h1 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter uppercase mb-4">نـظام الـدخول</h1>
+                <div className="flex items-center justify-center gap-4 md:gap-8">
+                  <div className="h-[1px] w-12 md:w-24 bg-gradient-to-l from-transparent via-red-600/40 to-transparent"></div>
+                  <p className="text-red-500 font-black tracking-[0.5em] md:tracking-[0.8em] text-[8px] md:text-[10px] uppercase italic">iABS Sovereign Protection</p>
+                  <div className="h-[1px] w-12 md:w-24 bg-gradient-to-r from-transparent via-red-600/40 to-transparent"></div>
                 </div>
               </div>
 
-              {/* PIN Box Display Group */}
-              <div className="flex justify-center flex-wrap gap-4 md:gap-6 mb-16 direction-ltr cursor-pointer" onClick={handleContainerClick}>
+              {/* PIN Box Display Group - NO FLEX WRAP */}
+              <div className="flex justify-center flex-nowrap gap-2 md:gap-4 mb-12 md:mb-16 direction-ltr cursor-pointer" onClick={handleContainerClick}>
                 {digits.map((i) => {
                   const hasValue = pinValue.length > i;
                   const isCurrent = pinValue.length === i;
                   return (
-                    <div key={i} className="relative group">
-                      {/* Cyber Pulse Ring when current */}
-                      {isCurrent && !isLoginSuccess && (
-                        <div className="absolute inset-0 rounded-3xl border-2 border-red-600 animate-ping opacity-20"></div>
-                      )}
-
+                    <div key={i} className="relative group flex-shrink-0">
                       <div className={`
-                        w-16 h-24 md:w-28 md:h-36 rounded-3xl flex items-center justify-center transition-all duration-500
-                        border-2 relative z-10 overflow-hidden shadow-2xl
-                        ${isCurrent ? 'bg-red-600/10 border-red-500 scale-110 shadow-red-600/20' : hasValue ? 'bg-black/40 border-red-900/40' : 'bg-black/60 border-white/5'}
-                        group-hover:border-red-600/30
+                        w-12 h-20 md:w-24 md:h-32 rounded-2xl md:rounded-3xl flex items-center justify-center transition-all duration-300
+                        border-2 relative z-10 overflow-hidden
+                        ${isCurrent ? 'bg-red-600/10 border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)]' : hasValue ? 'bg-black/40 border-red-900/40' : 'bg-black/60 border-white/5'}
                       `}>
-                        {/* Digit or Hidden Disc */}
                         {hasValue ? (
-                          <div className="w-6 h-6 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] animate-in zoom-in duration-300"></div>
+                          <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,1)] animate-in zoom-in duration-300"></div>
                         ) : isCurrent ? (
-                          <div className="w-[4px] h-10 bg-red-600 animate-pulse rounded-full"></div>
+                          <div className="w-[3px] md:w-[4px] h-8 md:h-12 bg-red-600 animate-pulse rounded-full shadow-[0_0_10px_rgba(220,38,38,1)]"></div>
                         ) : null}
-
-                        {/* Technical lines inside box */}
-                        <div className="absolute top-2 right-2 w-3 h-[1px] bg-red-600/20"></div>
-                        <div className="absolute bottom-2 left-2 w-3 h-[1px] bg-red-600/20"></div>
                       </div>
 
-                      {/* Box Glow underneath */}
-                      <div className={`absolute -inset-2 rounded-3xl blur transition-opacity duration-500 
-                        ${isCurrent ? 'opacity-100 bg-red-600/10' : 'opacity-0'}`}></div>
+                      {/* Box Highlight below */}
+                      <div className={`absolute -inset-1 blur-md transition-opacity duration-500 ${isCurrent ? 'opacity-100 bg-red-600/10' : 'opacity-0'}`}></div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Status & Errors */}
-              <div className="min-h-[80px] flex flex-col items-center justify-center relative mb-8">
+              {/* Status & Error Display */}
+              <div className="min-h-[60px] md:min-h-[80px] flex items-center justify-center mb-8">
                 {globalLoginError ? (
-                  <div className="flex items-center gap-6 text-red-500 font-bold bg-red-950/20 px-12 py-6 rounded-full border border-red-600/30 animate-[shake_0.6s_ease-in-out]">
-                    <AlertTriangle size={32} className="animate-pulse" />
-                    <span className="text-3xl tracking-tighter italic uppercase">{globalLoginError}</span>
+                  <div className="flex items-center gap-4 text-red-500 font-black bg-red-950/20 px-8 py-4 md:px-12 md:py-6 rounded-full border border-red-600/30 animate-[shake_0.6s_ease-in-out]">
+                    <AlertTriangle size={24} className="md:size-32 animate-pulse" />
+                    <span className="text-xl md:text-2xl tracking-tight uppercase italic">{globalLoginError}</span>
                   </div>
                 ) : (
-                  <div className="text-white/20 font-black text-xs uppercase tracking-[1em] animate-pulse flex items-center gap-3">
-                    <ShieldCheck size={18} />
-                    Securing Connection...
+                  <div className="flex items-center gap-3 text-white/10 font-black text-[9px] md:text-xs uppercase tracking-[0.5em] md:tracking-[0.8em]">
+                    <ShieldCheck size={16} />
+                    Verified System Access Only
                   </div>
                 )}
               </div>
 
-              {/* Bottom Signal Pings */}
-              <div className="flex gap-4 justify-center items-center opacity-40">
-                <div className="h-[2px] w-20 bg-gradient-to-l from-transparent via-white/10 to-transparent"></div>
-                <div className="flex gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping delay-200"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping delay-500"></div>
-                </div>
-                <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+              {/* Technical Indicator Dots */}
+              <div className="flex gap-2 justify-center opacity-30">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" style={{ animationDelay: `${i * 200}ms` }}></div>
+                ))}
               </div>
             </div>
           </div>
         </div>
 
         <style>{`
-          @keyframes unlock-load { 0% { width: 0; } 100% { width: 100%; } }
           @keyframes success-pop {
-            0% { transform: scale(0.5) rotate(-20deg); opacity: 0; }
-            70% { transform: scale(1.1) rotate(5deg); opacity: 1; }
-            100% { transform: scale(1) rotate(0); opacity: 1; }
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
           }
           @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-15px); }
-            40%, 80% { transform: translateX(15px); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
           }
           .direction-ltr { direction: ltr; }
+          .flex-nowrap { flex-wrap: nowrap; }
         `}</style>
       </div>
     );
