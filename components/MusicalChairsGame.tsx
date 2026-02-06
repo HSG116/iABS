@@ -932,7 +932,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
                                        <div className="w-full h-full bg-zinc-900 rounded-[1.7rem] flex items-center justify-center text-gray-600"><User size={sizes.icon} /></div>
                                     )}
                                  </div>
-                                 <span className={`${sizes.text} font-black uppercase truncate max-w-[100px] drop-shadow-md transition-colors group-hover:text-white`} style={{ color: p.color || '#9ca3af' }}>{p.username}</span>
+                                 <span className={`${sizes.text} font-black uppercase drop-shadow-md transition-colors group-hover:text-white`} style={{ color: p.color || '#9ca3af' }}>{p.username}</span>
                               </div>
                            )
                         })}
@@ -1111,7 +1111,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
                               />
 
                               {/* Chair Number - Massive and Clear */}
-                              {!config.hideNumbers && (
+                              {!config.hideNumbers && phase !== 'MUSIC_ON' && (
                                  <div
                                     className={`absolute -top-10 px-4 py-1 rounded-2xl ${sizes.text} font-black italic shadow-2xl z-50 transition-all ${isOccupied ? 'bg-green-500 border-4 border-white text-white scale-125' : 'bg-black/80 border-2 border-white/20 text-white'
                                        }`}
