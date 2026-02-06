@@ -219,95 +219,61 @@ const App: React.FC = () => {
   );
 
   const GlobalLoginPage = () => {
-    const [pin, setPin] = useState<string[]>(Array(8).fill(''));
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [pin, setPin] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const handleInputChange = (index: number, value: string) => {
-      // Allows only one char per box
-      const val = value.slice(-1);
-      const newPin = [...pin];
-      newPin[index] = val;
-      setPin(newPin);
-
-      // Auto-advance focus
-      if (val && index < 7) {
-        inputRefs.current[index + 1]?.focus();
-      }
-
-      // Check for completion
-      const fullPin = newPin.join('');
-      setGlobalPasswordInput(fullPin);
-      if (fullPin.length === 8) {
-        handleGlobalLogin(fullPin);
+    // Keep focus on the single hidden input
+    const focusInput = () => {
+      if (inputRef.current && !isLoginSuccess) {
+        inputRef.current.focus();
       }
     };
 
-    const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-      // Backspace Logic
-      if (e.key === 'Backspace') {
-        if (!pin[index] && index > 0) {
-          // If empty, move back then delete
-          inputRefs.current[index - 1]?.focus();
-          const newPin = [...pin];
-          newPin[index - 1] = '';
-          setPin(newPin);
-          setGlobalPasswordInput(newPin.join(''));
-        } else {
-          // If not empty, just clear current
-          const newPin = [...pin];
-          newPin[index] = '';
-          setPin(newPin);
-          setGlobalPasswordInput(newPin.join(''));
-        }
-      }
-      // Enter Logic
-      if (e.key === 'Enter') {
-        const fullPin = pin.join('');
-        if (fullPin.length > 0) handleGlobalLogin(fullPin);
-      }
-    };
-
-    const handlePaste = (e: React.ClipboardEvent) => {
-      e.preventDefault();
-      const pastedData = e.clipboardData.getData('text').slice(0, 8).split('');
-      const newPin = [...pin];
-      pastedData.forEach((char, i) => {
-        if (i < 8) newPin[i] = char;
-      });
-      setPin(newPin);
-      setGlobalPasswordInput(newPin.join(''));
-
-      const nextIndex = Math.min(pastedData.length, 7);
-      inputRefs.current[nextIndex]?.focus();
-
-      if (newPin.join('').length === 8) handleGlobalLogin(newPin.join(''));
-    };
-
-    // Auto-focus first input on mount
     useEffect(() => {
-      const t = setTimeout(() => {
-        if (!isLoginSuccess) inputRefs.current[0]?.focus();
-      }, 500);
-      return () => clearTimeout(t);
+      focusInput();
+      const t = setTimeout(focusInput, 100);
+      window.addEventListener('click', focusInput);
+      return () => {
+        clearTimeout(t);
+        window.removeEventListener('click', focusInput);
+      };
     }, []);
 
-    // Reset on error
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value.slice(0, 8); // Limit to 8 chars
+      setPin(val);
+      setGlobalPasswordInput(val);
+
+      if (val.length === 8) {
+        handleGlobalLogin(val);
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && pin.length > 0) {
+        handleGlobalLogin(pin);
+      }
+    };
+
+    // Reset pin on error
     useEffect(() => {
       if (globalLoginError) {
-        setPin(Array(8).fill(''));
-        if (inputRefs.current[0]) inputRefs.current[0].focus();
+        setPin('');
       }
     }, [globalLoginError]);
 
     return (
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="ltr">
+      <div
+        className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl"
+        dir="ltr"
+        onClick={focusInput}
+      >
         {/* Cinematic Background */}
         <div className="absolute inset-0 pointer-events-none">
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
           <div className="absolute inset-0 bg-[#020202] [mask-image:radial-gradient(circle_at_center,transparent_0%,black_100%)] opacity-80"></div>
           <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
 
-          {/* Grid pattern */}
           <div className="absolute inset-0 opacity-[0.03]"
             style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '40px 40px' }}>
           </div>
@@ -321,9 +287,25 @@ const App: React.FC = () => {
              ${isLoginSuccess ? 'border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.2)] scale-105' : 'border-white/10 shadow-[0_0_50px_rgba(220,38,38,0.1)]'}
           `}>
 
+            {/* The Invisible Master Input */}
+            <input
+              ref={inputRef}
+              type="text"
+              autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              value={pin}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              className="absolute inset-0 w-full h-full opacity-0 z-50 cursor-pointer caret-transparent"
+              style={{ fontSize: '1px' }} // Tiny font to avoid cursor artifacts
+            />
+
             {/* Success Animation Overlay */}
             {isLoginSuccess && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-500">
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-500 pointer-events-none">
                 <div className="relative">
                   <div className="absolute inset-0 bg-green-500 blur-[60px] opacity-40 rounded-full animate-pulse"></div>
                   <ShieldCheck size={120} className="text-green-500 relative z-10 animate-[bounce_1s_infinite]" />
@@ -338,7 +320,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 pointer-events-none">
               <div className="relative inline-block group">
                 <div className={`absolute inset-0 blur-[50px] transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/30' : 'bg-red-600/30'}`}></div>
                 <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 md:h-40 mx-auto mb-6 relative z-10 drop-shadow-[0_0_30px_rgba(255,0,0,0.5)] animate-float" alt="Logo" />
@@ -351,39 +333,39 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            {/* Input Grid */}
-            <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-10" onPaste={handlePaste}>
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <div key={i} className="relative group">
-                  <input
-                    ref={(el) => (inputRefs.current[i] = el)}
-                    type="password" /* Use password to mask characters if desired, or 'text' for visible */
-                    inputMode="text"
-                    maxLength={1}
-                    value={pin[i]}
-                    onChange={(e) => handleInputChange(i, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(i, e)}
-                    className={`
+            {/* Visual Output Grid */}
+            <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-10 pointer-events-none">
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+                const char = pin[i] || ''; // Get char at index
+                const isActive = i === pin.length; // Is this the next box to fill?
+                const isFilled = char !== '';
+
+                return (
+                  <div key={i} className="relative group">
+                    <div className={`
                       w-10 h-14 md:w-16 md:h-24 rounded-xl md:rounded-2xl
                       bg-white/5 border-2 text-center text-2xl md:text-4xl font-black text-white
-                      focus:outline-none transition-all duration-300
-                      ${pin[i] ? 'border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] bg-red-900/10' : 'border-white/10 hover:border-white/30'}
-                      focus:border-red-500 focus:scale-110 focus:bg-black focus:shadow-[0_0_25px_rgba(220,38,38,0.6)] z-10 relative
-                    `}
-                  />
-                  {/* Decorative corner accents for active/filled boxes */}
-                  {(pin[i] || document.activeElement === inputRefs.current[i]) && (
-                    <>
-                      <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-red-500 rounded-tl-lg pointer-events-none"></div>
-                      <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-red-500 rounded-br-lg pointer-events-none"></div>
-                    </>
-                  )}
-                </div>
-              ))}
+                      flex items-center justify-center transition-all duration-300
+                      ${isFilled ? 'border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] bg-red-900/10' : 'border-white/10'}
+                      ${isActive ? 'border-red-500 scale-110 bg-black shadow-[0_0_25px_rgba(220,38,38,0.6)] z-10' : ''}
+                    `}>
+                      {isFilled ? char : ''} {/* Show char or nothing */}
+                    </div>
+
+                    {/* Active/Filled Accents */}
+                    {(isFilled || isActive) && (
+                      <>
+                        <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-red-500 rounded-tl-lg"></div>
+                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-red-500 rounded-br-lg"></div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Status Message Area */}
-            <div className="min-h-[80px] flex items-center justify-center">
+            {/* Status Message */}
+            <div className="min-h-[80px] flex items-center justify-center pointer-events-none">
               {globalLoginError ? (
                 <div className="flex items-center gap-3 bg-red-950/40 border border-red-600/50 px-8 py-4 rounded-full animate-[shake_0.5s_ease-in-out]">
                   <AlertTriangle className="text-red-500 animate-pulse" size={24} />
@@ -410,9 +392,6 @@ const App: React.FC = () => {
             20%, 60% { transform: translateX(-10px); }
             40%, 80% { transform: translateX(10px); }
           }
-          /* Hide password dots if using type='password' but want custom styling? 
-             Actually standard dots are fine, or we can use text-security-disc if needed. 
-             For now type='password' gives distinct dots. */
         `}</style>
       </div>
     );
