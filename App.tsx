@@ -220,13 +220,32 @@ const App: React.FC = () => {
 
   const GlobalLoginPage = () => {
     const [pin, setPin] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    // Simple direct input handler
+    // Force focus anywhere
+    const focusInput = () => {
+      if (inputRef.current && !isLoginSuccess) {
+        inputRef.current.focus();
+      }
+    };
+
+    useEffect(() => {
+      focusInput();
+      // Aggressive focus strategy
+      const t1 = setTimeout(focusInput, 100);
+      const t2 = setTimeout(focusInput, 500);
+      const t3 = setTimeout(focusInput, 1000);
+      return () => {
+        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      };
+    }, []);
+
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
+      // Allow only numbers, but keep limit
+      const val = e.target.value.replace(/[^0-9]/g, ''); // Ensure only numeric input
       if (val.length <= 8) {
         setPin(val);
-        setGlobalPasswordInput(val); // Keep global sync
+        setGlobalPasswordInput(val);
         if (val.length === 8) {
           handleGlobalLogin(val);
         }
@@ -239,19 +258,18 @@ const App: React.FC = () => {
       }
     };
 
-    // Auto-focus on mount only
-    useEffect(() => {
-      const input = document.getElementById('global-pin-input');
-      if (input) setTimeout(() => input.focus(), 500);
-    }, []);
-
     // Reset logic
     useEffect(() => {
       if (globalLoginError) setPin('');
+      focusInput();
     }, [globalLoginError]);
 
     return (
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans" dir="ltr">
+      <div
+        className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans"
+        dir="ltr"
+        onClick={focusInput}
+      >
         {/* Background Effects */}
         <div className="absolute inset-0 pointer-events-none">
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
@@ -259,7 +277,7 @@ const App: React.FC = () => {
           <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
         </div>
 
-        {/* Main Card */}
+        {/* Main Card - Input is INSIDE this relative container */}
         <div className="relative z-10 w-full max-w-5xl px-4 animate-in zoom-in duration-500">
           <div className={`
              bg-black/90 backdrop-blur-3xl border-2 rounded-[3rem] p-10 md:p-16 
@@ -267,33 +285,35 @@ const App: React.FC = () => {
              ${isLoginSuccess ? 'border-green-500 shadow-green-900/50' : 'border-white/10 shadow-red-900/20'}
           `}>
 
+            {/* --- MASTER INPUT LAYER (COVERS EVERYTHING) --- */}
+            {/* This ensures clicking ANYWHERE on the card focuses the input */}
+            <input
+              id="global-pin-input"
+              ref={inputRef}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              value={pin}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              className="absolute inset-0 w-full h-full z-[100] opacity-0 cursor-text"
+              style={{ fontSize: '16px' }} // 16px prevents iOS zoom
+            />
+
             {/* Header */}
-            <div className="text-center mb-10 pointer-events-none">
+            <div className="text-center mb-10 pointer-events-none relative z-10">
               <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 md:h-40 mx-auto mb-6 drop-shadow-[0_0_30px_rgba(255,0,0,0.5)] animate-float" alt="Logo" />
               <h1 className="text-6xl md:text-7xl font-black text-white italic tracking-tighter uppercase mb-2">كـود الـدخول</h1>
-              <p className="text-red-500 font-bold tracking-[0.5em] text-xs uppercase opacity-60">System Access v3.0</p>
+              <p className="text-red-500 font-black tracking-[0.5em] text-xs uppercase opacity-60">System Access v3.0</p>
             </div>
 
-            {/* INTERACTIVE AREA: This holds both the hidden input and the visual boxes */}
-            <div className="relative max-w-4xl mx-auto mb-12">
-
-              {/* 1. The Real Input (Invisible overlay) */}
-              <input
-                id="global-pin-input"
-                type="text"
-                autoFocus
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck="false"
-                value={pin}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                className="absolute inset-0 w-full h-full z-50 opacity-0 cursor-text"
-                style={{ fontSize: '40px' }} // prevent zoom on mobile
-              />
-
-              {/* 2. The Visual Boxes (Rendered below input) */}
-              <div className="flex justify-center flex-wrap gap-3 md:gap-5 pointer-events-none">
+            {/* Visual Boxes Container */}
+            <div className="relative max-w-4xl mx-auto mb-12 pointer-events-none z-10">
+              <div className="flex justify-center flex-wrap gap-3 md:gap-5">
                 {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
                   const char = pin[i];
                   const isActive = i === pin.length;
@@ -301,7 +321,7 @@ const App: React.FC = () => {
 
                   return (
                     <div key={i} className={`
-                      relative w-12 h-16 md:w-20 md:h-28 rounded-2xl border-2 flex items-center justify-center
+                      relative w-12 h-16 md:w-20 md:h-28 rounded-xl md:rounded-2xl border-2 flex items-center justify-center
                       transition-all duration-200
                       ${isActive ? 'border-red-500 bg-red-600/10 scale-110 shadow-[0_0_30px_rgba(220,38,38,0.5)]' :
                         isFilled ? 'border-red-600/50 bg-white/5' : 'border-white/10 bg-black/50'}
@@ -316,7 +336,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Status / Error */}
-            <div className="min-h-[60px] flex items-center justify-center">
+            <div className="min-h-[60px] flex items-center justify-center pointer-events-none relative z-10">
               {globalLoginError ? (
                 <div className="flex items-center gap-3 bg-red-950/50 border border-red-500/50 px-8 py-4 rounded-full animate-shake">
                   <AlertTriangle className="text-red-500" size={24} />
