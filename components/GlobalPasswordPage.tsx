@@ -178,16 +178,18 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                         <div style={{ direction: 'ltr' }} className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-12">
                             {pin.map((digit, i) => (
                                 <div key={i} className="relative group">
-                                    <div className={`absolute inset-0 bg-red-600/20 blur-xl rounded-full transition-all duration-300 ${digit ? 'opacity-100 scale-150' : 'opacity-0'}`}></div>
+                                    <div className={`pointer-events-none absolute inset-0 bg-red-600/20 blur-xl rounded-full transition-all duration-300 ${digit ? 'opacity-100 scale-150' : 'opacity-0'}`}></div>
                                     <input
                                         ref={el => inputs.current[i] = el}
                                         type="text"
                                         inputMode="text"
+                                        autoComplete="off"
                                         maxLength={1}
                                         value={digit}
                                         onChange={(e) => handleInput(i, e.target.value)}
                                         onKeyDown={(e) => handleKeyDown(i, e)}
                                         className={`
+                                            relative z-20
                                             w-14 h-20 md:w-20 md:h-28 
                                             bg-transparent border-b-4 
                                             text-center text-4xl md:text-6xl font-black text-white 
