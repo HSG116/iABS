@@ -9,6 +9,7 @@ interface GlobalPasswordPageProps {
     subtitle?: string;
     newTitle?: string;
     returningTitle?: string;
+    configKey?: string;
 }
 
 type AuthStep = 'LOADING' | 'PASSWORD' | 'FINGERPRINT' | 'SCANNING' | 'SUCCESS' | 'WELCOME';
@@ -19,7 +20,8 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
     title,
     subtitle = 'RESTRICTED ACCESS AREA',
     newTitle = 'بروتوكول الأمان',
-    returningTitle = 'تسجيل الدخول'
+    returningTitle = 'تسجيل الدخول',
+    configKey = 'admin_password'
 }) => {
     const [step, setStep] = useState<AuthStep>('LOADING');
     const [pin, setPin] = useState<string[]>([]);
@@ -56,7 +58,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                 const { data } = await supabase
                     .from('app_config')
                     .select('value')
-                    .eq('key', 'admin_password')
+                    .eq('key', configKey)
                     .single();
 
                 if (data && data.value) {
