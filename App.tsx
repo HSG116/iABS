@@ -205,56 +205,111 @@ const App: React.FC = () => {
   );
 
   const GlobalLoginPage = () => (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black overflow-hidden font-sans rtl" dir="rtl">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/20 via-black to-black"></div>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="rtl">
+      {/* Dynamic Animated Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(220,38,38,0.15)_0%,_transparent_70%)] animate-pulse"></div>
+        <div className="absolute h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
 
-      {/* Background Animated Elements */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-600/30 blur-[120px] rounded-full animate-float"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-600/20 blur-[150px] rounded-full animate-pulse"></div>
+        {/* Floating Light Blobs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-600/10 blur-[120px] rounded-full animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-900/10 blur-[120px] rounded-full animate-float"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-xl px-6">
-        <div className="bg-[#050505] border-2 border-red-600/30 rounded-[3rem] p-12 shadow-[0_0_100px_rgba(255,0,0,0.2)] backdrop-blur-3xl relative overflow-hidden animate-in zoom-in duration-700">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+      {/* Main Container */}
+      <div className="relative z-10 w-full max-w-2xl px-8">
+        <div className="relative">
+          {/* Outer Protection Glow */}
+          <div className="absolute -inset-4 bg-red-600/5 blur-3xl rounded-[4rem] animate-pulse"></div>
 
-          <div className="text-center mb-12">
-            <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 mx-auto mb-8 drop-shadow-[0_0_30px_rgba(255,0,0,0.5)] animate-float" alt="Logo" />
-            <h1 className="text-5xl font-black text-white italic tracking-tighter uppercase mb-2">نظام الحـماية</h1>
-            <p className="text-red-500 font-bold tracking-[0.3em] text-[10px] uppercase">Sovereign Protection Layer</p>
-          </div>
+          <div className="bg-[#050505] border-2 border-white/5 rounded-[4rem] p-12 shadow-[0_0_100px_rgba(220,38,38,0.1)] backdrop-blur-3xl relative overflow-hidden group">
+            {/* Top Security Bar */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
 
-          <div className="space-y-6 relative z-30">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-600/50 to-red-900/50 rounded-2xl blur opacity-25 group-focus-within:opacity-100 transition duration-500"></div>
-              <input
-                type="password"
-                value={globalPasswordInput}
-                onChange={(e) => setGlobalPasswordInput(e.target.value)}
-                placeholder="أدخل كود التصريح للدخول..."
-                className="relative w-full bg-black/80 border-2 border-white/5 rounded-2xl p-6 text-center text-white text-2xl font-black placeholder:text-white/10 focus:border-red-600/50 focus:outline-none transition-all"
-                onKeyDown={(e) => e.key === 'Enter' && handleGlobalLogin()}
-              />
+            {/* Corner Accents */}
+            <div className="absolute top-6 right-6 w-12 h-12 border-t-2 border-r-2 border-red-600/40 rounded-tr-2xl"></div>
+            <div className="absolute bottom-6 left-6 w-12 h-12 border-b-2 border-l-2 border-red-600/40 rounded-bl-2xl"></div>
+
+            <div className="text-center mb-10 relative">
+              <div className="relative inline-block mb-8">
+                <div className="absolute inset-0 bg-red-600/20 blur-2xl rounded-full scale-150 animate-pulse"></div>
+                <img
+                  src="https://i.ibb.co/pvCN1NQP/95505180312.png"
+                  className="h-40 mx-auto relative z-10 drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] animate-float"
+                  alt="iABS Logo"
+                />
+              </div>
+              <h1 className="text-6xl font-black text-white italic tracking-tighter uppercase mb-3">دخول النـظام</h1>
+              <div className="flex items-center justify-center gap-3">
+                <div className="h-[1px] w-12 bg-red-600/30"></div>
+                <p className="text-red-500 font-black tracking-[0.4em] text-[10px] uppercase">Sovereign Protection Layer</p>
+                <div className="h-[1px] w-12 bg-red-600/30"></div>
+              </div>
             </div>
 
-            {globalLoginError && (
-              <div className="flex items-center justify-center gap-3 text-red-500 font-bold animate-pulse text-sm">
-                <AlertTriangle size={18} />
-                <span>{globalLoginError}</span>
-              </div>
-            )}
+            <div className="space-y-8 relative z-30 max-w-md mx-auto">
+              <div className="relative group">
+                {/* Scanner Line Animation */}
+                <div className="absolute top-0 left-0 w-full h-full bg-red-600/5 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none rounded-3xl overflow-hidden">
+                  <div className="w-full h-[2px] bg-red-600/40 absolute top-0 animate-[scan_3s_linear_infinite]"></div>
+                </div>
 
-            <button
-              onClick={handleGlobalLogin}
-              className="group relative w-full bg-red-600 text-white font-black py-6 rounded-2xl text-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_rgba(255,0,0,0.3)] overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-white/20 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 skew-x-[-20deg]"></div>
-              فحص التصريح
-            </button>
-            <p className="text-center text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]">iABS Engineering Division</p>
+                <div className="absolute -inset-1 bg-gradient-to-r from-red-600/30 via-red-900/30 to-red-600/30 rounded-3xl blur opacity-20 group-focus-within:opacity-100 transition duration-500"></div>
+
+                <div className="relative">
+                  <Lock className="absolute right-6 top-1/2 -translate-y-1/2 text-red-600/40 group-focus-within:text-red-600 transition-colors" size={24} />
+                  <input
+                    type="password"
+                    value={globalPasswordInput}
+                    onChange={(e) => setGlobalPasswordInput(e.target.value)}
+                    placeholder="أدخل كود التصريح..."
+                    className="w-full bg-black/60 border-2 border-white/5 rounded-3xl p-7 pr-16 text-center text-white text-3xl font-black placeholder:text-white/5 focus:border-red-600/40 focus:outline-none transition-all tracking-[0.2em]"
+                    onKeyDown={(e) => e.key === 'Enter' && handleGlobalLogin()}
+                  />
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2">
+                    <Zap className="text-red-600/20 group-focus-within:animate-pulse" size={20} />
+                  </div>
+                </div>
+              </div>
+
+              {globalLoginError && (
+                <div className="flex items-center justify-center gap-3 text-red-500 font-bold animate-in slide-in-from-top duration-300">
+                  <div className="w-8 h-8 rounded-full bg-red-600/10 flex items-center justify-center">
+                    <AlertTriangle size={18} />
+                  </div>
+                  <span className="text-sm tracking-wide">{globalLoginError}</span>
+                </div>
+              )}
+
+              <button
+                onClick={handleGlobalLogin}
+                className="group relative w-full bg-red-600 text-white font-black py-7 rounded-3xl text-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_60px_rgba(220,38,38,0.3)] overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-[-25deg]"></div>
+                <span className="relative z-10 flex items-center justify-center gap-4">
+                  مـصـادقـة الكـود <ShieldCheck size={28} />
+                </span>
+              </button>
+
+              <div className="pt-4 flex flex-col items-center gap-2">
+                <div className="flex gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse delay-75"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse delay-150"></div>
+                </div>
+                <p className="text-white/10 text-[9px] font-bold uppercase tracking-[0.5em]">iABS Engineering Division &copy; 2026</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes scan {
+          0% { top: 0; }
+          100% { top: 100%; }
+        }
+      `}</style>
     </div>
   );
 
