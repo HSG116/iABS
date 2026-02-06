@@ -173,6 +173,9 @@ const App: React.FC = () => {
 
   const handleGlobalLogin = async (providedPin?: string) => {
     const pinToVerify = providedPin || globalPasswordInput;
+    if (pinToVerify.length !== 6) return;
+
+    setIsAuthenticating(true); // Show a mini loader if needed, but we have isLoginSuccess
     const isValid = await leaderboardService.verifyAdminPassword(pinToVerify);
 
     if (isValid) {
@@ -185,13 +188,13 @@ const App: React.FC = () => {
         setGlobalPasswordInput('');
         setGlobalLoginError('');
         setIsLoginSuccess(false);
+        setIsAuthenticating(false);
       }, 2000);
     } else {
-      setGlobalLoginError('كود الدخول غير صحيح');
-      // Shared logic to clear inputs potentially?
+      setGlobalLoginError('تـصـريح غير صحيح - النظام مغلق');
       setGlobalPasswordInput('');
-      // focus first input again if possible
-      pinRefs.current[0]?.focus();
+      setIsAuthenticating(false);
+      // focus first input and clear it in the daughter component too
     }
   };
 
@@ -225,9 +228,12 @@ const App: React.FC = () => {
     const handlePinChange = (index: number, value: string) => {
       if (isLoginSuccess) return;
 
+      // Only digits allowed
+      const cleanValue = value.replace(/[^0-9]/g, '');
+      if (value && !cleanValue) return;
+
       const newPin = [...pin];
-      // Only keep last char if typed multiple
-      const lastChar = value.slice(-1);
+      const lastChar = cleanValue.slice(-1);
       newPin[index] = lastChar;
       setPin(newPin);
 
@@ -246,108 +252,174 @@ const App: React.FC = () => {
     };
 
     const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-      if (e.key === 'Backspace' && !pin[index] && index > 0) {
-        pinRefs.current[index - 1]?.focus();
+      if (e.key === 'Backspace') {
+        if (!pin[index] && index > 0) {
+          const newPin = [...pin];
+          newPin[index - 1] = '';
+          setPin(newPin);
+          pinRefs.current[index - 1]?.focus();
+        } else {
+          const newPin = [...pin];
+          newPin[index] = '';
+          setPin(newPin);
+        }
       }
     };
 
+    // Auto focus first input on mount
+    useEffect(() => {
+      setTimeout(() => pinRefs.current[0]?.focus(), 500);
+    }, []);
+
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="rtl">
-        {/* Dynamic Animated Background */}
+        {/* Advanced Parallax Background */}
         <div className="absolute inset-0">
-          <div className={`absolute inset-0 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/20' : 'bg-[radial-gradient(circle_at_50%_50%,_rgba(220,38,38,0.15)_0%,_transparent_70%)]'} animate-pulse`}></div>
-          <div className="absolute h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+          <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/5'}`}></div>
 
-          {/* Floating Light Blobs */}
-          <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
-          <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full animate-float transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-900/10' : 'bg-red-900/10'}`}></div>
+          {/* Cyber Grid */}
+          <div className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, ${isLoginSuccess ? '#22c55e' : '#dc2626'} 1px, transparent 0)`,
+              backgroundSize: '40px 40px'
+            }}></div>
+
+          <div className="absolute h-full w-full bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_100%,transparent_100%)]"></div>
+
+          {/* Animated Sovereign Spheres */}
+          <div className={`absolute top-[-20%] left-[-10%] w-[60%] h-[60%] blur-[160px] rounded-full animate-float transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/20' : 'bg-red-600/15'}`}></div>
+          <div className={`absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] blur-[160px] rounded-full animate-float transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-900/20' : 'bg-red-900/15'}`} style={{ animationDelay: '-3s' }}></div>
         </div>
 
-        {/* Main Container */}
-        <div className="relative z-10 w-full max-w-4xl px-8">
-          <div className="relative">
+        {/* Floating Technical Elements */}
+        {!isLoginSuccess && (
+          <div className="absolute inset-0 pointer-events-none opacity-30">
+            <div className="absolute top-10 left-10 font-mono text-[10px] text-red-600/40 space-y-1">
+              <div>&gt; SYSTEM_ID: iABS_SOVEREIGN_V4</div>
+              <div>&gt; ENCRYPTION: AES_256_RSA</div>
+              <div>&gt; STATUS: LOCKED</div>
+            </div>
+            <div className="absolute bottom-10 right-10 font-mono text-[10px] text-red-600/40 text-right space-y-1">
+              <div>AUTH_LAYER: ACTIVE</div>
+              <div>FIREWALL: BREACH_DETERRENT_ON</div>
+              <div>&copy; 2026 iABS_TECH</div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Interface Content */}
+        <div className="relative z-10 w-full max-w-5xl px-8 perspective-1000">
+          <div className="relative animate-in zoom-in duration-1000">
             {/* Outer Protection Glow */}
-            <div className={`absolute -inset-8 blur-3xl rounded-[4rem] animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/5'}`}></div>
+            <div className={`absolute -inset-12 blur-[100px] rounded-[5rem] animate-pulse transition-all duration-1000 ${isLoginSuccess ? 'bg-green-500/20' : 'bg-red-600/10'}`}></div>
 
-            <div className={`bg-[#050505] border-2 rounded-[4rem] p-16 shadow-[0_0_100px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative overflow-hidden group transition-all duration-700 ${isLoginSuccess ? 'border-green-500/40 shadow-green-500/20' : 'border-white/5 shadow-red-600/10'}`}>
+            <div className={`bg-black/80 border-2 rounded-[5rem] p-20 shadow-2xl backdrop-blur-3xl relative overflow-hidden group transition-all duration-700 ${isLoginSuccess ? 'border-green-500/50 shadow-green-500/30 scale-105' : 'border-white/10 shadow-red-600/20 hover:border-red-600/30'}`}>
 
-              {/* Success Overlay Effect */}
+              {/* Success Overlay Layer */}
               {isLoginSuccess && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
-                  <div className="relative mb-8">
-                    <div className="absolute inset-0 bg-green-500 blur-3xl animate-pulse opacity-40 scale-150"></div>
-                    <CheckCircle2 size={120} className="text-green-500 animate-[bounce_1s_infinite]" />
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-2xl animate-in fade-in duration-700">
+                  <div className="relative mb-12">
+                    <div className="absolute inset-0 bg-green-500 blur-3xl animate-pulse opacity-60 scale-150"></div>
+                    <div className="relative p-8 bg-green-500/10 rounded-full border-4 border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.4)]">
+                      <ShieldCheck size={140} className="text-green-400 animate-[success-scale_0.6s_ease-out_forwards]" />
+                    </div>
                   </div>
-                  <h2 className="text-6xl font-black text-white italic tracking-tighter mb-4 animate-in slide-in-from-bottom duration-700">تـم الـتـصـريح</h2>
-                  <p className="text-green-500 font-black tracking-[0.5em] text-xs uppercase animate-pulse">Access Granted - System Unlocked</p>
+                  <h2 className="text-8xl font-black text-white italic tracking-tighter mb-6 scale-in-center">تـم الـتـصـريح</h2>
+                  <div className="flex items-center gap-4 text-green-400 font-black tracking-[0.8em] text-sm uppercase">
+                    <div className="w-12 h-1 bg-green-500/30"></div>
+                    Access Granted
+                    <div className="w-12 h-1 bg-green-500/30"></div>
+                  </div>
 
-                  {/* Energy Bar */}
-                  <div className="mt-12 w-64 h-1 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 animate-[loading_2s_ease-in-out]"></div>
+                  {/* Digital Unlock Bar */}
+                  <div className="mt-16 w-80 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                    <div className="h-full bg-gradient-to-r from-green-600 via-green-400 to-green-600 animate-[loading_2s_ease-in-out_forwards]"></div>
                   </div>
                 </div>
               )}
 
-              {/* Top Security Bar */}
-              <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent transition-colors duration-1000 ${isLoginSuccess ? 'via-green-500' : 'via-red-600'} to-transparent`}></div>
-
-              {/* Corner Accents */}
-              <div className={`absolute top-8 right-8 w-16 h-16 border-t-2 border-r-2 rounded-tr-3xl transition-colors duration-1000 ${isLoginSuccess ? 'border-green-500/40' : 'border-red-600/40'}`}></div>
-              <div className={`absolute bottom-8 left-8 w-16 h-16 border-b-2 border-l-2 rounded-bl-3xl transition-colors duration-1000 ${isLoginSuccess ? 'border-green-500/40' : 'border-red-600/40'}`}></div>
-
-              <div className="text-center mb-14 relative">
-                <div className="relative inline-block mb-10">
-                  <div className={`absolute inset-0 blur-2xl rounded-full scale-150 animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/20' : 'bg-red-600/20'}`}></div>
+              {/* Dynamic Header */}
+              <div className="text-center mb-16 relative">
+                <div className="relative inline-block mb-12 group/logo hover:scale-110 transition-transform duration-500">
+                  <div className={`absolute inset-0 blur-[60px] rounded-full scale-150 animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/40' : 'bg-red-600/30'}`}></div>
                   <img
                     src="https://i.ibb.co/pvCN1NQP/95505180312.png"
-                    className="h-44 mx-auto relative z-10 drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] animate-float"
-                    alt="iABS Logo"
+                    className="h-48 mx-auto relative z-10 drop-shadow-[0_0_50px_rgba(255,0,0,0.6)] animate-float"
+                    alt="iABS Sovereignty"
                   />
+                  {/* Orbiting Ring */}
+                  {!isLoginSuccess && (
+                    <div className="absolute inset-0 border-2 border-red-600/20 rounded-full scale-125 animate-rotate-slow"></div>
+                  )}
                 </div>
-                <h1 className="text-7xl font-black text-white italic tracking-tighter uppercase mb-4">كـود المصـادقـة</h1>
-                <div className="flex items-center justify-center gap-4">
-                  <div className="h-[1px] w-16 bg-white/10"></div>
-                  <p className="text-red-500 font-black tracking-[0.6em] text-[12px] uppercase">Secure Verification Required</p>
-                  <div className="h-[1px] w-16 bg-white/10"></div>
+
+                <div className="relative">
+                  <h1 className="text-8xl font-black text-white italic tracking-tighter uppercase mb-4 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]">نظام الـدخول</h1>
+                  <div className="flex items-center justify-center gap-6">
+                    <div className="h-[2px] w-20 bg-gradient-to-l from-transparent via-red-600/50 to-transparent"></div>
+                    <p className="text-red-500 font-black tracking-[0.6em] text-sm uppercase italic drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">Biometric Protocol Stage 1</p>
+                    <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-red-600/50 to-transparent"></div>
+                  </div>
                 </div>
               </div>
 
-              {/* 6-Digit PIN UI */}
-              <div className="flex justify-center gap-4 mb-12 direction-ltr">
+              {/* 6-Digit Holographic PIN UI */}
+              <div className="flex justify-center gap-6 mb-16 direction-ltr relative group/pin">
                 {pin.map((digit, idx) => (
-                  <div key={idx} className="relative group">
-                    <div className={`absolute -inset-1 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500 bg-red-600/30`}></div>
+                  <div key={idx} className="relative">
+                    {/* Inner Glow when focused */}
+                    <div className={`absolute -inset-2 rounded-3xl blur transition-opacity duration-300 pointer-events-none 
+                      ${pinRefs.current[idx] === document.activeElement ? 'opacity-100 bg-red-600/20' : 'opacity-0'}`}></div>
+
                     <input
                       ref={el => pinRefs.current[idx] = el}
-                      type="password"
+                      type="text"
+                      inputMode="numeric"
                       value={digit}
                       onChange={(e) => handlePinChange(idx, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(idx, e)}
                       autoComplete="off"
-                      className="relative w-24 h-28 bg-black/60 border-2 border-white/5 rounded-2xl text-center text-white text-5xl font-black focus:border-red-600/40 focus:outline-none transition-all shadow-2xl"
+                      className={`relative w-28 h-36 bg-white/[0.03] border-4 rounded-3xl text-center text-white text-7xl font-black transition-all duration-300 shadow-2xl backdrop-blur-xl focus:scale-110 focus:bg-white/[0.08]
+                        ${digit ? 'border-red-600 shadow-[0_0_30px_rgba(220,38,38,0.3)]' : 'border-white/10 hover:border-white/20'}`}
+                      style={{ WebkitTextSecurity: 'disc' }}
                     />
+
+                    {/* Underline Sync Effect */}
+                    <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full transition-all duration-500
+                      ${digit ? 'bg-red-600 w-20 blur-[1px]' : 'bg-white/10'}`}></div>
                   </div>
                 ))}
               </div>
 
-              {globalLoginError && (
-                <div className="flex items-center justify-center gap-4 text-red-500 font-black animate-in slide-in-from-top duration-300 mb-8">
-                  <div className="w-10 h-10 rounded-full bg-red-600/10 flex items-center justify-center">
-                    <AlertTriangle size={24} />
+              {/* Advanced Error Status */}
+              <div className="h-20 flex items-center justify-center mb-8">
+                {globalLoginError ? (
+                  <div className="flex items-center gap-5 text-red-500 font-bold bg-red-600/10 px-10 py-5 rounded-full border border-red-500/20 animate-[shake_0.5s_ease-in-out]">
+                    <AlertTriangle size={32} className="animate-pulse" />
+                    <span className="text-2xl tracking-tighter italic uppercase">{globalLoginError}</span>
                   </div>
-                  <span className="text-xl tracking-tight uppercase italic">{globalLoginError}</span>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center gap-4 text-white/20 font-black text-sm uppercase tracking-[0.4em]">
+                    <ShieldCheck size={20} />
+                    Ready for Authentication
+                  </div>
+                )}
+              </div>
 
-              <div className="flex flex-col items-center gap-4">
-                <div className="p-4 px-8 rounded-full bg-white/5 border border-white/5 text-white/40 font-black text-xs uppercase tracking-[0.3em] flex items-center gap-3">
-                  <ShieldCheck size={18} />
-                  Protected by iABS Security
+              {/* Technical Footer */}
+              <div className="flex flex-col items-center gap-6 pt-4 border-t border-white/5">
+                <div className="flex gap-4">
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <div key={i} className={`w-3 h-3 rounded-full animate-pulse`}
+                      style={{
+                        backgroundColor: '#dc2626',
+                        animationDelay: `${i * 150}ms`,
+                        opacity: 0.3 + (i * 0.15)
+                      }}></div>
+                  ))}
                 </div>
-                <div className="flex gap-3">
-                  <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></div>
-                  <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse delay-100"></div>
-                  <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse delay-200"></div>
+                <div className="bg-black/40 px-6 py-2 rounded-full border border-white/5">
+                  <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.8em]">iABS Sovereign Core &copy; 2026</p>
                 </div>
               </div>
             </div>
@@ -355,15 +427,20 @@ const App: React.FC = () => {
         </div>
 
         <style>{`
-          @keyframes scan {
-            0% { top: 0; }
-            100% { top: 100%; }
+          @keyframes loading { 0% { width: 0; } 100% { width: 100%; } }
+          @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
           }
-          @keyframes loading {
-            0% { width: 0; }
-            100% { width: 100%; }
+          @keyframes success-scale {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
           }
           .direction-ltr { direction: ltr; }
+          .perspective-1000 { perspective: 2000px; }
+          input { -webkit-text-security: disc; }
         `}</style>
       </div>
     );
