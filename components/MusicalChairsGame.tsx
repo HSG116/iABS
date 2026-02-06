@@ -414,13 +414,13 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
 
    const getDynamicSize = (count: number) => {
       // قمت بتصغير حجم الصناديق (box/chair) وتكبير المحتوى (icon/text/chairIcon) بشكل هائل
-      if (count < 12) return { box: 'w-24 h-24', icon: 80, text: 'text-4xl', chair: 'w-16 h-16', chairIcon: 90 };
-      if (count < 30) return { box: 'w-20 h-20', icon: 60, text: 'text-3xl', chair: 'w-12 h-12', chairIcon: 70 };
-      if (count < 60) return { box: 'w-16 h-16', icon: 50, text: 'text-2xl', chair: 'w-10 h-10', chairIcon: 55 };
-      if (count < 150) return { box: 'w-12 h-12', icon: 40, text: 'text-xl', chair: 'w-8 h-8', chairIcon: 45 };
-      if (count < 300) return { box: 'w-10 h-10', icon: 30, text: 'text-base', chair: 'w-6 h-6', chairIcon: 35 };
-      if (count < 600) return { box: 'w-8 h-8', icon: 20, text: 'text-sm', chair: 'w-5 h-5', chairIcon: 25 };
-      return { box: 'w-6 h-6', icon: 16, text: 'text-xs', chair: 'w-4 h-4', chairIcon: 20 };
+      if (count < 12) return { box: 'w-24 h-24', icon: 80, text: 'text-2xl', chair: 'w-16 h-16', chairIcon: 90 };
+      if (count < 30) return { box: 'w-20 h-20', icon: 60, text: 'text-xl', chair: 'w-12 h-12', chairIcon: 70 };
+      if (count < 60) return { box: 'w-16 h-16', icon: 50, text: 'text-lg', chair: 'w-10 h-10', chairIcon: 55 };
+      if (count < 150) return { box: 'w-12 h-12', icon: 40, text: 'text-base', chair: 'w-8 h-8', chairIcon: 45 };
+      if (count < 300) return { box: 'w-10 h-10', icon: 30, text: 'text-sm', chair: 'w-6 h-6', chairIcon: 35 };
+      if (count < 600) return { box: 'w-8 h-8', icon: 20, text: 'text-[10px]', chair: 'w-5 h-5', chairIcon: 25 };
+      return { box: 'w-6 h-6', icon: 16, text: 'text-[8px]', chair: 'w-4 h-4', chairIcon: 20 };
    };
 
    // Improved coordinate math to ensure players orbit exactly around the center
@@ -1091,7 +1091,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
                               {/* Chair Number - Massive and Clear */}
                               {!config.hideNumbers && phase !== 'MUSIC_ON' && (
                                  <div
-                                    className={`absolute -top-10 px-4 py-1 rounded-2xl ${sizes.text} font-black italic shadow-2xl z-50 transition-all ${isOccupied ? 'bg-green-500 border-4 border-white text-white scale-125' : 'bg-black/80 border-2 border-white/20 text-white'
+                                    className={`absolute -top-8 px-2 py-0.5 rounded-xl ${sizes.text} font-black italic shadow-2xl z-50 transition-all ${isOccupied ? 'bg-green-500 border-2 border-white text-white scale-125' : 'bg-black/80 border border-white/20 text-white'
                                        }`}
                                     style={{
                                        borderColor: isOccupied ? '#fff' : config.selectedMap.borderColor,
