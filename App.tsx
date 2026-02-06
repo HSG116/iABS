@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { CategorySelect } from './components/CategorySelect';
 import { FawazirGame } from './components/FawazirGame';
@@ -97,7 +97,10 @@ const App: React.FC = () => {
 
   const [globalPasswordInput, setGlobalPasswordInput] = useState('');
   const [globalLoginError, setGlobalLoginError] = useState('');
+  const [isLoginSuccess, setIsLoginSuccess] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
+
+  const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('iabs_auth');
@@ -168,15 +171,27 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGlobalLogin = async () => {
-    const isValid = await leaderboardService.verifyAdminPassword(globalPasswordInput);
+  const handleGlobalLogin = async (providedPin?: string) => {
+    const pinToVerify = providedPin || globalPasswordInput;
+    const isValid = await leaderboardService.verifyAdminPassword(pinToVerify);
+
     if (isValid) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('iabs_auth', 'true');
-      setGlobalPasswordInput('');
-      setGlobalLoginError('');
+      setIsLoginSuccess(true);
+
+      // Premium success animation delay
+      setTimeout(() => {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('iabs_auth', 'true');
+        setGlobalPasswordInput('');
+        setGlobalLoginError('');
+        setIsLoginSuccess(false);
+      }, 2000);
     } else {
       setGlobalLoginError('كود الدخول غير صحيح');
+      // Shared logic to clear inputs potentially?
+      setGlobalPasswordInput('');
+      // focus first input again if possible
+      pinRefs.current[0]?.focus();
     }
   };
 
@@ -204,115 +219,155 @@ const App: React.FC = () => {
     </button>
   );
 
-  const GlobalLoginPage = () => (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="rtl">
-      {/* Dynamic Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(220,38,38,0.15)_0%,_transparent_70%)] animate-pulse"></div>
-        <div className="absolute h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+  const GlobalLoginPage = () => {
+    const [pin, setPin] = useState(['', '', '', '', '', '']);
 
-        {/* Floating Light Blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-600/10 blur-[120px] rounded-full animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-900/10 blur-[120px] rounded-full animate-float"></div>
-      </div>
+    const handlePinChange = (index: number, value: string) => {
+      if (isLoginSuccess) return;
 
-      {/* Main Container */}
-      <div className="relative z-10 w-full max-w-2xl px-8">
-        <div className="relative">
-          {/* Outer Protection Glow */}
-          <div className="absolute -inset-4 bg-red-600/5 blur-3xl rounded-[4rem] animate-pulse"></div>
+      const newPin = [...pin];
+      // Only keep last char if typed multiple
+      const lastChar = value.slice(-1);
+      newPin[index] = lastChar;
+      setPin(newPin);
 
-          <div className="bg-[#050505] border-2 border-white/5 rounded-[4rem] p-12 shadow-[0_0_100px_rgba(220,38,38,0.1)] backdrop-blur-3xl relative overflow-hidden group">
-            {/* Top Security Bar */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+      const fullPin = newPin.join('');
+      setGlobalPasswordInput(fullPin);
 
-            {/* Corner Accents */}
-            <div className="absolute top-6 right-6 w-12 h-12 border-t-2 border-r-2 border-red-600/40 rounded-tr-2xl"></div>
-            <div className="absolute bottom-6 left-6 w-12 h-12 border-b-2 border-l-2 border-red-600/40 rounded-bl-2xl"></div>
+      // Auto focus next
+      if (lastChar && index < 5) {
+        pinRefs.current[index + 1]?.focus();
+      }
 
-            <div className="text-center mb-10 relative">
-              <div className="relative inline-block mb-8">
-                <div className="absolute inset-0 bg-red-600/20 blur-2xl rounded-full scale-150 animate-pulse"></div>
-                <img
-                  src="https://i.ibb.co/pvCN1NQP/95505180312.png"
-                  className="h-40 mx-auto relative z-10 drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] animate-float"
-                  alt="iABS Logo"
-                />
-              </div>
-              <h1 className="text-6xl font-black text-white italic tracking-tighter uppercase mb-3">دخول النـظام</h1>
-              <div className="flex items-center justify-center gap-3">
-                <div className="h-[1px] w-12 bg-red-600/30"></div>
-                <p className="text-red-500 font-black tracking-[0.4em] text-[10px] uppercase">Sovereign Protection Layer</p>
-                <div className="h-[1px] w-12 bg-red-600/30"></div>
-              </div>
-            </div>
+      // If finished, trigger check
+      if (fullPin.length === 6) {
+        handleGlobalLogin(fullPin);
+      }
+    };
 
-            <div className="space-y-8 relative z-30 max-w-md mx-auto">
-              <div className="relative group">
-                {/* Scanner Line Animation */}
-                <div className="absolute top-0 left-0 w-full h-full bg-red-600/5 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none rounded-3xl overflow-hidden">
-                  <div className="w-full h-[2px] bg-red-600/40 absolute top-0 animate-[scan_3s_linear_infinite]"></div>
-                </div>
+    const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+      if (e.key === 'Backspace' && !pin[index] && index > 0) {
+        pinRefs.current[index - 1]?.focus();
+      }
+    };
 
-                <div className="absolute -inset-1 bg-gradient-to-r from-red-600/30 via-red-900/30 to-red-600/30 rounded-3xl blur opacity-20 group-focus-within:opacity-100 transition duration-500"></div>
+    return (
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="rtl">
+        {/* Dynamic Animated Background */}
+        <div className="absolute inset-0">
+          <div className={`absolute inset-0 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/20' : 'bg-[radial-gradient(circle_at_50%_50%,_rgba(220,38,38,0.15)_0%,_transparent_70%)]'} animate-pulse`}></div>
+          <div className="absolute h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
 
-                <div className="relative">
-                  <Lock className="absolute right-6 top-1/2 -translate-y-1/2 text-red-600/40 group-focus-within:text-red-600 transition-colors" size={24} />
-                  <input
-                    type="password"
-                    value={globalPasswordInput}
-                    onChange={(e) => setGlobalPasswordInput(e.target.value.slice(0, 6))}
-                    maxLength={6}
-                    placeholder="أدخل كود التصريح..."
-                    className="w-full bg-black/60 border-2 border-white/5 rounded-3xl p-7 pr-16 text-center text-white text-3xl font-black placeholder:text-white/5 focus:border-red-600/40 focus:outline-none transition-all tracking-[0.2em]"
-                    onKeyDown={(e) => e.key === 'Enter' && handleGlobalLogin()}
-                  />
-                  <div className="absolute left-6 top-1/2 -translate-y-1/2">
-                    <Zap className="text-red-600/20 group-focus-within:animate-pulse" size={20} />
+          {/* Floating Light Blobs */}
+          <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
+          <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full animate-float transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-900/10' : 'bg-red-900/10'}`}></div>
+        </div>
+
+        {/* Main Container */}
+        <div className="relative z-10 w-full max-w-4xl px-8">
+          <div className="relative">
+            {/* Outer Protection Glow */}
+            <div className={`absolute -inset-8 blur-3xl rounded-[4rem] animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/5'}`}></div>
+
+            <div className={`bg-[#050505] border-2 rounded-[4rem] p-16 shadow-[0_0_100px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative overflow-hidden group transition-all duration-700 ${isLoginSuccess ? 'border-green-500/40 shadow-green-500/20' : 'border-white/5 shadow-red-600/10'}`}>
+
+              {/* Success Overlay Effect */}
+              {isLoginSuccess && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
+                  <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-green-500 blur-3xl animate-pulse opacity-40 scale-150"></div>
+                    <CheckCircle2 size={120} className="text-green-500 animate-[bounce_1s_infinite]" />
                   </div>
-                </div>
-              </div>
+                  <h2 className="text-6xl font-black text-white italic tracking-tighter mb-4 animate-in slide-in-from-bottom duration-700">تـم الـتـصـريح</h2>
+                  <p className="text-green-500 font-black tracking-[0.5em] text-xs uppercase animate-pulse">Access Granted - System Unlocked</p>
 
-              {globalLoginError && (
-                <div className="flex items-center justify-center gap-3 text-red-500 font-bold animate-in slide-in-from-top duration-300">
-                  <div className="w-8 h-8 rounded-full bg-red-600/10 flex items-center justify-center">
-                    <AlertTriangle size={18} />
+                  {/* Energy Bar */}
+                  <div className="mt-12 w-64 h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 animate-[loading_2s_ease-in-out]"></div>
                   </div>
-                  <span className="text-sm tracking-wide">{globalLoginError}</span>
                 </div>
               )}
 
-              <button
-                onClick={handleGlobalLogin}
-                className="group relative w-full bg-red-600 text-white font-black py-7 rounded-3xl text-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_60px_rgba(220,38,38,0.3)] overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-[-25deg]"></div>
-                <span className="relative z-10 flex items-center justify-center gap-4">
-                  مـصـادقـة الكـود <ShieldCheck size={28} />
-                </span>
-              </button>
+              {/* Top Security Bar */}
+              <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent transition-colors duration-1000 ${isLoginSuccess ? 'via-green-500' : 'via-red-600'} to-transparent`}></div>
 
-              <div className="pt-4 flex flex-col items-center gap-2">
-                <div className="flex gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse delay-75"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse delay-150"></div>
+              {/* Corner Accents */}
+              <div className={`absolute top-8 right-8 w-16 h-16 border-t-2 border-r-2 rounded-tr-3xl transition-colors duration-1000 ${isLoginSuccess ? 'border-green-500/40' : 'border-red-600/40'}`}></div>
+              <div className={`absolute bottom-8 left-8 w-16 h-16 border-b-2 border-l-2 rounded-bl-3xl transition-colors duration-1000 ${isLoginSuccess ? 'border-green-500/40' : 'border-red-600/40'}`}></div>
+
+              <div className="text-center mb-14 relative">
+                <div className="relative inline-block mb-10">
+                  <div className={`absolute inset-0 blur-2xl rounded-full scale-150 animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/20' : 'bg-red-600/20'}`}></div>
+                  <img
+                    src="https://i.ibb.co/pvCN1NQP/95505180312.png"
+                    className="h-44 mx-auto relative z-10 drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] animate-float"
+                    alt="iABS Logo"
+                  />
                 </div>
-                <p className="text-white/10 text-[9px] font-bold uppercase tracking-[0.5em]">iABS Engineering Division &copy; 2026</p>
+                <h1 className="text-7xl font-black text-white italic tracking-tighter uppercase mb-4">كـود المصـادقـة</h1>
+                <div className="flex items-center justify-center gap-4">
+                  <div className="h-[1px] w-16 bg-white/10"></div>
+                  <p className="text-red-500 font-black tracking-[0.6em] text-[12px] uppercase">Secure Verification Required</p>
+                  <div className="h-[1px] w-16 bg-white/10"></div>
+                </div>
+              </div>
+
+              {/* 6-Digit PIN UI */}
+              <div className="flex justify-center gap-4 mb-12 direction-ltr">
+                {pin.map((digit, idx) => (
+                  <div key={idx} className="relative group">
+                    <div className={`absolute -inset-1 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500 bg-red-600/30`}></div>
+                    <input
+                      ref={el => pinRefs.current[idx] = el}
+                      type="password"
+                      value={digit}
+                      onChange={(e) => handlePinChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(idx, e)}
+                      autoComplete="off"
+                      className="relative w-24 h-28 bg-black/60 border-2 border-white/5 rounded-2xl text-center text-white text-5xl font-black focus:border-red-600/40 focus:outline-none transition-all shadow-2xl"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {globalLoginError && (
+                <div className="flex items-center justify-center gap-4 text-red-500 font-black animate-in slide-in-from-top duration-300 mb-8">
+                  <div className="w-10 h-10 rounded-full bg-red-600/10 flex items-center justify-center">
+                    <AlertTriangle size={24} />
+                  </div>
+                  <span className="text-xl tracking-tight uppercase italic">{globalLoginError}</span>
+                </div>
+              )}
+
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-4 px-8 rounded-full bg-white/5 border border-white/5 text-white/40 font-black text-xs uppercase tracking-[0.3em] flex items-center gap-3">
+                  <ShieldCheck size={18} />
+                  Protected by iABS Security
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></div>
+                  <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse delay-100"></div>
+                  <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse delay-200"></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <style>{`
-        @keyframes scan {
-          0% { top: 0; }
-          100% { top: 100%; }
-        }
-      `}</style>
-    </div>
-  );
+        <style>{`
+          @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+          }
+          @keyframes loading {
+            0% { width: 0; }
+            100% { width: 100%; }
+          }
+          .direction-ltr { direction: ltr; }
+        `}</style>
+      </div>
+    );
+  };
 
   const WelcomeGate = () => (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/98 backdrop-blur-3xl p-6 animate-in fade-in duration-1000">
