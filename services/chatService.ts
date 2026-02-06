@@ -103,20 +103,27 @@ class ChatService {
       });
 
       this.channel.bind('App\\Events\\ChatMessageEvent', (data: any) => {
-        console.log("[ChatService] New Message Received:", data);
         const message: ChatMessage = {
           id: data.id || Math.random().toString(36).substr(2, 9),
           user: {
             id: data.sender?.id || '0',
             username: data.sender?.username || 'Unknown',
             color: data.sender?.identity?.color || '#31d6d6',
-            avatar: data.sender?.profile_pic || '', // URL to profile picture
+            avatar: data.sender?.profile_pic || '',
           },
           content: data.content || '',
           role: getRoleFromIdentity(data.sender?.identity),
           timestamp: Date.now()
         };
-        this.listeners.forEach(cb => cb(message));
+
+        // Safety: ensure one listener failure doesn't stop others
+        this.listeners.forEach(cb => {
+          try {
+            cb(message);
+          } catch (e) {
+            console.error("[ChatService] Listener error:", e);
+          }
+        });
       });
 
       this.channel.bind('App\\Events\\MessageDeletedEvent', (data: any) => {

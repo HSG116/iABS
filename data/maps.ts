@@ -3,68 +3,62 @@ export interface ArenaMap {
   id: string;
   name: string;
   icon: string;
-  shape: 'circle' | 'square' | 'hexagon' | 'triangle' | 'star';
+  shape: 'circle' | 'square' | 'hexagon' | 'triangle' | 'star' | 'octagon' | 'diamond' | 'spiral';
   borderColor: string;
   glowColor: string;
   accentColor: string;
   secondaryColor: string;
   description: string;
+  particleColor?: string;
+  pulseColor?: string;
+  gridPattern?: boolean;
+  classicStyle?: boolean;
 }
 
 export const ARENA_MAPS: ArenaMap[] = [
   {
-    id: 'cyber',
-    name: 'حلقة النيون',
+    id: 'crystal-palace',
+    name: '💎 قصر الكريستال الماسي',
+    icon: '💎',
+    shape: 'octagon',
+    borderColor: '#00D9FF',
+    glowColor: 'rgba(0, 217, 255, 0.8)',
+    accentColor: '#00FFF0',
+    secondaryColor: '#B4F8FF',
+    particleColor: '#00D9FF',
+    pulseColor: 'rgba(0, 255, 240, 0.5)',
+    gridPattern: true,
+    classicStyle: false,
+    description: '✨ قصر ثماني فخم من الكريستال مع تأثيرات ضوئية ثلاثية الأبعاد'
+  },
+  {
+    id: 'neon-metropolis',
+    name: '🌃 مدينة النيون المستقبلية',
     icon: '⚡',
-    shape: 'circle',
-    borderColor: '#00f2ff',
-    glowColor: 'rgba(0, 242, 255, 0.6)',
-    accentColor: '#00f2ff',
-    secondaryColor: '#ff0055',
-    description: 'دائرة نيون مستقبلية متوهجة'
-  },
-  {
-    id: 'royal',
-    name: 'الساحة الملكية',
-    icon: '👑',
-    shape: 'square',
-    borderColor: '#ffd700',
-    glowColor: 'rgba(255, 215, 0, 0.4)',
-    accentColor: '#ffd700',
-    secondaryColor: '#ffffff',
-    description: 'ميدان مربع من الذهب الخالص'
-  },
-  {
-    id: 'void',
-    name: 'البوابة السداسية',
-    icon: '🌌',
     shape: 'hexagon',
-    borderColor: '#a855f7',
-    glowColor: 'rgba(168, 85, 247, 0.5)',
-    accentColor: '#a855f7',
-    secondaryColor: '#ec4899',
-    description: 'تحدي الفضاء في حلبة سداسية'
+    borderColor: '#FF00FF',
+    glowColor: 'rgba(255, 0, 255, 0.9)',
+    accentColor: '#00FFFF',
+    secondaryColor: '#FF0099',
+    particleColor: '#00FFFF',
+    pulseColor: 'rgba(255, 0, 255, 0.6)',
+    gridPattern: true,
+    classicStyle: false,
+    description: '🎆 ساحة سداسية مستقبلية بنيون متحرك وأنيميشن ديناميكي'
   },
   {
-    id: 'frost',
-    name: 'مثلث الانجماد',
-    icon: '❄️',
-    shape: 'triangle',
-    borderColor: '#3b82f6',
-    glowColor: 'rgba(59, 130, 246, 0.4)',
-    accentColor: '#60a5fa',
-    secondaryColor: '#e0f2fe',
-    description: 'حلبة مثلثية حادة وباردة'
-  },
-  {
-    id: 'inferno',
-    name: 'نجمة الجحيم',
-    icon: '🌋',
+    id: 'golden-kingdom',
+    name: '👑 المملكة الذهبية الفخمة',
+    icon: '👑',
     shape: 'star',
-    borderColor: '#ef4444',
-    glowColor: 'rgba(239, 68, 68, 0.6)',
-    accentColor: '#f97316',
-    secondaryColor: '#fde047',
-    description: 'حلبة بركانية على شكل نجمة مشتعلة'
+    borderColor: '#FFD700',
+    glowColor: 'rgba(255, 215, 0, 1)',
+    accentColor: '#FFA500',
+    secondaryColor: '#FFED4E',
+    particleColor: '#FFD700',
+    pulseColor: 'rgba(255, 165, 0, 0.7)',
+    gridPattern: false,
+    classicStyle: false,
+    description: '⭐ نجمة ذهبية ملكية فاخرة مع جزيئات متلألئة'
   }
 ];

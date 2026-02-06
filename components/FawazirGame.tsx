@@ -42,6 +42,7 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
   const [winnersList, setWinnersList] = useState<{ user: string, count: number, avatar: string }[]>([]);
   const [roundWinnersAccumulator, setRoundWinnersAccumulator] = useState<{ user: string, avatar: string }[]>([]);
   const [backgroundImage, setBackgroundImage] = useState<string>('');
+  const [avatarCache, setAvatarCache] = useState<Record<string, string>>({});
 
   const [settings, setSettings] = useState<GameSettings>({
     winMode: 'SPEED',
@@ -97,6 +98,44 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
     updateBackground(settings.backgroundId);
   }, [settings.backgroundId]);
 
+  const fetchKickAvatar = async (username: string): Promise<string> => {
+    const slug = username.toLowerCase().trim();
+    if (avatarCache[slug]) return avatarCache[slug];
+
+    const proxies = [
+      `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
+      `https://corsproxy.io/?${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`
+    ];
+
+    for (const proxyUrl of proxies) {
+      try {
+        const response = await fetch(proxyUrl);
+        if (!response.ok) continue;
+
+        const rawData = await response.json();
+        const data = proxyUrl.includes('allorigins') ? JSON.parse(rawData.contents) : rawData;
+
+        const avatar = data?.user?.profile_pic || data?.profile_pic || '';
+        if (avatar) {
+          setAvatarCache(prev => ({ ...prev, [slug]: avatar }));
+          return avatar;
+        }
+      } catch (e) { }
+    }
+    return '';
+  };
+
+  // Auto-repair missing avatars for the round winner
+  useEffect(() => {
+    if (roundWinner && !roundWinner.avatar) {
+      fetchKickAvatar(roundWinner.user).then(av => {
+        if (av) {
+          setRoundWinner(prev => (prev && prev.user === roundWinner.user) ? { ...prev, avatar: av } : prev);
+        }
+      });
+    }
+  }, [roundWinner]);
+
   const startGame = () => {
     const freshPool = QUESTIONS_DB.filter(q => q.category === category).sort(() => 0.5 - Math.random());
     const totalRounds = Math.min(settings.roundsCount, freshPool.length);
@@ -147,11 +186,23 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
       const isTextMatch = normalizedUser.length >= 2 && (normalizedUser.includes(normalizedCorrect) || normalizedCorrect.includes(normalizedUser));
 
       if (isNumberMatch || isTextMatch) {
-        let avatarUrl = msg.user.avatar || '';
+        let avatarUrl = msg.user.avatar || avatarCache[username.toLowerCase()] || '';
+        const winnerObj = { user: username, avatar: avatarUrl };
+
+        if (!avatarUrl) {
+          fetchKickAvatar(username).then(av => {
+            if (av) {
+              const uLower = username.toLowerCase();
+              setRoundWinner(prev => (prev && prev.user.toLowerCase() === uLower) ? { ...prev, avatar: av } : prev);
+              setWinnersList(prev => prev.map(w => w.user.toLowerCase() === uLower ? { ...w, avatar: av } : w));
+            }
+          });
+        }
+
         if (settingsRef.current.winMode === 'SPEED') {
-          handleRoundEnd({ user: username, avatar: avatarUrl });
+          handleRoundEnd(winnerObj);
         } else {
-          setRoundWinnersAccumulator(prev => [...prev, { user: username, avatar: avatarUrl }]);
+          setRoundWinnersAccumulator(prev => [...prev, winnerObj]);
         }
       }
     });

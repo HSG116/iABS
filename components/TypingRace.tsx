@@ -1,134 +1,301 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { chatService } from '../services/chatService';
 import { leaderboardService } from '../services/supabase';
 import { TYPING_WORDS } from '../constants';
-import { Keyboard as KeyboardIcon, Play, RotateCcw, Trophy, Zap, Timer, LogOut, Home } from 'lucide-react';
+import { Keyboard as KeyboardIcon, Play, RotateCcw, Trophy, Zap, Timer, LogOut, Home, History } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface TypingRaceProps {
-  channelConnected: boolean;
-  onHome: () => void;
+   channelConnected: boolean;
+   onHome: () => void;
 }
 
 const SidebarPortal = ({ children }: { children?: React.ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
-  const el = document.getElementById('game-sidebar-portal');
-  if (!mounted || !el) return null;
-  return createPortal(children, el);
+   const [mounted, setMounted] = useState(false);
+   useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
+   const el = document.getElementById('game-sidebar-portal');
+   if (!mounted || !el) return null;
+   return createPortal(children, el);
 };
 
 export const TypingRace: React.FC<TypingRaceProps> = ({ channelConnected, onHome }) => {
-  const [currentWord, setCurrentWord] = useState<string | null>(null);
-  const [winner, setWinner] = useState<{name: string, time: number, avatar?: string, color?: string} | null>(null);
-  const [startTime, setStartTime] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const availableIndices = useRef<number[]>([]);
-  const wordRef = useRef(currentWord);
-  
-  useEffect(() => { wordRef.current = currentWord; }, [currentWord]);
+   const [currentWord, setCurrentWord] = useState<string | null>(null);
+   const [winner, setWinner] = useState<{ name: string, time: number, avatar?: string, color?: string } | null>(null);
+   const [startTime, setStartTime] = useState(0);
+   const [elapsed, setElapsed] = useState(0);
+   const [wordHistory, setWordHistory] = useState<string[]>([]);
 
-  useEffect(() => {
-    let interval: number;
-    if (currentWord && !winner) interval = window.setInterval(() => setElapsed(Date.now() - startTime), 50);
-    return () => clearInterval(interval);
-  }, [currentWord, winner, startTime]);
+   const availableIndices = useRef<number[]>([]);
+   const wordRef = useRef(currentWord);
 
-  const resetPool = () => {
-     availableIndices.current = Array.from({ length: TYPING_WORDS.length }, (_, i) => i);
-     for (let i = availableIndices.current.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [availableIndices.current[i], availableIndices.current[j]] = [availableIndices.current[j], availableIndices.current[i]];
-     }
-  };
+   useEffect(() => { wordRef.current = currentWord; }, [currentWord]);
 
-  useEffect(() => {
-    if (!channelConnected) return;
-    const cleanup = chatService.onMessage(async (msg) => {
-       if (!wordRef.current || !!winner) return;
-       if (msg.content.trim() === wordRef.current) {
-          const userWinner = { 
-            name: msg.user.username, 
-            time: (Date.now() - startTime) / 1000, 
-            avatar: msg.user.avatar, 
-            color: msg.user.color 
-          };
-          setWinner(userWinner);
-          setCurrentWord(null);
-          
-          // التسجيل في لوحة الصدارة (50 نقطة للفوز بسباق الكتابة)
-          await leaderboardService.recordWin(userWinner.name, userWinner.avatar || '', 50);
-       }
-    });
-    return cleanup;
-  }, [channelConnected, startTime, winner]);
+   useEffect(() => {
+      let interval: number;
+      if (currentWord && !winner) interval = window.setInterval(() => setElapsed(Date.now() - startTime), 50);
+      return () => clearInterval(interval);
+   }, [currentWord, winner, startTime]);
 
-  const startRound = () => {
-    if (availableIndices.current.length === 0) resetPool();
-    setWinner(null); setElapsed(0);
-    setCurrentWord(TYPING_WORDS[availableIndices.current.pop() || 0]);
-    setStartTime(Date.now());
-  };
+   const resetPool = () => {
+      availableIndices.current = Array.from({ length: TYPING_WORDS.length }, (_, i) => i);
+      for (let i = availableIndices.current.length - 1; i > 0; i--) {
+         const j = Math.floor(Math.random() * (i + 1));
+         [availableIndices.current[i], availableIndices.current[j]] = [availableIndices.current[j], availableIndices.current[i]];
+      }
+   };
 
-  return (
-    <>
-      <SidebarPortal>
-         <div className="bg-black/40 p-4 rounded-[2rem] border border-white/5 space-y-4 animate-in slide-in-from-bottom-4">
-             <div className="flex items-center justify-between">
-                <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2"><KeyboardIcon size={12} /> تحكم الكتابة</h4>
-                <button onClick={onHome} className="p-2 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl transition-all border border-red-500/20"><LogOut size={14} /></button>
-             </div>
-             <button onClick={startRound} className="w-full bg-red-600 text-white font-black py-4 rounded-2xl text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 italic border-t-2 border-white/20">
-                <Play fill="currentColor" size={18}/> {currentWord ? 'تغيير الكلمة' : 'كلمة جديدة'}
-             </button>
-             <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => { resetPool(); alert("تم خلط الكلمات!"); }} className="bg-white/5 text-gray-500 py-3 rounded-2xl text-[9px] font-black hover:text-white border border-white/5 uppercase italic tracking-tighter"><RotateCcw size={12} className="inline mr-1" /> إعادة خلط</button>
-                <button onClick={onHome} className="bg-white/5 text-red-600 py-3 rounded-2xl text-[9px] font-black hover:bg-red-600/10 border border-white/5 uppercase italic tracking-tighter"><Home size={12} className="inline mr-1" /> خروج</button>
-             </div>
+   // --- REAL KICK AVATAR FETCHING ---
+   const fetchRealAvatar = async (username: string) => {
+      try {
+         const proxies = [
+            `https://corsproxy.io/?${encodeURIComponent(`https://kick.com/api/v2/channels/${username}`)}`,
+            `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${username}`)}`
+         ];
+
+         for (const url of proxies) {
+            try {
+               const res = await fetch(url);
+               if (!res.ok) continue;
+               const raw = await res.json();
+               const data = url.includes('allorigins') ? JSON.parse(raw.contents) : raw;
+               if (data?.user?.profile_pic) return data.user.profile_pic;
+            } catch (e) { }
+         }
+      } catch (e) { }
+      return null;
+   };
+
+   const triggerWinEffect = () => {
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+         confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#ff0000', '#ffffff', '#00ff00']
+         });
+         confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#ff0000', '#ffffff', '#00ff00']
+         });
+
+         if (Date.now() < end) {
+            requestAnimationFrame(frame);
+         }
+      };
+      frame();
+   };
+
+   useEffect(() => {
+      if (!channelConnected) return;
+      const cleanup = chatService.onMessage(async (msg) => {
+         if (!wordRef.current || !!winner) return;
+
+         if (msg.content.trim() === wordRef.current) {
+            const userWinner = {
+               name: msg.user.username,
+               time: (Date.now() - startTime) / 1000,
+               avatar: msg.user.avatar, // Initial avatar from chat msg
+               color: msg.user.color
+            };
+
+            // 1. FAST UPDATE: Set winner immediately to keep it snappy
+            setWinner(userWinner);
+            setWordHistory(prev => [wordRef.current!, ...prev].slice(0, 5));
+            setCurrentWord(null);
+            triggerWinEffect();
+
+            // 2. SLOW UPDATE: Fetch high-res avatar in background
+            fetchRealAvatar(userWinner.name).then((realPic) => {
+               if (realPic) {
+                  setWinner(prev => prev ? { ...prev, avatar: realPic } : prev);
+               }
+            });
+
+            await leaderboardService.recordWin(userWinner.name, userWinner.avatar || '', 50);
+         }
+      });
+      return cleanup;
+   }, [channelConnected, startTime, winner]);
+
+   const startRound = () => {
+      if (availableIndices.current.length === 0) resetPool();
+      setWinner(null);
+      setElapsed(0);
+
+      let nextIndex = availableIndices.current.pop();
+      if (nextIndex === undefined) {
+         resetPool();
+         nextIndex = availableIndices.current.pop() || 0;
+      }
+
+      setCurrentWord(TYPING_WORDS[nextIndex]);
+      setStartTime(Date.now());
+   };
+
+   return (
+      <>
+         <SidebarPortal>
+            <div className="bg-black/40 p-6 rounded-[2.5rem] border border-white/5 space-y-6 animate-in slide-in-from-right duration-500 shadow-2xl backdrop-blur-md">
+               <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <h4 className="text-[12px] font-black text-red-500 uppercase tracking-widest flex items-center gap-3">
+                     <KeyboardIcon size={16} /> لوحة التحكم
+                  </h4>
+                  <button onClick={onHome} className="p-2.5 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl transition-all border border-red-500/20"><LogOut size={16} /></button>
+               </div>
+
+               <button onClick={startRound} className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white font-black py-5 rounded-[1.5rem] text-sm shadow-[0_10px_30px_rgba(220,38,38,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-t border-white/20 uppercase tracking-widest group">
+                  <Play fill="currentColor" size={20} className={currentWord ? '' : 'animate-pulse'} />
+                  {currentWord ? 'تجاوز الكلمة' : 'ابـدأ الـسـبـاق'}
+               </button>
+
+               <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => { resetPool(); alert("تم إعادة تعبئة الكلمات!"); }} className="bg-white/5 text-gray-400 py-4 rounded-[1.2rem] text-[10px] font-black hover:text-white hover:bg-white/10 border border-white/5 uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-2">
+                     <RotateCcw size={16} /> إعادة خلط
+                  </button>
+                  <button onClick={onHome} className="bg-white/5 text-red-500 py-4 rounded-[1.2rem] text-[10px] font-black hover:bg-red-600/10 border border-white/5 uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-2">
+                     <Home size={16} /> خروج
+                  </button>
+               </div>
+
+               {wordHistory.length > 0 && (
+                  <div className="bg-black/20 rounded-[1.5rem] p-4 border border-white/5">
+                     <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold mb-3 uppercase tracking-widest px-1">
+                        <History size={12} /> آخر الكلمات
+                     </div>
+                     <div className="space-y-2">
+                        {wordHistory.map((w, i) => (
+                           <div key={i} className="text-gray-400 text-xs font-mono bg-white/5 px-3 py-2 rounded-lg border-r-2 border-red-500/50 flex justify-between">
+                              <span>{w}</span>
+                              <span className="text-gray-600 text-[9px]">#{i + 1}</span>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               )}
+            </div>
+         </SidebarPortal>
+
+         <div className="w-full h-full flex flex-col items-center justify-center p-8 relative overflow-hidden bg-transparent select-none">
+
+            <div className="absolute inset-0 pointer-events-none">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle,rgba(255,0,0,0.03)_0%,transparent_70%)]"></div>
+               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+            </div>
+
+            {!currentWord && !winner && (
+               <div className="text-center opacity-40 animate-in zoom-in duration-1000">
+                  <div className="relative inline-block mb-8">
+                     <div className="absolute inset-0 bg-red-600/30 blur-[60px] animate-pulse rounded-full"></div>
+                     <KeyboardIcon size={140} className="relative z-10 text-gray-500" />
+                  </div>
+                  <h2 className="text-[6rem] font-black text-white italic tracking-tighter uppercase leading-none drop-shadow-2xl">
+                     سباق <span className="text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-red-800">الكتابة</span>
+                  </h2>
+                  <p className="text-2xl text-red-600/80 font-bold uppercase tracking-[0.8em] mt-6 animate-pulse">
+                     iABS Speed Engine
+                  </p>
+               </div>
+            )}
+
+            {currentWord && (
+               <div className="flex flex-col items-center justify-center w-full max-w-6xl animate-in fade-in zoom-in duration-300 z-10">
+
+                  <div className="flex items-center justify-center gap-4 mb-16 bg-black/40 backdrop-blur-md px-10 py-4 rounded-full border border-white/10 shadow-2xl">
+                     <Timer size={32} className={`text-red-500 ${elapsed > 10000 ? 'animate-spin-fast' : 'animate-spin-slow'}`} />
+                     <span className="font-mono text-5xl font-black text-white tabular-nums tracking-widest">
+                        {(elapsed / 1000).toFixed(2)}<span className="text-2xl text-gray-500 ml-1">s</span>
+                     </span>
+                  </div>
+
+                  <div className="relative group w-full text-center">
+                     <div className="absolute inset-[-50px] bg-gradient-to-r from-red-600/20 via-purple-600/10 to-red-600/20 blur-[100px] rounded-full opacity-60 group-hover:opacity-100 transition-all duration-1000 animate-pulse"></div>
+
+                     <div className="relative transform transition-transform duration-200 hover:scale-105">
+                        <div className="text-[140px] font-black text-white leading-none italic tracking-tighter drop-shadow-[0_10px_0px_rgba(0,0,0,0.5)]">
+                           {currentWord}
+                        </div>
+                        <div className="text-[140px] font-black text-white/5 leading-none italic tracking-tighter absolute top-full left-0 w-full transform -scale-y-100 opacity-20 mask-gradient" style={{ maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))', WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))' }}>
+                           {currentWord}
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="mt-20 text-gray-500 font-mono text-sm uppercase tracking-[0.5em] animate-pulse">
+                     اكتب الكلمة بأسرع ما يمكن!
+                  </div>
+               </div>
+            )}
+
+            {winner && (
+               <div className="text-center animate-in slide-in-from-bottom-12 duration-700 z-20">
+                  <Trophy size={160} className="text-[#FFD700] mx-auto mb-10 animate-bounce drop-shadow-[0_0_80px_rgba(255,215,0,0.6)]" fill="currentColor" />
+
+                  <div className="bg-black/80 border border-white/10 p-16 rounded-[4rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] relative overflow-hidden backdrop-blur-3xl min-w-[600px]">
+                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 animate-gradient-x"></div>
+
+                     <div className="text-green-500 font-black uppercase tracking-[0.4em] text-sm mb-10 italic flex items-center justify-center gap-2">
+                        <Zap size={16} /> Fastest Fingers <Zap size={16} />
+                     </div>
+
+                     <div className="flex flex-col items-center justify-center gap-6 mb-12">
+                        <div className="w-32 h-32 rounded-[2.5rem] bg-zinc-900 border-4 border-white/10 flex items-center justify-center overflow-hidden shadow-2xl relative">
+                           {/* Enhanced Image Handling */}
+                           <img
+                              src={winner.avatar || `https://ui-avatars.com/api/?name=${winner.name}&background=random&color=fff&size=512`}
+                              className="w-full h-full object-cover animate-in fade-in duration-500"
+                              crossOrigin="anonymous"
+                              alt={winner.name}
+                              onError={(e) => {
+                                 (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${winner.name}&background=111&color=fff&size=512`;
+                              }}
+                           />
+                           <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-black p-2 rounded-tl-2xl rounded-br-2xl border-4 border-black">
+                              <Trophy size={20} fill="black" />
+                           </div>
+                        </div>
+
+                        <div>
+                           <div className="text-7xl font-black text-white italic tracking-tighter uppercase drop-shadow-xl">{winner.name}</div>
+                           <div className="text-4xl font-mono font-black text-red-500 mt-2">{winner.time.toFixed(3)}s</div>
+                        </div>
+                     </div>
+
+                     <div className="flex gap-4 px-10">
+                        <button onClick={startRound} className="flex-1 py-6 bg-white hover:bg-gray-100 text-black font-black text-xl rounded-[2rem] hover:scale-105 active:scale-95 transition-all italic shadow-2xl flex items-center justify-center gap-2">
+                           <Play size={24} fill="black" /> الجولة التالية
+                        </button>
+                        <button onClick={onHome} className="flex-1 py-6 bg-zinc-800 hover:bg-zinc-700 text-white font-black text-xl rounded-[2rem] hover:scale-105 active:scale-95 transition-all italic shadow-2xl border border-white/5">
+                           خروج
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            )}
          </div>
-      </SidebarPortal>
 
-      <div className="w-full h-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-black">
-         {!currentWord && !winner && (
-            <div className="text-center opacity-30 animate-in zoom-in">
-               <KeyboardIcon size={120} className="mx-auto mb-6 text-gray-600" />
-               <h2 className="text-8xl font-black text-white italic tracking-tighter uppercase leading-none">سباق الكتابة</h2>
-               <p className="text-2xl text-red-600 font-bold uppercase tracking-[0.5em] mt-4">iABS Type Engine</p>
-            </div>
-         )}
-         {currentWord && (
-            <div className="text-center animate-in zoom-in duration-300 w-full max-w-5xl">
-               <div className="flex items-center justify-center gap-3 mb-10 text-red-500">
-                  <Timer size={24} className="animate-spin-slow" />
-                  <span className="font-mono text-3xl font-black italic">{(elapsed / 1000).toFixed(2)}s</span>
-               </div>
-               <div className="relative group">
-                  <div className="absolute inset-0 bg-red-600/20 blur-[100px] rounded-full opacity-50 group-hover:opacity-100 transition-all"></div>
-                  <div className="relative text-[120px] font-black text-white bg-white/5 px-20 py-12 rounded-[4rem] border-2 border-red-600/30 shadow-[0_0_60px_rgba(255,0,0,0.15)] backdrop-blur-xl leading-none italic tracking-tighter">
-                     <span className="drop-shadow-[0_10px_30px_rgba(0,0,0,1)] bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">{currentWord}</span>
-                  </div>
-               </div>
-            </div>
-         )}
-         {winner && (
-            <div className="text-center animate-in slide-in-from-bottom-12 duration-700">
-               <Trophy size={140} className="text-[#FFD700] mx-auto mb-8 animate-bounce drop-shadow-[0_0_50px_rgba(255,215,0,0.4)]" fill="currentColor" />
-               <div className="bg-black/60 border-2 border-red-600/40 p-16 rounded-[4rem] shadow-2xl relative overflow-hidden backdrop-blur-3xl min-w-[500px]">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-red-600"></div>
-                  <div className="text-red-500 font-black uppercase tracking-[0.4em] text-xs mb-8 italic">Fastest Fingers!</div>
-                  <div className="flex items-center justify-center gap-8 mb-10">
-                     <div className="w-24 h-24 rounded-[2rem] bg-white flex items-center justify-center text-5xl font-black text-black shadow-2xl" style={{ backgroundColor: winner.color || '#ff0000' }}>{winner.name.charAt(0).toUpperCase()}</div>
-                     <div className="text-7xl font-black text-white italic tracking-tighter uppercase">{winner.name}</div>
-                  </div>
-                  <div className="flex gap-4">
-                    <button onClick={startRound} className="flex-1 py-5 bg-white text-black font-black text-2xl rounded-3xl hover:scale-105 transition-all italic shadow-2xl">الجولة التالية</button>
-                    <button onClick={onHome} className="flex-1 py-5 bg-red-600 text-white font-black text-2xl rounded-3xl hover:scale-105 transition-all italic shadow-2xl">خروج</button>
-                  </div>
-               </div>
-            </div>
-         )}
-      </div>
-    </>
-  );
+         <style>{`
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        .animate-spin-fast { animation: spin 0.5s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .mask-gradient { mask-image: linear-gradient(to top, transparent, black); -webkit-mask-image: linear-gradient(to top, transparent, black); }
+        @keyframes gradient-x {
+             0% { background-position: 0% 50%; }
+             50% { background-position: 100% 50%; }
+             100% { background-position: 0% 50%; }
+        }
+        .animate-gradient-x {
+            background-size: 200% 200%;
+            animation: gradient-x 3s ease infinite;
+        }
+      `}</style>
+      </>
+   );
 };

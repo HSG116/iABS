@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { chatService } from '../services/chatService';
 import { leaderboardService } from '../services/supabase';
-import { Eye, EyeOff, Search, Play, RotateCcw, Trophy, Image as ImageIcon, AlertTriangle, Trash2, Wand2, ChevronRight, ChevronLeft, LogOut, Home } from 'lucide-react';
+import { Eye, EyeOff, Search, Play, RotateCcw, Trophy, Image as ImageIcon, Trash2, Wand2, ChevronRight, ChevronLeft, LogOut, Home, Sparkles } from 'lucide-react';
 
 interface BlurGuessProps {
   channelConnected: boolean;
@@ -27,13 +27,13 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
   const [photos, setPhotos] = useState<any[]>([]);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [blurLevel, setBlurLevel] = useState(50);
+  const [blurLevel, setBlurLevel] = useState(100);
   const [timer, setTimer] = useState(0);
-  const [winner, setWinner] = useState<{name: string, avatar?: string, color?: string} | null>(null);
+  const [winner, setWinner] = useState<{ name: string, avatar?: string, color?: string } | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [scores, setScores] = useState<Record<string, number>>({});
   const [showSolution, setShowSolution] = useState(false);
+  const [recentMessages, setRecentMessages] = useState<{ user: string, content: string, color?: string }[]>([]);
 
   const gameStateRef = useRef(gameState);
   const arabicWordRef = useRef(arabicWord);
@@ -42,7 +42,7 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
 
   useEffect(() => {
     if (photos.length > 0 && photos[photoIndex]) {
-       setImageUrl(photos[photoIndex].src.large2x);
+      setImageUrl(photos[photoIndex].src.large2x);
     }
   }, [photos, photoIndex]);
 
@@ -55,158 +55,276 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
   }, [gameState]);
 
   useEffect(() => {
-     if (gameState !== 'PLAYING') return;
-     if (timer < 15) setBlurLevel(50);
-     else if (timer < 30) setBlurLevel(20);
-     else if (timer < 45) setBlurLevel(5);
-     else setBlurLevel(0);
+    if (gameState !== 'PLAYING') return;
+    // Stricter/Slower blur progression for more challenge
+    if (timer < 10) setBlurLevel(100);
+    else if (timer < 25) setBlurLevel(60);
+    else if (timer < 45) setBlurLevel(30);
+    else if (timer < 60) setBlurLevel(15);
+    else setBlurLevel(0);
   }, [timer, gameState]);
 
   useEffect(() => {
     if (!channelConnected) return;
     const cleanup = chatService.onMessage(async (msg) => {
       if (gameStateRef.current !== 'PLAYING') return;
+      setRecentMessages(prev => [{
+        user: msg.user.username,
+        content: msg.content,
+        color: msg.user.color
+      }, ...prev].slice(0, 5));
+
       if (msg.content.trim().toLowerCase() === arabicWordRef.current.trim().toLowerCase()) {
         const username = msg.user.username;
         const userWinner = { name: username, avatar: msg.user.avatar, color: msg.user.color };
         setWinner(userWinner);
-        setScores(prev => ({ ...prev, [username]: (prev[username] || 0) + 1 }));
         setGameState('WINNER');
         setBlurLevel(0);
-
-        // تسجيل في لوحة الصدارة (100 نقطة لتخمين الصورة)
         await leaderboardService.recordWin(userWinner.name, userWinner.avatar || '', 100);
       }
     });
     return cleanup;
   }, [channelConnected]);
 
-  const autoTranslate = async () => {
-    if (!arabicWord) return;
-    setIsTranslating(true);
+  // Improved translation logic using Google Translate fallback
+  const translateToArabic = async (text: string): Promise<string> => {
+    if (!text) return '';
     try {
-      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(arabicWord)}&langpair=ar|en`);
+      // Use a more reliable translation mirror for Google Translate
+      const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ar&tl=en&dt=t&q=${encodeURIComponent(text)}`);
       const data = await res.json();
-      if (data.responseData?.translatedText) {
-         setSearchQuery(data.responseData.translatedText.replace(/[.!?,]/g, ''));
+      return data[0][0][0] || text;
+    } catch (e) {
+      // Fallback to MyMemory if Google fails
+      try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ar|en`);
+        const data = await res.json();
+        return data.responseData?.translatedText?.replace(/[.!?,]/g, '') || text;
+      } catch (err) { return text; }
+    }
+  };
+
+  const handleArabicChange = async (val: string) => {
+    setArabicWord(val);
+    if (val.length > 2) {
+      setIsTranslating(true);
+      const translated = await translateToArabic(val);
+      setSearchQuery(translated);
+      setIsTranslating(false);
+
+      // Auto-fetch images behind the scenes
+      if (translated) {
+        setIsSearching(true);
+        try {
+          const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(translated)}&per_page=30`, {
+            headers: { Authorization: PEXELS_API_KEY }
+          });
+          const data = await res.json();
+          if (data.photos?.length > 0) {
+            setPhotos(data.photos);
+            setPhotoIndex(0);
+          }
+        } catch (e) { } finally { setIsSearching(false); }
       }
-    } catch (e) {} finally { setIsTranslating(false); }
+    }
   };
 
-  const fetchImages = async () => {
-    if (!searchQuery) return;
-    setIsSearching(true);
-    try {
-      const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=30`, {
-        headers: { Authorization: PEXELS_API_KEY }
-      });
-      const data = await res.json();
-      if (data.photos?.length > 0) {
-        setPhotos(data.photos);
-        setPhotoIndex(0);
-      } else { alert("لم يتم العثور على صور!"); }
-    } catch (e) {} finally { setIsSearching(false); }
-  };
+  const resetGame = () => { setGameState('SETUP'); setWinner(null); setBlurLevel(100); setTimer(0); setPhotos([]); setImageUrl(null); setArabicWord(''); setSearchQuery(''); };
 
-  const resetGame = () => { setGameState('SETUP'); setWinner(null); setBlurLevel(50); setTimer(0); };
-  
   return (
     <>
       <SidebarPortal>
-         <div className="bg-black/40 p-4 rounded-[2rem] border border-white/5 space-y-4 animate-in slide-in-from-bottom-4">
-             <div className="flex items-center justify-between">
-                <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
-                   <Eye size={12} /> تحكم الصورة
-                </h4>
-                <button onClick={onHome} className="p-2 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl transition-all border border-red-500/20">
-                   <LogOut size={14} />
+        <div className="bg-[#080808] p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-2xl animate-in slide-in-from-right duration-500 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+
+          <div className="flex items-center justify-between">
+            <h4 className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+              <ImageIcon size={14} className="text-red-600" /> مـحرك الـتخمين الـذكي
+            </h4>
+          </div>
+
+          {gameState === 'SETUP' ? (
+            <div className="space-y-6">
+              {/* Single Input: Only Arabic solution */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-wider">ادخـل الـكلمة بـالعربية</label>
+                <div className="relative">
+                  <input
+                    value={arabicWord}
+                    onChange={(e) => handleArabicChange(e.target.value)}
+                    placeholder="مثال: أسد، سيارة، برج..."
+                    className="w-full bg-black/60 border-2 border-white/5 rounded-2xl py-6 px-14 text-white font-black text-2xl outline-none focus:border-red-600 transition-all shadow-inner text-center"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    {(isTranslating || isSearching) && <div className="w-6 h-6 border-4 border-red-600/20 border-t-red-600 rounded-full animate-spin" />}
+                  </div>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600">
+                    <Sparkles size={24} className="animate-pulse" />
+                  </div>
+                </div>
+                <p className="text-[9px] text-gray-600 font-bold italic pr-2">سيتم الترجمة والبحث عن الصور تلقائياً "خلف الستار"</p>
+              </div>
+
+              {/* Preview Image Only in Sidebar for Privacy */}
+              {imageUrl && (
+                <div className="relative h-44 rounded-[2rem] overflow-hidden border-4 border-white/5 group shadow-2xl animate-in zoom-in">
+                  <img src={imageUrl} className="w-full h-full object-cover" alt="preview" />
+                  <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-sm p-4 flex items-center justify-between">
+                    <button onClick={() => setPhotoIndex(p => (p - 1 + photos.length) % photos.length)} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><ChevronRight size={24} /></button>
+                    <span className="text-[10px] font-black text-white italic">صورة {photoIndex + 1} / {photos.length}</span>
+                    <button onClick={() => setPhotoIndex(p => (p + 1) % photos.length)} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><ChevronLeft size={24} /></button>
+                  </div>
+                  <div className="absolute top-4 right-4 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg italic">مـعاينة الإدارة</div>
+                </div>
+              )}
+
+              <button
+                onClick={() => setGameState('PLAYING')}
+                disabled={!imageUrl || !arabicWord}
+                className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-black py-6 rounded-[2rem] text-xl shadow-[0_20px_50px_rgba(220,38,38,0.3)] hover:scale-[1.03] active:scale-95 transition-all disabled:opacity-10 italic border-t-2 border-white/20 flex items-center justify-center gap-4"
+              >
+                <Play fill="currentColor" size={24} /> بـدء الـتحدي الآن
+              </button>
+
+              <button
+                onClick={onHome}
+                className="w-full bg-white/5 py-5 rounded-[1.5rem] text-[10px] font-black text-gray-500 hover:text-white hover:bg-white/10 border border-white/5 transition-all flex items-center justify-center gap-3 uppercase tracking-widest italic"
+              >
+                <Home size={18} /> الـعودة للـقائمة الـرئيسـية
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 flex items-center justify-between shadow-xl">
+                <div>
+                  <div className="text-[9px] text-gray-500 mb-1 uppercase font-black tracking-widest">الإجـابة هـي</div>
+                  <div className="text-2xl font-black text-white italic">{showSolution ? arabicWord : '••••••••'}</div>
+                </div>
+                <button onClick={() => setShowSolution(!showSolution)} className="w-12 h-12 flex items-center justify-center bg-red-600/10 text-red-500 rounded-full hover:bg-red-600 hover:text-white transition-all">
+                  {showSolution ? <EyeOff size={24} /> : <Eye size={24} />}
                 </button>
-             </div>
-
-             {gameState === 'SETUP' && (
-               <div className="space-y-3">
-                 <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-2xl flex items-start gap-2">
-                    <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-[9px] text-red-200 leading-tight font-bold">تحذير: لا تبحث عن الصورة أمام المشاهدين!</p>
-                 </div>
-                 <div className="space-y-1">
-                   <label className="text-[9px] font-black text-gray-500 uppercase">كلمة الحل</label>
-                   <div className="flex gap-2">
-                      <input value={arabicWord} onChange={(e) => setArabicWord(e.target.value)} placeholder="مثال: أسد" className="flex-1 bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-red-500 outline-none transition-all" />
-                      <button onClick={autoTranslate} className="bg-white/5 hover:bg-white/10 text-red-500 p-2 rounded-xl border border-white/5"><Wand2 size={16} /></button>
-                   </div>
-                 </div>
-                 <div className="space-y-1">
-                   <label className="text-[9px] font-black text-gray-500 uppercase">كلمة البحث (EN)</label>
-                   <div className="flex gap-2">
-                      <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="e.g. Lion" className="flex-1 bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-red-500 outline-none" />
-                      <button onClick={fetchImages} className="bg-red-600 text-white p-2 rounded-xl shadow-lg shadow-red-600/20"><Search size={14}/></button>
-                   </div>
-                 </div>
-                 {imageUrl && (
-                   <div className="relative h-28 rounded-2xl overflow-hidden border border-white/10 group bg-zinc-900">
-                      <img src={imageUrl} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-between px-4">
-                          <button onClick={() => setPhotoIndex(p => (p-1+photos.length)%photos.length)} className="p-1 hover:bg-white/20 rounded-lg"><ChevronRight size={18} /></button>
-                          <button onClick={() => setPhotoIndex(p => (p+1)%photos.length)} className="p-1 hover:bg-white/20 rounded-lg"><ChevronLeft size={18} /></button>
-                      </div>
-                   </div>
-                 )}
-                 <button onClick={() => setGameState('PLAYING')} disabled={!imageUrl || !arabicWord} className="w-full bg-red-600 text-white font-black py-3 rounded-2xl text-xs shadow-xl shadow-red-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 italic border-t-2 border-white/20">بدء التحدي الآن</button>
-               </div>
-             )}
-
-             {gameState !== 'SETUP' && (
-               <div className="space-y-3">
-                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
-                    <div>
-                        <div className="text-[8px] text-gray-500 mb-1 uppercase font-black">الحل الصحيح</div>
-                        <div className="text-sm font-black text-white">{showSolution ? arabicWord : '••••••'}</div>
-                    </div>
-                    <button onClick={() => setShowSolution(!showSolution)} className="text-red-500 hover:scale-110 transition-transform">{showSolution ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-                 </div>
-                 <button onClick={resetGame} className="w-full bg-white/5 py-3 rounded-2xl text-[10px] font-black text-gray-400 hover:text-white border border-white/5"><RotateCcw size={12} className="inline mr-1" /> صورة جديدة</button>
-                 <button onClick={onHome} className="w-full bg-red-600/10 py-3 rounded-2xl text-[10px] font-black text-red-500 hover:bg-red-600/20 border border-red-500/20"><Home size={12} className="inline mr-1" /> خروج للقائمة</button>
-               </div>
-             )}
-         </div>
+              </div>
+              <button onClick={resetGame} className="w-full bg-white/5 py-5 rounded-[1.5rem] text-xs font-black text-gray-400 hover:text-white border border-white/5 transition-all flex items-center justify-center gap-3">
+                <RotateCcw size={18} /> جـولة جـديـدة
+              </button>
+              <button onClick={onHome} className="w-full bg-red-600/10 py-5 rounded-[1.5rem] text-xs font-black text-red-500 hover:bg-red-600/20 border border-red-500/20 transition-all flex items-center justify-center gap-3">
+                <Home size={18} /> خـروج
+              </button>
+            </div>
+          )}
+        </div>
       </SidebarPortal>
 
-      <div className="w-full h-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-black">
-          {gameState === 'SETUP' && !imageUrl && (
-             <div className="text-center animate-pulse opacity-40">
-                <ImageIcon size={100} className="mx-auto mb-6 text-gray-600" />
-                <h1 className="text-5xl font-black text-white italic tracking-tighter uppercase leading-none">تخمين الصورة</h1>
-                <p className="text-lg text-gray-500 mt-2 font-bold uppercase tracking-widest">iABS Gaming Engine</p>
-             </div>
-          )}
-          {imageUrl && (gameState === 'PLAYING' || gameState === 'SETUP') && (
-             <div className="relative w-full h-full max-w-4xl max-h-[80%] rounded-[3rem] overflow-hidden border-[12px] border-white/5 bg-zinc-900 shadow-2xl transition-all duration-700">
-                <img src={imageUrl} className="w-full h-full object-contain transition-all duration-1000" style={{ filter: `blur(${gameState === 'SETUP' ? 0 : blurLevel}px)` }} />
-                {gameState === 'PLAYING' && (
-                    <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-red-600 text-white px-12 py-3 rounded-full font-black italic text-2xl shadow-[0_0_50px_rgba(255,0,0,0.4)] animate-glow border-t-2 border-white/20">خمن الـصـورة!</div>
-                )}
-             </div>
-          )}
-          {gameState === 'WINNER' && winner && (
-             <div className="text-center animate-in zoom-in duration-500 z-10">
-                <Trophy size={140} className="text-[#FFD700] mx-auto mb-8 animate-bounce drop-shadow-[0_0_50px_rgba(255,215,0,0.4)]" fill="currentColor" />
-                <h1 className="text-9xl font-black text-white italic tracking-tighter mb-4 uppercase drop-shadow-[0_10px_40px_rgba(0,0,0,1)]">{arabicWord}</h1>
-                <div className="bg-white/5 backdrop-blur-2xl px-16 py-8 rounded-[3rem] border border-red-500/30 inline-block shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-red-600"></div>
-                    <div className="text-red-500 font-black uppercase tracking-[0.4em] text-xs mb-4 italic">Winner Winner!</div>
-                    <div className="flex items-center gap-6">
-                       <div className="w-20 h-20 rounded-[1.5rem] bg-white text-black flex items-center justify-center text-4xl font-black shadow-xl" style={{ backgroundColor: winner.color || '#ff0000' }}>{winner.name.charAt(0).toUpperCase()}</div>
-                       <div className="text-6xl font-black text-white italic tracking-tighter">{winner.name}</div>
-                    </div>
+      <div className="w-full h-full flex flex-col items-center justify-center p-8 relative overflow-hidden bg-black select-none">
+        {/* Main Display: Static Info during Setup, Hidden image for privacy */}
+        {gameState === 'SETUP' && (
+          <div className="text-center animate-in fade-in zoom-in duration-1000">
+            <div className="relative mb-10">
+              <div className="absolute inset-0 bg-red-600 blur-[100px] opacity-10 animate-pulse"></div>
+              <div className="w-32 h-32 bg-gradient-to-br from-red-600 to-red-900 rounded-[3rem] mx-auto flex items-center justify-center shadow-2xl relative border-2 border-white/10 rotate-12">
+                <ImageIcon size={64} className="text-white drop-shadow-lg" />
+              </div>
+            </div>
+            <h1 className="text-9xl font-black text-white italic tracking-tighter uppercase leading-none drop-shadow-[0_20px_60px_rgba(255,255,255,0.1)]">تـخمين الـصورة</h1>
+            <div className="mt-8 flex items-center justify-center gap-8">
+              <div className="h-px w-20 bg-gradient-to-l from-transparent via-red-600 to-transparent"></div>
+              <p className="text-red-500 font-black tracking-[0.6em] text-xs uppercase italic">ARENA GUESS ENGINE</p>
+              <div className="h-px w-20 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+            </div>
+          </div>
+        )}
+
+        {/* PLAYING MODE: Image is shown (Blurred) */}
+        {gameState === 'PLAYING' && imageUrl && (
+          <div className="relative w-full h-[90vh] flex flex-col items-center justify-center gap-10 animate-in fade-in slide-in-from-top-10 duration-700">
+            <div className="relative group w-full max-w-6xl aspect-video rounded-[4rem] overflow-hidden border-[15px] border-[#16161a] shadow-[0_0_100px_rgba(0,0,0,0.8)] bg-zinc-900">
+              <img
+                src={imageUrl}
+                className="w-full h-full object-cover transition-all duration-1000"
+                style={{ filter: `blur(${blurLevel}px)` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+
+              {/* HUD Overlays */}
+              <div className="absolute top-10 inset-x-0 flex justify-center px-10 pointer-events-none">
+                <div className="bg-red-600 text-white px-20 py-5 rounded-[2.5rem] font-black italic text-4xl shadow-[0_30px_60px_rgba(220,38,38,0.5)] border-t-2 border-white/20 animate-bounce tracking-tight">
+                  خـمن الـصـورة!
                 </div>
-                <div className="mt-10 flex gap-4 justify-center">
-                   <button onClick={resetGame} className="px-12 py-4 bg-white text-black font-black text-xl rounded-2xl hover:scale-110 transition-all italic shadow-2xl">جولة جديدة</button>
-                   <button onClick={onHome} className="px-12 py-4 bg-red-600 text-white font-black text-xl rounded-2xl hover:scale-110 transition-all italic shadow-2xl">خروج</button>
+              </div>
+
+              {/* Live Chat Overlay */}
+              <div className="absolute top-10 right-10 flex flex-col gap-3 w-80 pointer-events-none">
+                {recentMessages.map((m, i) => (
+                  <div key={i} className="bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 animate-in slide-in-from-right duration-300 flex flex-col items-end">
+                    <span className="text-[10px] font-black italic mb-1" style={{ color: m.color || '#ef4444' }}>{m.user}</span>
+                    <span className="text-sm font-bold text-white text-right">{m.content}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Sleek Bottom HUD Bar */}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/80 to-transparent p-10 flex items-end justify-between">
+                <div className="flex gap-8">
+                  <div className="glass-card bg-white/5 border border-white/10 px-10 py-5 rounded-[2rem] flex flex-col items-center">
+                    <span className="text-[10px] text-gray-500 font-black uppercase mb-1">الـوقت</span>
+                    <span className="text-4xl font-black text-white font-mono">{timer}s</span>
+                  </div>
+                  <div className="glass-card bg-white/5 border border-white/10 px-10 py-5 rounded-[2rem] flex flex-col items-center">
+                    <span className="text-[10px] text-gray-500 font-black uppercase mb-1">الـضباب</span>
+                    <span className="text-4xl font-black text-kick-green font-mono">{Math.round((blurLevel / 100) * 100)}%</span>
+                  </div>
                 </div>
-             </div>
-          )}
+
+                <div className="flex gap-4">
+                  <button onClick={onHome} className="bg-white/5 hover:bg-red-600 text-gray-400 hover:text-white px-8 py-5 rounded-[2rem] border border-white/10 transition-all font-black text-xl italic flex items-center gap-3">
+                    <Home size={24} /> خـروج
+                  </button>
+                  <button onClick={resetGame} className="bg-white/5 hover:bg-white/10 text-white px-8 py-5 rounded-[2rem] border border-white/10 transition-all font-black text-xl italic flex items-center gap-3">
+                    <RotateCcw size={24} /> إعادة
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* WINNER DISPLAY */}
+        {gameState === 'WINNER' && winner && (
+          <div className="text-center animate-in zoom-in duration-700 z-10 p-10">
+            <div className="relative flex flex-col items-center">
+              <div className="absolute inset-0 bg-amber-500 blur-[150px] opacity-10"></div>
+              <Trophy size={200} className="text-[#FFD700] mb-10 animate-bounce drop-shadow-[0_0_80px_rgba(255,215,0,0.6)]" fill="currentColor" />
+            </div>
+
+            <h1 className="text-[12rem] font-black text-white italic tracking-tighter mb-8 uppercase drop-shadow-[0_20px_80px_rgba(0,0,0,1)] leading-none">{arabicWord}</h1>
+
+            <div className="bg-[#050505]/80 backdrop-blur-3xl px-20 py-12 rounded-[5rem] border-2 border-red-600 inline-block shadow-[0_0_150px_rgba(255,0,0,0.3)] relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+              <div className="text-red-600 font-black uppercase tracking-[0.8em] text-sm mb-6 italic">Champion Detected</div>
+
+              <div className="flex items-center gap-10">
+                <div className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-red-500 to-red-800 text-white flex items-center justify-center text-5xl font-black shadow-2xl border-2 border-white/10" style={{ backgroundColor: winner.color }}>
+                  {winner.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="text-8xl font-black text-white italic tracking-tighter drop-shadow-lg">{winner.name}</div>
+              </div>
+            </div>
+
+            <div className="mt-16 flex gap-8 justify-center">
+              <button onClick={resetGame} className="px-16 py-6 bg-white text-black font-black text-3xl rounded-3xl hover:scale-110 active:scale-95 transition-all italic shadow-2xl flex items-center gap-3"><RotateCcw size={32} /> جـولة جـديـدة</button>
+              <button onClick={onHome} className="px-16 py-6 bg-red-600/10 border border-red-600/30 text-red-500 font-black text-3xl rounded-3xl hover:bg-red-600 hover:text-white transition-all italic shadow-2xl">خـروج</button>
+            </div>
+          </div>
+        )}
       </div>
+
+      <style>{`
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 50px rgba(220, 38, 38, 0.4); }
+          50% { box-shadow: 0 0 80px rgba(220, 38, 38, 0.6); }
+        }
+        .animate-glow { animation: glow 2s ease-in-out infinite; }
+      `}</style>
     </>
   );
 };
