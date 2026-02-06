@@ -219,130 +219,95 @@ const App: React.FC = () => {
   );
 
   const GlobalLoginPage = () => {
-    const [pin, setPin] = useState<string[]>(Array(8).fill(''));
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [pin, setPin] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const handleInputChange = (index: number, value: string) => {
-      const newPin = [...pin];
-      // Keep only last char if user types really fast
-      const val = value.slice(-1);
-      newPin[index] = val;
-      setPin(newPin);
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value.slice(0, 20); // Allow longer for flexibility
+      setPin(val);
+      setGlobalPasswordInput(val);
+    };
 
-      // Move focus forward
-      if (val !== '' && index < 7) {
-        inputRefs.current[index + 1]?.focus();
-      }
-
-      // Check if complete
-      const finalPin = newPin.join('');
-      setGlobalPasswordInput(finalPin);
-      if (finalPin.length === 8) {
-        handleGlobalLogin(finalPin);
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && pin.length > 0) {
+        handleGlobalLogin(pin);
       }
     };
 
-    const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Backspace' && pin[index] === '' && index > 0) {
-        inputRefs.current[index - 1]?.focus();
-      }
-      if (e.key === 'Enter') {
-        const finalPin = pin.join('');
-        if (finalPin.length > 0) handleGlobalLogin(finalPin);
-      }
-    };
+    const focusInput = () => inputRef.current?.focus();
 
     useEffect(() => {
-      // Focus first box on mount
-      const timer = setTimeout(() => inputRefs.current[0]?.focus(), 500);
-      return () => clearTimeout(timer);
+      focusInput();
+      const t = setTimeout(focusInput, 500);
+      return () => clearTimeout(t);
     }, []);
-
-    // Reset pin on error
-    useEffect(() => {
-      if (globalLoginError) {
-        setPin(Array(8).fill(''));
-        inputRefs.current[0]?.focus();
-      }
-    }, [globalLoginError]);
 
     return (
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="rtl">
-        {/* Backdrop */}
+        {/* Stellar Background */}
         <div className="absolute inset-0 pointer-events-none">
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
           <div className="absolute inset-0 bg-[#020202] [mask-image:radial-gradient(circle_at_center,transparent_0%,black_100%)] opacity-80"></div>
-          <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
           <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
         </div>
 
-        {/* UI Container */}
-        <div className="relative z-10 w-full max-w-5xl px-4">
-          <div className="relative animate-in zoom-in duration-700">
-            <div className={`bg-black/90 border border-white/10 rounded-[4rem] p-10 md:p-16 shadow-2xl backdrop-blur-3xl relative overflow-hidden transition-all duration-700 ${isLoginSuccess ? 'border-green-500 scale-105 shadow-green-500/20' : 'border-white/5'}`}>
+        {/* Login Container */}
+        <div className="relative z-10 w-full max-w-4xl px-4 animate-in zoom-in duration-700">
+          <div className={`bg-black/90 border-2 rounded-[4rem] p-12 md:p-20 shadow-2xl backdrop-blur-3xl relative overflow-hidden transition-all duration-700 ${isLoginSuccess ? 'border-green-500 scale-105 shadow-green-500/20' : 'border-white/10'}`}>
 
-              {/* Success Overlay */}
-              {isLoginSuccess && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-700">
-                  <ShieldCheck size={140} className="text-green-500 animate-[bounce_1s_infinite] mb-8" />
-                  <h2 className="text-8xl font-black text-white italic mb-4">تـم الـتـصـريح</h2>
-                  <p className="text-green-500 font-black tracking-[0.8em] text-[10px] uppercase">Access Granted</p>
+            {/* Success Shield */}
+            {isLoginSuccess && (
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-700">
+                <ShieldCheck size={140} className="text-green-500 animate-[bounce_1s_infinite] mb-6" />
+                <h2 className="text-8xl font-black text-white italic">تـم الـتـصـريح</h2>
+              </div>
+            )}
+
+            <div className="text-center mb-12">
+              <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-44 mx-auto mb-8 drop-shadow-[0_0_50px_rgba(255,0,0,0.7)] animate-float" alt="Logo" />
+              <h1 className="text-7xl md:text-8xl font-black text-white italic tracking-tighter uppercase mb-2">كـود الـدخول</h1>
+              <p className="text-red-500 font-black tracking-[0.5em] text-xs uppercase opacity-50">Sovereign Terminal Access</p>
+            </div>
+
+            <div className="relative max-w-2xl mx-auto mb-12">
+              <input
+                ref={inputRef}
+                type="text"
+                autoFocus
+                value={pin}
+                onChange={handleInput}
+                onKeyDown={handleKeyDown}
+                placeholder="أدخل كود الدخول هنا..."
+                className="w-full bg-white/5 border-2 border-white/10 rounded-[2.5rem] py-8 px-12 text-center text-white text-4xl md:text-5xl font-black outline-none transition-all focus:border-red-600 focus:bg-red-600/5 focus:shadow-[0_0_40px_rgba(220,38,38,0.2)] placeholder:text-white/10 placeholder:text-2xl"
+              />
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => handleGlobalLogin(pin)}
+                  className="bg-red-600 hover:bg-red-500 text-white font-black px-16 py-5 rounded-2xl text-2xl transition-all hover:scale-105 active:scale-95 shadow-[0_15px_30px_rgba(220,38,38,0.3)]"
+                >
+                  تـأكـيد الـدخول
+                </button>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            <div className="min-h-[60px] flex items-center justify-center">
+              {globalLoginError && (
+                <div className="flex items-center gap-4 text-red-500 font-black bg-red-950/30 px-10 py-4 rounded-full border border-red-600/40 animate-[shake_0.6s_ease-in-out]">
+                  <AlertTriangle size={24} />
+                  <span className="text-xl uppercase italic">{globalLoginError}</span>
                 </div>
               )}
-
-              <div className="text-center mb-12">
-                <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-40 mx-auto mb-8 drop-shadow-[0_0_50px_rgba(255,0,0,0.7)] animate-float" alt="Logo" />
-                <h1 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter uppercase mb-2">كـود الـدخول</h1>
-                <p className="text-red-500 font-black tracking-[0.5em] text-[10px] uppercase italic opacity-50">Sovereign Encryption Layer</p>
-              </div>
-
-              {/* REAL INPUT GRID */}
-              <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-12 direction-ltr">
-                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-                  <div key={i} className="relative group">
-                    <input
-                      ref={el => inputRefs.current[i] = el}
-                      type="text"
-                      maxLength={1}
-                      value={pin[i]}
-                      onChange={(e) => handleInputChange(i, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(i, e)}
-                      className={`
-                        w-10 h-16 md:w-20 md:h-28 rounded-2xl flex items-center justify-center transition-all duration-300
-                        border-2 text-white text-3xl md:text-5xl font-black text-center bg-transparent outline-none
-                        ${pin[i] !== '' ? 'border-red-600/60 bg-white/5' : 'border-white/10 bg-black/40'}
-                        focus:border-red-500 focus:bg-red-600/10 focus:shadow-[0_0_25px_rgba(220,38,38,0.4)] focus:scale-110 focus:translate-y-[-4px]
-                      `}
-                      style={{ WebkitTextSecurity: 'disc' }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Status Section */}
-              <div className="min-h-[100px] flex flex-col items-center justify-center">
-                {globalLoginError ? (
-                  <div className="flex items-center gap-4 text-red-500 font-black bg-red-950/30 px-10 py-5 rounded-full border border-red-600/40 animate-[shake_0.6s_ease-in-out]">
-                    <AlertTriangle size={32} />
-                    <span className="text-xl md:text-2xl uppercase italic">{globalLoginError}</span>
-                  </div>
-                ) : (
-                  <div className="text-white/20 font-black text-[9px] uppercase tracking-[0.8em] animate-pulse flex items-center gap-3">
-                    <Lock size={16} /> Awaiting Terminal Authentication
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
 
         <style>{`
           @keyframes shake {
-             0%, 100% { transform: translateX(0); }
-             10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-             20%, 40%, 60%, 80% { transform: translateX(10px); }
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
           }
-          .direction-ltr { direction: ltr; }
         `}</style>
       </div>
     );
