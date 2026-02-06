@@ -84,8 +84,7 @@ const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, userna
 };
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(true);
+
   const [currentView, setCurrentView] = useState<ViewState | 'ADMIN_LOGIN' | 'ADMIN_PANEL'>('HOME');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -95,20 +94,12 @@ const App: React.FC = () => {
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [globalPasswordInput, setGlobalPasswordInput] = useState('');
-  const [globalLoginError, setGlobalLoginError] = useState('');
-  const [isLoginSuccess, setIsLoginSuccess] = useState(false);
+
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
 
-  const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => {
-    const authStatus = sessionStorage.getItem('iabs_auth');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    }
-    setIsAuthenticating(false);
-  }, []);
+
+
 
   const playNotificationSound = () => {
     try {
@@ -171,28 +162,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGlobalLogin = async (providedPin?: string) => {
-    const pinToVerify = providedPin || globalPasswordInput;
-    if (!pinToVerify) return;
 
-    const isValid = await leaderboardService.verifyAdminPassword(pinToVerify);
-
-    if (isValid) {
-      setIsLoginSuccess(true);
-
-      setTimeout(() => {
-        setIsAuthenticated(true);
-        sessionStorage.setItem('iabs_auth', 'true');
-        setGlobalPasswordInput('');
-        setGlobalLoginError('');
-        setIsLoginSuccess(false);
-      }, 2000);
-    } else {
-      setGlobalLoginError('كود الدخول غير صحيح - تم رفض الوصول');
-      setGlobalPasswordInput('');
-      // The child component will clear pinValue via useEffect
-    }
-  };
 
   const handleGoHome = () => setCurrentView('HOME');
 
@@ -217,160 +187,6 @@ const App: React.FC = () => {
       </span>
     </button>
   );
-
-  const GlobalLoginPage = () => {
-    const [pin, setPin] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    // Force focus anywhere
-    const focusInput = () => {
-      if (inputRef.current && !isLoginSuccess) {
-        inputRef.current.focus();
-      }
-    };
-
-    useEffect(() => {
-      focusInput();
-      // Aggressive focus strategy
-      const t1 = setTimeout(focusInput, 100);
-      const t2 = setTimeout(focusInput, 500);
-      const t3 = setTimeout(focusInput, 1000);
-      return () => {
-        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
-      };
-    }, []);
-
-    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Allow only numbers, but keep limit
-      const val = e.target.value.replace(/[^0-9]/g, ''); // Ensure only numeric input
-      if (val.length <= 8) {
-        setPin(val);
-        setGlobalPasswordInput(val);
-        if (val.length === 8) {
-          handleGlobalLogin(val);
-        }
-      }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && pin.length > 0) {
-        handleGlobalLogin(pin);
-      }
-    };
-
-    // Reset logic
-    useEffect(() => {
-      if (globalLoginError) setPin('');
-      focusInput();
-    }, [globalLoginError]);
-
-    return (
-      <div
-        className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans"
-        dir="ltr"
-        onClick={focusInput}
-      >
-        {/* Background Effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
-          <div className="absolute inset-0 bg-[#020202] opacity-80" style={{ maskImage: 'radial-gradient(circle at center, transparent 0%, black 100%)' }}></div>
-          <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
-        </div>
-
-        {/* Main Card - Input is INSIDE this relative container */}
-        <div className="relative z-10 w-full max-w-5xl px-4 animate-in zoom-in duration-500">
-          <div className={`
-             bg-black/90 backdrop-blur-3xl border-2 rounded-[3rem] p-10 md:p-16 
-             shadow-2xl relative overflow-hidden transition-all duration-700
-             ${isLoginSuccess ? 'border-green-500 shadow-green-900/50' : 'border-white/10 shadow-red-900/20'}
-          `}>
-
-            {/* --- MASTER INPUT LAYER (COVERS EVERYTHING) --- */}
-            {/* This ensures clicking ANYWHERE on the card focuses the input */}
-            <input
-              id="global-pin-input"
-              ref={inputRef}
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              autoFocus
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              value={pin}
-              onChange={handleInput}
-              onKeyDown={handleKeyDown}
-              className="absolute inset-0 w-full h-full z-[100] opacity-0 cursor-text"
-              style={{ fontSize: '16px' }} // 16px prevents iOS zoom
-            />
-
-            {/* Header */}
-            <div className="text-center mb-10 pointer-events-none relative z-10">
-              <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 md:h-40 mx-auto mb-6 drop-shadow-[0_0_30px_rgba(255,0,0,0.5)] animate-float" alt="Logo" />
-              <h1 className="text-6xl md:text-7xl font-black text-white italic tracking-tighter uppercase mb-2">كـود الـدخول</h1>
-              <p className="text-red-500 font-black tracking-[0.5em] text-xs uppercase opacity-60">System Access v3.0</p>
-            </div>
-
-            {/* Visual Boxes Container */}
-            <div className="relative max-w-4xl mx-auto mb-12 pointer-events-none z-10">
-              <div className="flex justify-center flex-wrap gap-3 md:gap-5">
-                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
-                  const char = pin[i];
-                  const isActive = i === pin.length;
-                  const isFilled = !!char;
-
-                  return (
-                    <div key={i} className={`
-                      relative w-12 h-16 md:w-20 md:h-28 rounded-xl md:rounded-2xl border-2 flex items-center justify-center
-                      transition-all duration-200
-                      ${isActive ? 'border-red-500 bg-red-600/10 scale-110 shadow-[0_0_30px_rgba(220,38,38,0.5)]' :
-                        isFilled ? 'border-red-600/50 bg-white/5' : 'border-white/10 bg-black/50'}
-                    `}>
-                      <span className="text-3xl md:text-5xl font-black text-white drop-shadow-md">
-                        {char || (isActive && <div className="w-1 h-8 bg-red-500 animate-pulse" />)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Status / Error */}
-            <div className="min-h-[60px] flex items-center justify-center pointer-events-none relative z-10">
-              {globalLoginError ? (
-                <div className="flex items-center gap-3 bg-red-950/50 border border-red-500/50 px-8 py-4 rounded-full animate-shake">
-                  <AlertTriangle className="text-red-500" size={24} />
-                  <span className="text-red-500 font-bold text-lg">{globalLoginError}</span>
-                </div>
-              ) : (
-                <div className="text-white/20 text-xs font-mono tracking-widest animate-pulse">
-                  SECURE CONNECTION ESTABLISHED
-                </div>
-              )}
-            </div>
-
-            {/* Success Overlay */}
-            {isLoginSuccess && (
-              <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-300">
-                <ShieldCheck size={140} className="text-green-500 animate-bounce mb-8" />
-                <h2 className="text-7xl font-black text-white italic">تـم الـتـصـريح</h2>
-              </div>
-            )}
-
-          </div>
-        </div>
-        <style>{`
-          .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-          @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-          }
-        `}</style>
-      </div>
-    );
-  };
 
   const WelcomeGate = () => (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/98 backdrop-blur-3xl p-6 animate-in fade-in duration-1000">
@@ -659,7 +475,7 @@ const App: React.FC = () => {
     }
   };
 
-  if (!isAuthenticated) return <GlobalLoginPage />;
+
 
   return (
     <Layout currentView={currentView as ViewState} onChangeView={(v) => setCurrentView(v)}>
