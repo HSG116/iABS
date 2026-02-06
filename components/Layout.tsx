@@ -2,19 +2,20 @@
 import React, { useState } from 'react';
 import { ViewState } from '../types';
 import { ChatWidget } from './ChatWidget';
-import { 
-  MessageSquare, X, Settings2, ChevronRight, 
+import {
+  MessageSquare, X, Settings2, ChevronRight,
   Maximize2, Minimize2, PanelRightClose,
-  LayoutGrid, ArrowLeftRight
+  LayoutGrid, ArrowLeftRight, Link, Video
 } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
   currentView: ViewState;
   onChangeView: (view: ViewState) => void;
+  onOBSLinks?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeView }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeView, onOBSLinks }) => {
   const [chatOpen, setChatOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(450); // Default Width
 
@@ -46,64 +47,79 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       >
         {/* --- MODERN COMMAND BAR (ABOVE CHAT) --- */}
         <div className="h-16 shrink-0 bg-gradient-to-l from-red-600/10 via-black to-black border-b border-white/10 flex items-center justify-between px-4 z-30">
-           <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-600 rounded-xl shadow-[0_0_15px_rgba(255,0,0,0.4)]">
-                 <LayoutGrid size={16} className="text-white" />
-              </div>
-              <span className="text-[10px] font-black text-white uppercase tracking-widest italic">نظام التحكم</span>
-           </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-red-600 to-red-900 rounded-xl shadow-[0_0_20px_rgba(255,0,0,0.4)] border border-white/20">
+              <LayoutGrid size={18} className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic leading-none">نظام التحكم</span>
+              <span className="text-[8px] font-bold text-red-500/80 uppercase tracking-widest mt-0.5">Control Center</span>
+            </div>
+          </div>
 
-           <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/10">
-              {/* Resize Controls */}
-              <button 
-                onClick={() => handleResize(-50)}
-                title="تصغير الشات"
-                className="p-2 hover:bg-white/10 text-gray-400 hover:text-white transition-all rounded-xl border border-transparent hover:border-white/10 active:scale-90"
-              >
-                <Minimize2 size={16} />
-              </button>
-              
-              <div className="w-px h-4 bg-white/10 mx-1"></div>
+          <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/10">
+            {/* Resize Controls */}
+            <button
+              onClick={() => handleResize(-50)}
+              title="تصغير الشات"
+              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white transition-all rounded-xl border border-transparent hover:border-white/10 active:scale-90"
+            >
+              <Minimize2 size={16} />
+            </button>
 
-              <button 
-                onClick={() => handleResize(50)}
-                title="تكبير الشات"
-                className="p-2 hover:bg-white/10 text-gray-400 hover:text-white transition-all rounded-xl border border-transparent hover:border-white/10 active:scale-90"
-              >
-                <Maximize2 size={16} />
-              </button>
+            <div className="w-px h-4 bg-white/10 mx-1"></div>
 
-              <div className="w-px h-4 bg-white/10 mx-1"></div>
+            <button
+              onClick={() => handleResize(50)}
+              title="تكبير الشات"
+              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white transition-all rounded-xl border border-transparent hover:border-white/10 active:scale-90"
+            >
+              <Maximize2 size={16} />
+            </button>
 
-              {/* Hide Button */}
-              <button 
-                onClick={() => setChatOpen(false)}
-                title="إخفاء الجانب"
-                className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white transition-all rounded-xl border border-red-600/20 active:scale-90"
-              >
-                <PanelRightClose size={16} className="rotate-180" />
-              </button>
-           </div>
+            <div className="w-px h-4 bg-white/10 mx-1"></div>
+
+            {/* Hide Button */}
+            <button
+              onClick={() => setChatOpen(false)}
+              title="إخفاء الجانب"
+              className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white transition-all rounded-xl border border-red-600/20 active:scale-90"
+            >
+              <PanelRightClose size={16} className="rotate-180" />
+            </button>
+          </div>
+
+          <div className="w-px h-6 bg-white/10 mx-3"></div>
+
+          {/* OBS Link Button */}
+          <button
+            onClick={onOBSLinks}
+            title="روابط OBS"
+            className="relative p-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white transition-all rounded-xl border border-purple-600/30 active:scale-95 shadow-[0_0_10px_rgba(147,51,234,0.2)] hover:shadow-[0_0_20px_rgba(147,51,234,0.6)] group"
+          >
+            <Link size={18} className="relative z-10" />
+            <div className="absolute inset-0 rounded-xl bg-purple-500/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </button>
         </div>
 
         {/* Top Section: Chat Content */}
         <div className="flex-[1.2] min-h-0 overflow-hidden flex flex-col">
-           <ChatWidget lang="ar" />
+          <ChatWidget lang="ar" />
         </div>
 
         {/* Bottom Section: Game Controls */}
         {!isHome && (
           <div className="flex-1 border-t-2 border-white/10 bg-gradient-to-b from-black/60 to-red-950/10 backdrop-blur-3xl flex flex-col relative">
-             <div className="p-5 border-b border-white/10 flex items-center gap-4 bg-black/40">
-                <div className="p-2 bg-red-600 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)]">
-                   <Settings2 size={20} className="text-white animate-spin-slow" />
-                </div>
-                <span className="text-sm font-black text-white uppercase tracking-[0.2em]">إعدادات الـمـيـدان</span>
-             </div>
-             <div id="game-sidebar-portal" className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                {/* Game-specific controls teleported here */}
-             </div>
-             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-red-600 to-transparent shadow-[0_0_20px_red]"></div>
+            <div className="p-5 border-b border-white/10 flex items-center gap-4 bg-black/40">
+              <div className="p-2 bg-red-600 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)]">
+                <Settings2 size={20} className="text-white animate-spin-slow" />
+              </div>
+              <span className="text-sm font-black text-white uppercase tracking-[0.2em]">إعدادات الـمـيـدان</span>
+            </div>
+            <div id="game-sidebar-portal" className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              {/* Game-specific controls teleported here */}
+            </div>
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-red-600 to-transparent shadow-[0_0_20px_red]"></div>
           </div>
         )}
       </aside>

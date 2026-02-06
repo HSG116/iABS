@@ -7,6 +7,10 @@
   --kick-green: #53fc18;
 }
 
+body.obs-mode {
+  background: transparent !important;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }

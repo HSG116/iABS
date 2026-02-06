@@ -23,9 +23,10 @@ import {
   RotateCw, Gift, Flag, Users2, Keyboard, Gem, Coffee,
   PaintBucket, Sparkles, ShieldCheck, Zap, Armchair,
   Maximize2, MonitorOff, CheckCircle2, AlertTriangle,
-  Crown, Medal, Loader2, RefreshCw, ChevronRight
+  Crown, Medal, Loader2, RefreshCw, ChevronRight, Video
 } from 'lucide-react';
 import { supabase, leaderboardService } from './services/supabase';
+import { OBSLinksModal } from './components/OBSLinksModal';
 
 // Premium Avatar Component with Auto-Fix for Kick Images
 const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, username: string, size?: string }) => {
@@ -89,6 +90,8 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState | 'ADMIN_LOGIN' | 'ADMIN_PANEL'>('HOME');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [isOBSMode, setIsOBSMode] = useState(false);
+  const [showOBSModal, setShowOBSModal] = useState(false);
 
   // Authorization State
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
@@ -114,6 +117,29 @@ const App: React.FC = () => {
       console.warn("Audio failed:", e);
     }
   };
+
+  useEffect(() => {
+    // Check for OBS/Streamer Mode params
+    const params = new URLSearchParams(window.location.search);
+    const obsParam = params.get('obs');
+    const viewParam = params.get('view');
+
+    if (obsParam === 'true' && viewParam) {
+      console.log('ENTERING OBS MODE:', viewParam);
+      setIsOBSMode(true);
+      setCurrentView(viewParam as ViewState);
+      setIsAuthorized(true); // Bypass auth for OBS
+      setShowWelcome(false); // Bypass welcome
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOBSMode) {
+      document.body.classList.add('obs-mode');
+    } else {
+      document.body.classList.remove('obs-mode');
+    }
+  }, [isOBSMode]);
 
   useEffect(() => {
     // Better Real-time listener
@@ -459,12 +485,18 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-20 mt-16 pb-28">
+            <div className="flex flex-wrap justify-center gap-10 md:gap-20 mt-16 pb-28">
               <button onClick={() => setCurrentView('LEADERBOARD')} className="flex items-center gap-6 text-white/40 hover:text-iabs-red font-black text-3xl tracking-[0.2em] transition-all hover:scale-110 group italic">
                 <Trophy size={32} className="group-hover:animate-bounce text-yellow-500 drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]" />
                 لوحة الصدارة
               </button>
-              <button onClick={() => setCurrentView('ADMIN_LOGIN')} className="flex items-center gap-6 text-white/10 hover:text-white/40 font-black text-3xl tracking-[0.2em] transition-all hover:scale-110 group border-l-4 border-white/5 pl-20 italic">
+
+              <button onClick={() => setShowOBSModal(true)} className="flex items-center gap-6 text-white/40 hover:text-purple-500 font-black text-3xl tracking-[0.2em] transition-all hover:scale-110 group italic border-l-4 border-white/5 pl-10 md:pl-20">
+                <Video size={32} className="group-hover:animate-pulse text-purple-500 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" />
+                روابط البث
+              </button>
+
+              <button onClick={() => setCurrentView('ADMIN_LOGIN')} className="flex items-center gap-6 text-white/10 hover:text-white/40 font-black text-3xl tracking-[0.2em] transition-all hover:scale-110 group border-l-4 border-white/5 pl-10 md:pl-20 italic">
                 <ShieldCheck size={32} className="group-hover:text-blue-500 transition-colors" />
                 الإدارة
               </button>
@@ -476,8 +508,21 @@ const App: React.FC = () => {
 
 
 
+  if (isOBSMode) {
+    return (
+      <div className="w-full h-screen bg-transparent overflow-hidden flex items-center justify-center">
+        {renderContent()}
+      </div>
+    );
+  }
+
   return (
-    <Layout currentView={currentView as ViewState} onChangeView={(v) => setCurrentView(v)}>
+    <Layout
+      currentView={currentView as ViewState}
+      onChangeView={(v) => setCurrentView(v)}
+      onOBSLinks={() => setShowOBSModal(true)}
+    >
+      <OBSLinksModal isOpen={showOBSModal} onClose={() => setShowOBSModal(false)} />
       {!isAuthorized && <GlobalPasswordPage onSuccess={() => setIsAuthorized(true)} />}
 
       {/* Only show content if authorized */}
