@@ -20,9 +20,67 @@ import {
   Trophy, Play, Lock, User, Swords, Image as ImageIcon,
   RotateCw, Gift, Flag, Users2, Keyboard, Gem, Coffee,
   PaintBucket, Sparkles, ShieldCheck, Zap, Armchair,
-  Maximize2, MonitorOff, CheckCircle2, AlertTriangle
+  Maximize2, MonitorOff, CheckCircle2, AlertTriangle,
+  Crown, Medal, Loader2, RefreshCw, ChevronRight
 } from 'lucide-react';
-import { leaderboardService } from './services/supabase';
+import { supabase, leaderboardService } from './services/supabase';
+
+// Premium Avatar Component with Auto-Fix for Kick Images
+const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, username: string, size?: string }) => {
+  const [src, setSrc] = React.useState(url);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+
+  // Update src if url prop changes (e.g. when leaderboard reloads)
+  React.useEffect(() => {
+    setSrc(url);
+  }, [url]);
+
+  const handleFix = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      // Use AllOrigins with a different approach to ensure it fetches JSON
+      const targetUrl = `https://kick.com/api/v2/channels/${username.toLowerCase()}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      const res = await fetch(proxyUrl);
+      if (res.ok) {
+        const raw = await res.json();
+        const data = JSON.parse(raw.contents);
+        if (data.user?.profile_pic) {
+          setSrc(data.user.profile_pic);
+          // Optional: Update in Supabase for next time
+          await supabase.from('profiles').update({ avatar_url: data.user.profile_pic }).eq('username', username);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fix avatar for", username);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  return (
+    <div className={`${size} rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-iabs-red transition-all relative flex-shrink-0 bg-zinc-900 shadow-lg`}>
+      {src ? (
+        <img
+          src={src}
+          className="w-full h-full object-cover"
+          onError={handleFix}
+          alt={username}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center opacity-20 bg-black/40">
+          <User size={size.includes('w-2') || size.includes('w-3') ? 48 : 24} />
+        </div>
+      )}
+      {isRefreshing && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+          <Loader2 className="animate-spin text-white" size={16} />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState | 'ADMIN_LOGIN' | 'ADMIN_PANEL'>('HOME');
@@ -34,13 +92,17 @@ const App: React.FC = () => {
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
+  const loadLeaderboard = () => {
+    setIsLoadingLeaderboard(true);
+    leaderboardService.getTopPlayers(10).then(data => {
+      setLeaderboardData(data);
+      setIsLoadingLeaderboard(false);
+    });
+  };
+
   useEffect(() => {
     if (currentView === 'LEADERBOARD') {
-      setIsLoadingLeaderboard(true);
-      leaderboardService.getTopPlayers(10).then(data => {
-        setLeaderboardData(data);
-        setIsLoadingLeaderboard(false);
-      });
+      loadLeaderboard();
     }
   }, [currentView]);
 
@@ -162,51 +224,145 @@ const App: React.FC = () => {
       case 'TERRITORY_WAR': return <TerritoryWar channelConnected={true} onHome={handleGoHome} />;
 
       case 'LEADERBOARD': return (
-        <div className="animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto w-full pt-8 text-right h-full flex flex-col">
-          <h2 className="text-5xl font-black red-neon-text text-center mb-10 flex items-center justify-center gap-4">
-            <Trophy size={48} className="text-yellow-500" /> أساطير الساحة
-          </h2>
-          <div className="glass-card rounded-[2.5rem] overflow-hidden red-neon-border shadow-2xl flex-1 relative bg-black/40 backdrop-blur-xl">
-            {isLoadingLeaderboard ? (
-              <div className="flex items-center justify-center h-64 text-xl text-gray-400 font-bold animate-pulse">جاري تحميل البيانات...</div>
-            ) : (
-              <div className="overflow-y-auto h-full custom-scrollbar">
-                <table className="w-full text-right border-collapse">
-                  <thead className="sticky top-0 z-10">
-                    <tr className="bg-iabs-red text-white font-black uppercase tracking-widest text-sm shadow-xl">
-                      <th className="p-6 text-center w-24">#</th>
-                      <th className="p-6">المتسابق</th>
-                      <th className="p-6 text-center">مرات الفوز</th>
-                      <th className="p-6 text-left">النقاط</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {leaderboardData.map((user, index) => (
-                      <tr key={user.id} className="hover:bg-white/5 transition-colors group">
-                        <td className="p-4 text-center">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg mx-auto ${index === 0 ? 'bg-yellow-500 text-black shadow-[0_0_15px_gold]' : index === 1 ? 'bg-gray-400 text-black' : index === 2 ? 'bg-orange-700 text-white' : 'bg-white/5 text-gray-500'}`}>
-                            {index + 1}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-iabs-red transition-colors relative">
-                              {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-zinc-900 flex items-center justify-center"><User size={24} className="text-white/20" /></div>}
-                            </div>
-                            <span className="font-black text-xl text-white group-hover:text-iabs-red transition-colors">{user.username}</span>
-                          </div>
-                        </td>
-                        <td className="p-4 text-center"><span className="bg-white/5 px-4 py-1 rounded-full font-mono font-bold text-gray-300">{user.wins}</span></td>
-                        <td className="p-4 text-left font-black text-2xl text-kick-green font-mono tracking-widest drop-shadow-[0_0_10px_rgba(83,252,24,0.3)]">{user.score}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {leaderboardData.length === 0 && <div className="text-center py-20 text-gray-500 font-bold text-xl">لا يوجد متصدرين حتى الآن.. كن الأول!</div>}
+        <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto w-full pt-10 px-6 h-full flex flex-col items-center">
+          <div className="text-center mb-12">
+            <h2 className="text-7xl font-black italic red-neon-text tracking-tighter mb-4">أساطير الساحة</h2>
+            <div className="flex items-center justify-center gap-4 text-white/40 uppercase tracking-[0.5em] text-xs font-bold">
+              <div className="h-[1px] w-12 bg-white/20" />
+              TOP SURVIVORS
+              <div className="h-[1px] w-12 bg-white/20" />
+            </div>
+          </div>
+
+          <div className="w-full space-y-12">
+            {/* Top 3 Podium Cards */}
+            {!isLoadingLeaderboard && leaderboardData.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end mb-16">
+                {/* 2nd Place */}
+                {leaderboardData[1] && (
+                  <div className="order-2 md:order-1 h-[280px] glass-card rounded-[3rem] p-8 border-2 border-slate-400/30 flex flex-col items-center justify-center relative hover:scale-105 transition-all group overflow-hidden bg-gradient-to-t from-slate-900/80 to-transparent">
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Medal size={80} className="text-slate-400" />
+                    </div>
+                    <div className="mb-6 relative">
+                      <ProAvatar url={leaderboardData[1].avatar_url} username={leaderboardData[1].username} size="w-24 h-24" />
+                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-slate-400 text-black flex items-center justify-center font-black text-xl border-4 border-black">2</div>
+                    </div>
+                    <div className="text-2xl font-black text-white mb-2">{leaderboardData[1].username}</div>
+                    <div className="flex gap-4">
+                      <span className="text-slate-400 font-bold">{leaderboardData[1].score} نقطة</span>
+                      <span className="text-white/20">|</span>
+                      <span className="text-slate-400 font-bold">{leaderboardData[1].wins} فوز</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 1st Place - Champion */}
+                {leaderboardData[0] && (
+                  <div className="order-1 md:order-2 h-[340px] glass-card rounded-[3.5rem] p-8 border-4 border-yellow-500/50 flex flex-col items-center justify-center relative hover:scale-110 transition-all group overflow-hidden bg-gradient-to-t from-yellow-900/40 via-yellow-950/20 to-transparent shadow-[0_0_80px_rgba(234,179,8,0.2)]">
+                    <div className="absolute -top-10 animate-float opacity-30">
+                      <Crown size={120} className="text-yellow-500 blur-sm" />
+                    </div>
+                    <div className="mb-8 relative z-10">
+                      <div className="absolute -inset-4 bg-yellow-500/20 blur-2xl rounded-full animate-pulse" />
+                      <ProAvatar url={leaderboardData[0].avatar_url} username={leaderboardData[0].username} size="w-32 h-32" />
+                      <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-yellow-500 text-black flex items-center justify-center font-black text-2xl border-4 border-black animate-bounce">1</div>
+                    </div>
+                    <div className="text-4xl font-black text-white italic mb-3 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">{leaderboardData[0].username}</div>
+                    <div className="flex gap-6 relative z-10 bg-black/40 px-6 py-2 rounded-full border border-yellow-500/20">
+                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].score} PTS</span>
+                      <span className="text-white/20">|</span>
+                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].wins} WINS</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3rd Place */}
+                {leaderboardData[2] && (
+                  <div className="order-3 h-[240px] glass-card rounded-[3rem] p-8 border-2 border-orange-700/30 flex flex-col items-center justify-center relative hover:scale-105 transition-all group overflow-hidden bg-gradient-to-t from-orange-950/40 to-transparent">
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Medal size={60} className="text-orange-700" />
+                    </div>
+                    <div className="mb-6 relative">
+                      <ProAvatar url={leaderboardData[2].avatar_url} username={leaderboardData[2].username} size="w-20 h-20" />
+                      <div className="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-orange-700 text-white flex items-center justify-center font-black text-lg border-4 border-black">3</div>
+                    </div>
+                    <div className="text-xl font-black text-white mb-2">{leaderboardData[2].username}</div>
+                    <div className="flex gap-4">
+                      <span className="text-orange-700 font-bold">{leaderboardData[2].score} نقطة</span>
+                      <span className="text-white/20">|</span>
+                      <span className="text-orange-700 font-bold">{leaderboardData[2].wins} فوز</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Rest of the players table */}
+            <div className="glass-card rounded-[3rem] border border-white/5 overflow-hidden shadow-2xl bg-black/40 backdrop-blur-xl flex-1 mb-8">
+              {isLoadingLeaderboard ? (
+                <div className="flex flex-col items-center justify-center h-[300px] gap-6">
+                  <Loader2 className="animate-spin text-iabs-red" size={60} />
+                  <div className="text-xl text-gray-400 font-bold animate-pulse italic tracking-widest">GATHERING LEGENDS...</div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto h-full custom-scrollbar">
+                  <table className="w-full text-right">
+                    <thead className="bg-white/5 border-b border-white/5">
+                      <tr className="text-gray-400 font-black uppercase text-[10px] tracking-[0.3em]">
+                        <th className="p-8 text-center w-24">الرتبة</th>
+                        <th className="p-8 text-right">المتسابق</th>
+                        <th className="p-8 text-center">مرات الفوز</th>
+                        <th className="p-8 text-left">مجموع النقاط</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {leaderboardData.slice(3).map((user, index) => (
+                        <tr key={user.id} className="hover:bg-white/10 transition-all group animate-in slide-in-from-right duration-500" style={{ animationDelay: `${index * 50}ms` }}>
+                          <td className="p-6 text-center">
+                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-black text-gray-500 group-hover:text-white group-hover:bg-iabs-red/20 transition-all transition-colors border border-white/5">
+                              {index + 4}
+                            </div>
+                          </td>
+                          <td className="p-6">
+                            <div className="flex items-center gap-6">
+                              <ProAvatar url={user.avatar_url} username={user.username} />
+                              <span className="font-black text-2xl text-white group-hover:text-iabs-red transition-all group-hover:translate-x-[-4px] tracking-tight">{user.username}</span>
+                            </div>
+                          </td>
+                          <td className="p-6 text-center">
+                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 border border-white/5 font-black text-xl text-gray-300 group-hover:text-white group-hover:border-white/20 transition-all font-mono">
+                              {user.wins}
+                            </div>
+                          </td>
+                          <td className="p-6 text-left">
+                            <div className="font-black text-3xl text-kick-green font-mono tracking-tighter drop-shadow-[0_0_15px_rgba(83,252,24,0.4)] group-hover:scale-110 transition-transform origin-left">
+                              {user.score}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {leaderboardData.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-32 space-y-6 opacity-20">
+                      <Trophy size={100} strokeWidth={1} />
+                      <div className="text-2xl font-black italic">ARENA IS EMPTY</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="text-center mt-8 pb-8"><button onClick={handleGoHome} className="px-10 py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-white font-bold transition-all border border-white/10 hover:border-white/30">العودة للرئيسية</button></div>
+
+          <div className="flex items-center gap-6 mt-10 mb-16">
+            <button onClick={handleGoHome} className="group px-12 py-5 bg-white/5 hover:bg-white/10 rounded-[2rem] text-white font-black text-lg transition-all border border-white/10 hover:border-white/30 flex items-center gap-4">
+              <ChevronRight className="group-hover:translate-x-2 transition-transform" /> العودة للرئيسية
+            </button>
+            <button onClick={loadLeaderboard} className="p-5 bg-iabs-red/10 text-iabs-red rounded-[2rem] border-2 border-iabs-red/20 hover:bg-iabs-red hover:text-white transition-all">
+              <RefreshCw size={24} className={isLoadingLeaderboard ? 'animate-spin' : ''} />
+            </button>
+          </div>
         </div>
       );
 

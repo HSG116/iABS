@@ -1,0 +1,39 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --iabs-red: #ff0000;
+  --kick-green: #53fc18;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--iabs-red);
+  border-radius: 10px;
+}
+
+.neon-glow-red {
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+.neon-glow-green {
+  box-shadow: 0 0 20px rgba(83, 252, 24, 0.5);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
