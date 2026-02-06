@@ -155,7 +155,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                 </p>
 
                 {/* Dynamic Input Grid - Center it */}
-                <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-12 direction-ltr max-w-full">
+                <div style={{ direction: 'ltr' }} className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-12 max-w-full">
                     {pin.map((digit, i) => (
                         <input
                             key={i}
