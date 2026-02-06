@@ -600,6 +600,9 @@ const App: React.FC = () => {
     }
   };
 
+  if (isAuthenticating) return <div className="h-screen w-screen bg-black" />;
+  if (!isAuthenticated) return <GlobalLoginPage />;
+
   return (
     <Layout currentView={currentView as ViewState} onChangeView={(v) => setCurrentView(v)}>
       {showWelcome && <WelcomeGate />}
