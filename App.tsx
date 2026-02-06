@@ -91,9 +91,7 @@ const App: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(true);
 
   // Authorization State
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(() => {
-    return localStorage.getItem('site_access_granted') === 'true';
-  });
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
 
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
