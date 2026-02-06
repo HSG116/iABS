@@ -17,6 +17,7 @@ import { TerritoryWar } from './components/TerritoryWar';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GlobalAnnouncement } from './components/GlobalAnnouncement';
 import { ViewState } from './types';
+import { GlobalPasswordPage } from './components/GlobalPasswordPage';
 import {
   Trophy, Play, Lock, User, Swords, Image as ImageIcon,
   RotateCw, Gift, Flag, Users2, Keyboard, Gem, Coffee,
@@ -88,6 +89,11 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState | 'ADMIN_LOGIN' | 'ADMIN_PANEL'>('HOME');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+
+  // Authorization State
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(() => {
+    return localStorage.getItem('site_access_granted') === 'true';
+  });
 
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
@@ -479,8 +485,11 @@ const App: React.FC = () => {
 
   return (
     <Layout currentView={currentView as ViewState} onChangeView={(v) => setCurrentView(v)}>
-      {showWelcome && <WelcomeGate />}
-      {renderContent()}
+      {!isAuthorized && <GlobalPasswordPage onSuccess={() => setIsAuthorized(true)} />}
+
+      {/* Only show content if authorized */}
+      {isAuthorized && showWelcome && <WelcomeGate />}
+      {isAuthorized && renderContent()}
 
       {activeAnnouncement && (
         <GlobalAnnouncement
@@ -493,3 +502,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
