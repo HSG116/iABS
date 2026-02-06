@@ -4,11 +4,23 @@ import { supabase } from '../services/supabase';
 
 interface GlobalPasswordPageProps {
     onSuccess: () => void;
+    storageKey?: string;
+    title?: string;
+    subtitle?: string;
+    newTitle?: string;
+    returningTitle?: string;
 }
 
 type AuthStep = 'LOADING' | 'PASSWORD' | 'FINGERPRINT' | 'SCANNING' | 'SUCCESS' | 'WELCOME';
 
-export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSuccess }) => {
+export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
+    onSuccess,
+    storageKey = 'site_access_granted',
+    title,
+    subtitle = 'RESTRICTED ACCESS AREA',
+    newTitle = 'بروتوكول الأمان',
+    returningTitle = 'تسجيل الدخول'
+}) => {
     const [step, setStep] = useState<AuthStep>('LOADING');
     const [pin, setPin] = useState<string[]>([]);
     const [targetPin, setTargetPin] = useState<string | null>(null);
@@ -30,7 +42,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
     useEffect(() => {
         const initAuth = async () => {
             // 1. Check LocalStorage for existing access
-            const hasAccess = localStorage.getItem('site_access_granted');
+            const hasAccess = localStorage.getItem(storageKey);
             if (hasAccess === 'true') {
                 setUserType('RETURNING');
                 setStep('FINGERPRINT'); // Skip password, go to fingerprint
@@ -134,7 +146,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
         setStep('SUCCESS');
 
         // Save persistence now
-        localStorage.setItem('site_access_granted', 'true');
+        localStorage.setItem(storageKey, 'true');
 
         // Wait for "Access Granted" / "Welcome Back" message
         setTimeout(() => {
@@ -169,10 +181,10 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                         </div>
 
                         <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter mb-4 text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-500 drop-shadow-2xl">
-                            {userType === 'NEW' ? 'بروتوكول الأمان' : 'تسجيل الدخول'}
+                            {userType === 'NEW' ? (title || newTitle) : (title || returningTitle)}
                         </h2>
                         <p className="text-red-500 font-bold tracking-[0.5em] text-sm md:text-base uppercase mb-16 text-center drop-shadow-[0_0_10px_rgba(255,0,0,0.5)]">
-                            RESTRICTED ACCESS AREA
+                            {subtitle}
                         </p>
 
                         <div style={{ direction: 'ltr' }} className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-12">
@@ -213,7 +225,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
 
                         <div className="mb-20 text-center space-y-4 relative z-20">
                             <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400 drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                                {userType === 'NEW' ? 'تأكيد الهوية' : 'المصادقة البيومترية'}
+                                {userType === 'NEW' ? (title || newTitle) : (title || returningTitle)}
                             </h2>
                             <p className="text-white/60 text-lg md:text-xl font-bold tracking-[0.5em] uppercase animate-pulse">
                                 {step === 'SCANNING' ? 'ANALYZING BIOMETRIC DATA...' : 'TOUCH SENSOR TO PROCEED'}
@@ -280,7 +292,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                         </div>
 
                         <h2 className="text-6xl md:text-8xl font-black italic text-white mb-6 tracking-tighter drop-shadow-2xl">
-                            {userType === 'NEW' ? 'تمت العملية' : 'أهلاً بك'}
+                            {userType === 'NEW' ? 'تمت المصادقة' : 'أهلاً بك'}
                         </h2>
                         <p className="text-green-500 font-bold tracking-[0.6em] text-2xl uppercase drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] animate-pulse">
                             ACCESS AUTHORIZED

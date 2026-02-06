@@ -241,19 +241,14 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'ADMIN_PANEL': return <AdminDashboard onLogout={handleGoHome} />;
       case 'ADMIN_LOGIN': return (
-        <div className="flex-1 w-full flex flex-col items-center justify-center animate-in zoom-in">
-          <div className="glass-card p-10 rounded-[2.5rem] border border-red-500/30 text-center w-full max-w-md relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-red-600"></div>
-            <Lock size={48} className="mx-auto text-red-500 mb-6" />
-            <h2 className="text-2xl font-black text-white mb-6">منطقة الإدارة المحظورة</h2>
-            <input type="password" value={adminPasswordInput} onChange={(e) => setAdminPasswordInput(e.target.value)} placeholder="أدخل كود التصريح..." className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-center text-white font-bold mb-4 focus:border-red-500 focus:outline-none" onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()} />
-            {loginError && <p className="text-red-500 text-sm font-bold mb-4 animate-pulse">{loginError}</p>}
-            <div className="flex gap-3">
-              <button onClick={handleGoHome} className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl font-bold">إلغاء</button>
-              <button onClick={handleAdminLogin} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)]">دخول</button>
-            </div>
-          </div>
-        </div>
+        <GlobalPasswordPage
+          onSuccess={() => setCurrentView('ADMIN_PANEL')}
+          storageKey="admin_access_granted"
+          title="بوابة الإدارة"
+          subtitle="SYSTEM ADMINISTRATION"
+          newTitle="التحقق الإداري"
+          returningTitle="دخول المشرف"
+        />
       );
       case 'FAWAZIR_SELECT': return <CategorySelect onSelect={handleCategorySelect} onBack={handleGoHome} />;
       case 'FAWAZIR_GAME': return selectedCategory ? <FawazirGame category={selectedCategory} onFinish={() => setCurrentView('LEADERBOARD')} onHome={handleGoHome} /> : null;
