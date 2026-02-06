@@ -219,169 +219,118 @@ const App: React.FC = () => {
   );
 
   const GlobalLoginPage = () => {
-    const [pin, setPin] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
+    const [pin, setPin] = useState<string[]>(Array(8).fill(''));
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // ALLOW ALL CHARACTERS (Letters + Numbers)
-      const val = e.target.value.slice(0, 8);
-      setPin(val);
-      setGlobalPasswordInput(val);
+    const handleInputChange = (index: number, value: string) => {
+      const newPin = [...pin];
+      // Keep only last char if user types really fast
+      const val = value.slice(-1);
+      newPin[index] = val;
+      setPin(newPin);
 
-      // Auto-trigger only if it reaches 8 and we're sure it's the right length
-      // But better to let them press Enter if it's a variable password
-      if (val.length === 8) {
-        handleGlobalLogin(val);
+      // Move focus forward
+      if (val !== '' && index < 7) {
+        inputRefs.current[index + 1]?.focus();
+      }
+
+      // Check if complete
+      const finalPin = newPin.join('');
+      setGlobalPasswordInput(finalPin);
+      if (finalPin.length === 8) {
+        handleGlobalLogin(finalPin);
       }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && pin.length > 0) {
-        handleGlobalLogin(pin);
+    const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Backspace' && pin[index] === '' && index > 0) {
+        inputRefs.current[index - 1]?.focus();
       }
-    };
-
-    // Focus Management
-    const focusInput = () => {
-      if (inputRef.current && !isLoginSuccess) {
-        inputRef.current.focus();
+      if (e.key === 'Enter') {
+        const finalPin = pin.join('');
+        if (finalPin.length > 0) handleGlobalLogin(finalPin);
       }
     };
 
     useEffect(() => {
-      focusInput();
-      // Keep trying to focus on mount to beat browser delays
-      const timer = setTimeout(focusInput, 100);
+      // Focus first box on mount
+      const timer = setTimeout(() => inputRefs.current[0]?.focus(), 500);
       return () => clearTimeout(timer);
     }, []);
 
     // Reset pin on error
     useEffect(() => {
       if (globalLoginError) {
-        setPin('');
+        setPin(Array(8).fill(''));
+        inputRefs.current[0]?.focus();
       }
     }, [globalLoginError]);
 
     return (
-      <div
-        className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl cursor-text"
-        dir="rtl"
-        onClick={focusInput}
-      >
-        {/* Deep Cinematic Background */}
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl" dir="rtl">
+        {/* Backdrop */}
         <div className="absolute inset-0 pointer-events-none">
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
           <div className="absolute inset-0 bg-[#020202] [mask-image:radial-gradient(circle_at_center,transparent_0%,black_100%)] opacity-80"></div>
-          {/* Subtle Cyber Grid */}
-          <div className="absolute inset-0 opacity-[0.02]"
-            style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
-
+          <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
           <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
         </div>
 
-        {/* The MASTER Input - Improved visibility for browser focus support */}
-        <input
-          ref={inputRef}
-          type="text"
-          autoFocus
-          autoComplete="one-time-code"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck="false"
-          maxLength={8}
-          value={pin}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          // We use absolute positioning but keep it "real" for the browser
-          className="absolute opacity-[0.01] pointer-events-auto z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[100px] text-[40px]"
-        />
-
-        {/* UI Layer */}
-        <div className="relative z-10 w-full max-w-5xl px-4 pointer-events-none">
-          <div className="relative animate-in slide-in-from-bottom-10 duration-1000">
-            {/* Glow Aura */}
-            <div className={`absolute -inset-20 blur-[120px] rounded-full transition-all duration-1000 ${isLoginSuccess ? 'bg-green-500/15' : 'bg-red-600/15'}`}></div>
-
+        {/* UI Container */}
+        <div className="relative z-10 w-full max-w-5xl px-4">
+          <div className="relative animate-in zoom-in duration-700">
             <div className={`bg-black/90 border border-white/10 rounded-[4rem] p-10 md:p-16 shadow-2xl backdrop-blur-3xl relative overflow-hidden transition-all duration-700 ${isLoginSuccess ? 'border-green-500 scale-105 shadow-green-500/20' : 'border-white/5'}`}>
 
               {/* Success Overlay */}
               {isLoginSuccess && (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-700">
-                  <div className="relative mb-10">
-                    <div className="absolute inset-0 bg-green-500 blur-3xl animate-pulse opacity-40 scale-150"></div>
-                    <ShieldCheck size={140} className="text-green-500 animate-[bounce_1s_infinite]" />
-                  </div>
-                  <h2 className="text-8xl font-black text-white italic tracking-tighter mb-4">تـم الـتـصـريح</h2>
+                  <ShieldCheck size={140} className="text-green-500 animate-[bounce_1s_infinite] mb-8" />
+                  <h2 className="text-8xl font-black text-white italic mb-4">تـم الـتـصـريح</h2>
                   <p className="text-green-500 font-black tracking-[0.8em] text-[10px] uppercase">Access Granted</p>
                 </div>
               )}
 
               <div className="text-center mb-12">
-                <div className="relative inline-block mb-6">
-                  <div className={`absolute inset-0 blur-[40px] rounded-full scale-150 animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/30' : 'bg-red-600/30'}`}></div>
-                  <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-40 mx-auto relative z-10 drop-shadow-[0_0_50px_rgba(255,0,0,0.7)] animate-float" alt="Logo" />
-                </div>
-
-                <h1 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter uppercase mb-4 drop-shadow-2xl">كـود الـدخول</h1>
-                <p className="text-red-500 font-black tracking-[0.6em] text-[10px] uppercase italic opacity-60">Quantum Security Activation Layer</p>
+                <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-40 mx-auto mb-8 drop-shadow-[0_0_50px_rgba(255,0,0,0.7)] animate-float" alt="Logo" />
+                <h1 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter uppercase mb-2">كـود الـدخول</h1>
+                <p className="text-red-500 font-black tracking-[0.5em] text-[10px] uppercase italic opacity-50">Sovereign Encryption Layer</p>
               </div>
 
-              {/* Display Boxes (Increased to 8) */}
+              {/* REAL INPUT GRID */}
               <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-12 direction-ltr">
-                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
-                  const char = pin[i];
-                  const hasValue = !!char;
-                  const isCurrent = pin.length === i;
-                  return (
-                    <div key={i} className="relative">
-                      <div className={`
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <div key={i} className="relative group">
+                    <input
+                      ref={el => inputRefs.current[i] = el}
+                      type="text"
+                      maxLength={1}
+                      value={pin[i]}
+                      onChange={(e) => handleInputChange(i, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(i, e)}
+                      className={`
                         w-10 h-16 md:w-20 md:h-28 rounded-2xl flex items-center justify-center transition-all duration-300
-                        border-2 text-white text-3xl md:text-5xl font-black
-                        ${isCurrent ? 'bg-red-600/10 border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)] scale-110 translate-y-[-4px]' : hasValue ? 'bg-white/5 border-red-600/40' : 'bg-black/60 border-white/5'}
-                      `}>
-                        {char ? (
-                          <span className="drop-shadow-[0_0_15px_rgba(255,255,255,1)] opacity-80">*</span>
-                        ) : isCurrent ? (
-                          <div className="w-[3px] h-8 md:h-12 bg-red-600 animate-pulse rounded-full shadow-[0_0_15px_rgba(220,38,38,1)]"></div>
-                        ) : null}
-                      </div>
-
-                      {/* Box Glow */}
-                      <div className={`absolute -inset-1 blur-md transition-opacity duration-500 ${isCurrent ? 'opacity-100 bg-red-600/10' : 'opacity-0'}`}></div>
-                    </div>
-                  );
-                })}
+                        border-2 text-white text-3xl md:text-5xl font-black text-center bg-transparent outline-none
+                        ${pin[i] !== '' ? 'border-red-600/60 bg-white/5' : 'border-white/10 bg-black/40'}
+                        focus:border-red-500 focus:bg-red-600/10 focus:shadow-[0_0_25px_rgba(220,38,38,0.4)] focus:scale-110 focus:translate-y-[-4px]
+                      `}
+                      style={{ WebkitTextSecurity: 'disc' }}
+                    />
+                  </div>
+                ))}
               </div>
 
-              {/* Status Message */}
-              <div className="min-h-[80px] flex flex-col items-center justify-center mb-8">
+              {/* Status Section */}
+              <div className="min-h-[100px] flex flex-col items-center justify-center">
                 {globalLoginError ? (
                   <div className="flex items-center gap-4 text-red-500 font-black bg-red-950/30 px-10 py-5 rounded-full border border-red-600/40 animate-[shake_0.6s_ease-in-out]">
-                    <AlertTriangle size={32} className="animate-pulse" />
-                    <span className="text-xl md:text-2xl uppercase tracking-tighter italic">{globalLoginError}</span>
+                    <AlertTriangle size={32} />
+                    <span className="text-xl md:text-2xl uppercase italic">{globalLoginError}</span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="text-white/20 font-black text-[9px] uppercase tracking-[0.8em] animate-pulse">
-                      Awaiting Authentication Key
-                    </div>
-                    {pin.length > 0 && (
-                      <div className="text-[10px] text-red-500 font-bold uppercase animate-pulse">
-                        Press Enter to confirm key
-                      </div>
-                    )}
+                  <div className="text-white/20 font-black text-[9px] uppercase tracking-[0.8em] animate-pulse flex items-center gap-3">
+                    <Lock size={16} /> Awaiting Terminal Authentication
                   </div>
                 )}
-              </div>
-
-              {/* Technical Indicator */}
-              <div className="pt-8 border-t border-white/5 flex flex-col items-center gap-4">
-                <div className="flex gap-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" style={{ animationDelay: `${i * 300}ms` }}></div>
-                  ))}
-                </div>
-                <p className="text-white/10 text-[8px] uppercase tracking-[0.6em] font-black">Encrypted via iABS Sovereign Core 2026</p>
               </div>
             </div>
           </div>
@@ -389,12 +338,11 @@ const App: React.FC = () => {
 
         <style>{`
           @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-            20%, 40%, 60%, 80% { transform: translateX(10px); }
+             0%, 100% { transform: translateX(0); }
+             10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+             20%, 40%, 60%, 80% { transform: translateX(10px); }
           }
           .direction-ltr { direction: ltr; }
-          .caret-transparent { caret-color: transparent; }
         `}</style>
       </div>
     );
