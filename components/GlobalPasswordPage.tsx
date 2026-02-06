@@ -183,6 +183,13 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                         <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter mb-4 text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-500 drop-shadow-2xl">
                             {userType === 'NEW' ? (title || newTitle) : (title || returningTitle)}
                         </h2>
+
+                        {/* Security Warning */}
+                        <div className="mb-8 bg-red-900/40 border border-red-500/30 px-6 py-2 rounded-full animate-pulse flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
+                            <p className="text-red-200 font-bold text-sm tracking-wider">يرجى إخفاء الشاشة الآن</p>
+                        </div>
+
                         <p className="text-red-500 font-bold tracking-[0.5em] text-sm md:text-base uppercase mb-16 text-center drop-shadow-[0_0_10px_rgba(255,0,0,0.5)]">
                             {subtitle}
                         </p>
