@@ -263,7 +263,7 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderContent = () => {
+  const renderContent = (obsMode: boolean = false) => {
     switch (currentView) {
       case 'ADMIN_PANEL': return <AdminDashboard onLogout={handleGoHome} />;
       case 'ADMIN_LOGIN': return (
@@ -277,18 +277,18 @@ const App: React.FC = () => {
         />
       );
       case 'FAWAZIR_SELECT': return <CategorySelect onSelect={handleCategorySelect} onBack={handleGoHome} />;
-      case 'FAWAZIR_GAME': return selectedCategory ? <FawazirGame category={selectedCategory} onFinish={() => setCurrentView('LEADERBOARD')} onHome={handleGoHome} /> : null;
-      case 'MUSICAL_CHAIRS': return <MusicalChairsGame onHome={handleGoHome} />;
-      case 'MASAQIL_WAR': return <MasaqilWar channelConnected={true} onHome={handleGoHome} />;
-      case 'BLUR_GUESS': return <BlurGuess channelConnected={true} onHome={handleGoHome} />;
-      case 'SPIN_WHEEL': return <SpinWheel channelConnected={true} onHome={handleGoHome} />;
-      case 'RAFFLE': return <Raffle channelConnected={true} onHome={handleGoHome} />;
-      case 'FLAG_QUIZ': return <FlagQuiz channelConnected={true} onHome={handleGoHome} />;
-      case 'TEAM_BATTLE': return <TeamBattle channelConnected={true} onHome={handleGoHome} />;
-      case 'TYPING_RACE': return <TypingRace channelConnected={true} onHome={handleGoHome} />;
-      case 'GRID_HUNT': return <GridHunt channelConnected={true} onHome={handleGoHome} />;
-      case 'CUP_SHUFFLE': return <CupShuffle channelConnected={true} onHome={handleGoHome} />;
-      case 'TERRITORY_WAR': return <TerritoryWar channelConnected={true} onHome={handleGoHome} />;
+      case 'FAWAZIR_GAME': return selectedCategory ? <FawazirGame category={selectedCategory} onFinish={() => setCurrentView('LEADERBOARD')} onHome={handleGoHome} isOBS={obsMode} /> : null;
+      case 'MUSICAL_CHAIRS': return <MusicalChairsGame onHome={handleGoHome} isOBS={obsMode} />;
+      case 'MASAQIL_WAR': return <MasaqilWar channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'BLUR_GUESS': return <BlurGuess channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'SPIN_WHEEL': return <SpinWheel channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'RAFFLE': return <Raffle channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'FLAG_QUIZ': return <FlagQuiz channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'TEAM_BATTLE': return <TeamBattle channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'TYPING_RACE': return <TypingRace channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'GRID_HUNT': return <GridHunt channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'CUP_SHUFFLE': return <CupShuffle channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'TERRITORY_WAR': return <TerritoryWar channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
 
       case 'LEADERBOARD': return (
         <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto w-full pt-10 px-6 h-full flex flex-col items-center">
@@ -510,8 +510,8 @@ const App: React.FC = () => {
 
   if (isOBSMode) {
     return (
-      <div className="w-full h-screen bg-transparent overflow-hidden flex items-center justify-center">
-        {renderContent()}
+      <div className="fixed inset-0 bg-transparent overflow-hidden flex items-center justify-center z-[99999]">
+        {renderContent(true)}
       </div>
     );
   }
@@ -527,7 +527,7 @@ const App: React.FC = () => {
 
       {/* Only show content if authorized */}
       {isAuthorized && showWelcome && <WelcomeGate />}
-      {isAuthorized && renderContent()}
+      {isAuthorized && renderContent(false)}
 
       {activeAnnouncement && (
         <GlobalAnnouncement

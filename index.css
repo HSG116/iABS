@@ -9,6 +9,16 @@
 
 body.obs-mode {
   background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden !important;
+}
+
+body.obs-mode * {
+  scrollbar-width: none !important;
+}
+
+body.obs-mode *::-webkit-scrollbar {
+  display: none !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

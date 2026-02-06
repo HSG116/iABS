@@ -20,6 +20,7 @@ interface FawazirGameProps {
   category: string;
   onFinish: () => void;
   onHome: () => void;
+  isOBS?: boolean;
 }
 
 interface GameSettings {
@@ -33,7 +34,7 @@ interface GameSettings {
   winnerDuration: number;
 }
 
-export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, onHome }) => {
+export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, onHome, isOBS }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timer, setTimer] = useState(20);
@@ -294,26 +295,31 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
   }
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center overflow-hidden transition-all duration-1000 bg-cover bg-center" style={{ backgroundImage }}>
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]"></div>
+    <div className={`absolute inset-0 flex items-center justify-center overflow-hidden transition-all duration-1000 bg-cover bg-center ${isOBS ? 'bg-none' : ''}`} style={{ backgroundImage: isOBS ? 'none' : backgroundImage }}>
+      {!isOBS && <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]"></div>}
 
       <div className="relative z-10 w-full h-full flex flex-col items-center p-8 max-w-7xl">
-        <div className="w-full flex justify-between items-center mb-12">
-          <button onClick={onHome} className="p-4 bg-black/60 rounded-3xl border border-white/10 text-white hover:bg-red-600 transition-all shadow-xl group">
-            <ChevronLeft size={28} className="rotate-180 group-hover:scale-110" />
-          </button>
-          <img src={logoImage} className="h-20 drop-shadow-2xl" />
-          <div className="flex flex-col gap-2 items-end">
-            <div className="bg-black/80 px-8 py-3 rounded-2xl border border-white/10 flex items-center gap-4 shadow-2xl">
-              <span className="text-xs font-black text-gray-500 uppercase">الجولة</span>
-              <span className="text-4xl font-black text-white italic font-mono">{currentIndex + 1}/{questions.length}</span>
-            </div>
-            <div className={`bg-black/80 px-8 py-3 rounded-2xl border-2 flex items-center gap-4 shadow-2xl transition-all ${timer < 5 ? 'border-red-600 text-red-600 animate-pulse' : 'border-white/10 text-white'}`}>
-              <Clock size={24} />
-              <span className="text-4xl font-black font-mono italic">{timer}s</span>
+        {(!isOBS || gameState !== 'PRE_START') && (
+          <div className="w-full flex justify-between items-center mb-12">
+            {!isOBS && (
+              <button onClick={onHome} className="p-4 bg-black/60 rounded-3xl border border-white/10 text-white hover:bg-red-600 transition-all shadow-xl group">
+                <ChevronLeft size={28} className="rotate-180 group-hover:scale-110" />
+              </button>
+            )}
+            {isOBS && <div className="w-14"></div>}
+            <img src={logoImage} className={`h-20 drop-shadow-2xl ${isOBS ? 'opacity-50' : ''}`} />
+            <div className="flex flex-col gap-2 items-end">
+              <div className="bg-black/80 px-8 py-3 rounded-2xl border border-white/10 flex items-center gap-4 shadow-2xl">
+                <span className="text-xs font-black text-gray-500 uppercase">الجولة</span>
+                <span className="text-4xl font-black text-white italic font-mono">{currentIndex + 1}/{questions.length}</span>
+              </div>
+              <div className={`bg-black/80 px-8 py-3 rounded-2xl border-2 flex items-center gap-4 shadow-2xl transition-all ${timer < 5 ? 'border-red-600 text-red-600 animate-pulse' : 'border-white/10 text-white'}`}>
+                <Clock size={24} />
+                <span className="text-4xl font-black font-mono italic">{timer}s</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {gameState === 'PRE_START' ? (
           <div className="flex-1 w-full flex items-center justify-center animate-in zoom-in overflow-y-auto custom-scrollbar p-4">

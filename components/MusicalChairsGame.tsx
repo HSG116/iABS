@@ -9,6 +9,7 @@ import { leaderboardService } from '../services/supabase';
 
 interface MusicalChairsGameProps {
    onHome: () => void;
+   isOBS?: boolean;
 }
 
 type Difficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'RANDOM';
@@ -136,7 +137,7 @@ const STICKERS_EMOJI = [
 const ALL_STICKERS = [...STICKERS_IABS, ...STICKERS_GENERAL, ...STICKERS_EMOJI];
 const ALL_JOIN_STICKERS = ALL_STICKERS.map(s => s.name.toLowerCase());
 
-export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) => {
+export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, isOBS }) => {
    const [config, setConfig] = useState<GameConfig>({
       joinKeyword: 'دخول',
       maxPlayers: 100,
@@ -447,8 +448,14 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome }) 
       }
    };
 
+   useEffect(() => {
+      if (isOBS && phase === 'SETUP') {
+         setPhase('LOBBY');
+      }
+   }, [isOBS, phase]);
+
    return (
-      <div className="w-full h-full flex flex-col items-center bg-transparent text-right font-display select-none" dir="rtl">
+      <div className={`w-full h-full flex flex-col items-center bg-transparent text-right font-display select-none ${isOBS ? 'overflow-hidden' : ''}`} dir="rtl">
          <audio ref={audioRef} />
 
          <style>{`
