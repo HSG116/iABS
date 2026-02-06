@@ -1,40 +1,83 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Lock, Unlock, Sparkles } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 interface GlobalPasswordPageProps {
     onSuccess: () => void;
 }
 
 export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSuccess }) => {
-    const [pin, setPin] = useState<string[]>(['', '', '', '', '', '']);
+    const [pin, setPin] = useState<string[]>([]);
+    const [targetPin, setTargetPin] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(false);
     const [shake, setShake] = useState(false);
     const [success, setSuccess] = useState(false);
     const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
-    // correct pin
-    const CORRECT_PIN = "123456";
-
     useEffect(() => {
-        // Focus first input on mount
-        inputs.current[0]?.focus();
+        const fetchConfig = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('app_config')
+                    .select('value')
+                    .eq('key', 'admin_password')
+                    .single();
+
+                if (data && data.value) {
+                    const pass = data.value;
+                    setTargetPin(pass);
+                    setPin(new Array(pass.length).fill(''));
+                    // Initialize refs array based on length
+                    inputs.current = inputs.current.slice(0, pass.length);
+                } else {
+                    // Fallback
+                    console.warn("No admin_password found in app_config, using fallback");
+                    const fallback = "123456";
+                    setTargetPin(fallback);
+                    setPin(new Array(fallback.length).fill(''));
+                }
+            } catch (e) {
+                console.error("Failed to fetch password config:", e);
+                const fallback = "123456";
+                setTargetPin(fallback);
+                setPin(new Array(fallback.length).fill(''));
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchConfig();
     }, []);
 
+    // Focus first input when loading is done
+    useEffect(() => {
+        if (!isLoading && inputs.current[0]) {
+            // slight delay to ensure render
+            setTimeout(() => inputs.current[0]?.focus(), 100);
+        }
+    }, [isLoading]);
+
     const handleInput = (index: number, value: string) => {
-        if (!/^\d*$/.test(value)) return; // Only allow numbers
+        // Allow alphanumeric, so no regex restriction unless we want only numbers
+        // The user said "6 squares" which implies numbers usually, but admin_password is "admin123" by default.
+        // So we must allow letters.
+
+        // Take only the last character entered
+        const char = value.slice(-1);
 
         const newPin = [...pin];
-        newPin[index] = value.slice(-1); // Take only the last character entered
+        newPin[index] = char;
         setPin(newPin);
 
         // Auto-advance
-        if (value && index < 5) {
+        if (char && index < pin.length - 1) {
             inputs.current[index + 1]?.focus();
         }
 
         // Check if complete
-        if (newPin.every(d => d !== '') && index === 5 && value) {
-            verifyPin(newPin.join(''));
+        if (newPin.every(d => d !== '') && index === pin.length - 1 && char && targetPin) {
+            // Small delay to allow render of last char before verifying
+            setTimeout(() => verifyPin(newPin.join('')), 50);
         }
     };
 
@@ -46,7 +89,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
     };
 
     const verifyPin = (enteredPin: string) => {
-        if (enteredPin === CORRECT_PIN) {
+        if (enteredPin === targetPin) {
             setSuccess(true);
             setTimeout(() => {
                 localStorage.setItem('site_access_granted', 'true');
@@ -57,7 +100,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
             setShake(true);
             setTimeout(() => {
                 setShake(false);
-                setPin(['', '', '', '', '', '']); // Clear
+                setPin(new Array(pin.length).fill('')); // Clear
                 inputs.current[0]?.focus();
                 setError(false);
             }, 600);
@@ -78,6 +121,17 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
         );
     }
 
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+                    <div className="text-white/50 animate-pulse tracking-widest text-sm">SECURING CONNECTION...</div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col items-center justify-center font-sans overflow-hidden">
             {/* Background Effects */}
@@ -86,7 +140,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[150px] rounded-full animate-pulse delay-1000"></div>
             </div>
 
-            <div className={`relative z-10 w-full max-w-lg p-10 flex flex-col items-center transition-transform duration-300 ${shake ? 'translate-x-[10px] sm:translate-x-[-10px] animate-shake' : ''}`}>
+            <div className={`relative z-10 w-full max-w-4xl p-10 flex flex-col items-center transition-transform duration-300 ${shake ? 'translate-x-[10px] sm:translate-x-[-10px] animate-shake' : ''}`}>
 
                 <div className="mb-10 relative group">
                     <div className="absolute inset-0 bg-white/5 blur-2xl rounded-full group-hover:bg-white/10 transition-all duration-500"></div>
@@ -100,21 +154,22 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                     Security Access Protocol
                 </p>
 
-                <div className="flex gap-3 md:gap-4 mb-12 direction-ltr">
+                {/* Dynamic Input Grid - Center it */}
+                <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-12 direction-ltr max-w-full">
                     {pin.map((digit, i) => (
                         <input
                             key={i}
                             ref={el => inputs.current[i] = el}
-                            type="password"
-                            inputMode="numeric"
+                            type="text"
+                            inputMode="text"
                             maxLength={1}
                             value={digit}
                             onChange={(e) => handleInput(i, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(i, e)}
                             className={`
-                w-12 h-16 md:w-16 md:h-20 
+                w-10 h-14 md:w-14 md:h-16 lg:w-16 lg:h-20
                 bg-white/5 border-2 rounded-2xl 
-                text-center text-3xl font-black text-white 
+                text-center text-2xl md:text-3xl font-black text-white 
                 focus:outline-none focus:scale-110 transition-all duration-300
                 shadow-[0_4px_20px_rgba(0,0,0,0.5)]
                 ${error
@@ -129,8 +184,8 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                 </div>
 
                 {error && (
-                    <p className="absolute -bottom-12 text-red-500 font-bold tracking-widest animate-bounce">
-                        INCORRECT PIN
+                    <p className="absolute bottom-20 text-red-500 font-bold tracking-widest animate-bounce">
+                        ACCESS DENIED
                     </p>
                 )}
 
@@ -142,13 +197,13 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
             </div>
 
             <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-10px); }
           75% { transform: translateX(10px); }
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         .animate-shake { animation: shake 0.4s ease-in-out; }
         .animate-in { animation-duration: 0.6s; animation-fill-mode: both; }
