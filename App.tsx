@@ -220,32 +220,16 @@ const App: React.FC = () => {
 
   const GlobalLoginPage = () => {
     const [pin, setPin] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
 
-    // Keep focus on the single hidden input
-    const focusInput = () => {
-      if (inputRef.current && !isLoginSuccess) {
-        inputRef.current.focus();
-      }
-    };
-
-    useEffect(() => {
-      focusInput();
-      const t = setTimeout(focusInput, 100);
-      window.addEventListener('click', focusInput);
-      return () => {
-        clearTimeout(t);
-        window.removeEventListener('click', focusInput);
-      };
-    }, []);
-
+    // Simple direct input handler
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value.slice(0, 8); // Limit to 8 chars
-      setPin(val);
-      setGlobalPasswordInput(val);
-
-      if (val.length === 8) {
-        handleGlobalLogin(val);
+      const val = e.target.value;
+      if (val.length <= 8) {
+        setPin(val);
+        setGlobalPasswordInput(val); // Keep global sync
+        if (val.length === 8) {
+          handleGlobalLogin(val);
+        }
       }
     };
 
@@ -255,142 +239,113 @@ const App: React.FC = () => {
       }
     };
 
-    // Reset pin on error
+    // Auto-focus on mount only
     useEffect(() => {
-      if (globalLoginError) {
-        setPin('');
-      }
+      const input = document.getElementById('global-pin-input');
+      if (input) setTimeout(() => input.focus(), 500);
+    }, []);
+
+    // Reset logic
+    useEffect(() => {
+      if (globalLoginError) setPin('');
     }, [globalLoginError]);
 
     return (
-      <div
-        className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans rtl"
-        dir="ltr"
-        onClick={focusInput}
-      >
-        {/* Cinematic Background */}
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#020202] overflow-hidden font-sans" dir="ltr">
+        {/* Background Effects */}
         <div className="absolute inset-0 pointer-events-none">
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
-          <div className="absolute inset-0 bg-[#020202] [mask-image:radial-gradient(circle_at_center,transparent_0%,black_100%)] opacity-80"></div>
+          <div className="absolute inset-0 bg-[#020202] opacity-80" style={{ maskImage: 'radial-gradient(circle at center, transparent 0%, black 100%)' }}></div>
           <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
-
-          <div className="absolute inset-0 opacity-[0.03]"
-            style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '40px 40px' }}>
-          </div>
         </div>
 
-        {/* content container */}
-        <div className="relative z-10 w-full max-w-5xl px-4 animate-in zoom-in duration-700">
+        {/* Main Card */}
+        <div className="relative z-10 w-full max-w-5xl px-4 animate-in zoom-in duration-500">
           <div className={`
-             bg-black/80 backdrop-blur-2xl border-2 rounded-[3rem] p-8 md:p-16 shadow-[0_0_100px_rgba(0,0,0,0.8)]
-             relative overflow-hidden transition-all duration-1000
-             ${isLoginSuccess ? 'border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.2)] scale-105' : 'border-white/10 shadow-[0_0_50px_rgba(220,38,38,0.1)]'}
+             bg-black/90 backdrop-blur-3xl border-2 rounded-[3rem] p-10 md:p-16 
+             shadow-2xl relative overflow-hidden transition-all duration-700
+             ${isLoginSuccess ? 'border-green-500 shadow-green-900/50' : 'border-white/10 shadow-red-900/20'}
           `}>
 
-            {/* The Invisible Master Input */}
-            <input
-              ref={inputRef}
-              type="text"
-              autoFocus
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
-              value={pin}
-              onChange={handleInput}
-              onKeyDown={handleKeyDown}
-              className="absolute inset-0 w-full h-full opacity-0 z-50 cursor-pointer caret-transparent"
-              style={{ fontSize: '1px' }} // Tiny font to avoid cursor artifacts
-            />
-
-            {/* Success Animation Overlay */}
-            {isLoginSuccess && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-500 pointer-events-none">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-green-500 blur-[60px] opacity-40 rounded-full animate-pulse"></div>
-                  <ShieldCheck size={120} className="text-green-500 relative z-10 animate-[bounce_1s_infinite]" />
-                </div>
-                <h2 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter mt-8 mb-2 drop-shadow-[0_0_20px_rgba(34,197,94,0.8)]">
-                  تـم الـتـصـريح
-                </h2>
-                <div className="h-1 w-32 bg-green-500 rounded-full my-4"></div>
-                <p className="text-green-500 font-bold tracking-[0.5em] text-sm uppercase animate-pulse">
-                  ACCESS GRANTED - SYSTEM UNLOCKED
-                </p>
-              </div>
-            )}
-
-            <div className="text-center mb-12 pointer-events-none">
-              <div className="relative inline-block group">
-                <div className={`absolute inset-0 blur-[50px] transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/30' : 'bg-red-600/30'}`}></div>
-                <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 md:h-40 mx-auto mb-6 relative z-10 drop-shadow-[0_0_30px_rgba(255,0,0,0.5)] animate-float" alt="Logo" />
-              </div>
-              <h1 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter uppercase mb-3 drop-shadow-2xl">
-                كـود الـدخول
-              </h1>
-              <p className="text-red-500 font-bold tracking-[0.4em] text-[10px] md:text-xs uppercase opacity-70">
-                Secure Access Terminal v2.0
-              </p>
+            {/* Header */}
+            <div className="text-center mb-10 pointer-events-none">
+              <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-32 md:h-40 mx-auto mb-6 drop-shadow-[0_0_30px_rgba(255,0,0,0.5)] animate-float" alt="Logo" />
+              <h1 className="text-6xl md:text-7xl font-black text-white italic tracking-tighter uppercase mb-2">كـود الـدخول</h1>
+              <p className="text-red-500 font-bold tracking-[0.5em] text-xs uppercase opacity-60">System Access v3.0</p>
             </div>
 
-            {/* Visual Output Grid */}
-            <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-10 pointer-events-none">
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
-                const char = pin[i] || ''; // Get char at index
-                const isActive = i === pin.length; // Is this the next box to fill?
-                const isFilled = char !== '';
+            {/* INTERACTIVE AREA: This holds both the hidden input and the visual boxes */}
+            <div className="relative max-w-4xl mx-auto mb-12">
 
-                return (
-                  <div key={i} className="relative group">
-                    <div className={`
-                      w-10 h-14 md:w-16 md:h-24 rounded-xl md:rounded-2xl
-                      bg-white/5 border-2 text-center text-2xl md:text-4xl font-black text-white
-                      flex items-center justify-center transition-all duration-300
-                      ${isFilled ? 'border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] bg-red-900/10' : 'border-white/10'}
-                      ${isActive ? 'border-red-500 scale-110 bg-black shadow-[0_0_25px_rgba(220,38,38,0.6)] z-10' : ''}
+              {/* 1. The Real Input (Invisible overlay) */}
+              <input
+                id="global-pin-input"
+                type="text"
+                autoFocus
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                value={pin}
+                onChange={handleInput}
+                onKeyDown={handleKeyDown}
+                className="absolute inset-0 w-full h-full z-50 opacity-0 cursor-text"
+                style={{ fontSize: '40px' }} // prevent zoom on mobile
+              />
+
+              {/* 2. The Visual Boxes (Rendered below input) */}
+              <div className="flex justify-center flex-wrap gap-3 md:gap-5 pointer-events-none">
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+                  const char = pin[i];
+                  const isActive = i === pin.length;
+                  const isFilled = !!char;
+
+                  return (
+                    <div key={i} className={`
+                      relative w-12 h-16 md:w-20 md:h-28 rounded-2xl border-2 flex items-center justify-center
+                      transition-all duration-200
+                      ${isActive ? 'border-red-500 bg-red-600/10 scale-110 shadow-[0_0_30px_rgba(220,38,38,0.5)]' :
+                        isFilled ? 'border-red-600/50 bg-white/5' : 'border-white/10 bg-black/50'}
                     `}>
-                      {isFilled ? char : ''} {/* Show char or nothing */}
+                      <span className="text-3xl md:text-5xl font-black text-white drop-shadow-md">
+                        {char || (isActive && <div className="w-1 h-8 bg-red-500 animate-pulse" />)}
+                      </span>
                     </div>
-
-                    {/* Active/Filled Accents */}
-                    {(isFilled || isActive) && (
-                      <>
-                        <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-red-500 rounded-tl-lg"></div>
-                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-red-500 rounded-br-lg"></div>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Status Message */}
-            <div className="min-h-[80px] flex items-center justify-center pointer-events-none">
+            {/* Status / Error */}
+            <div className="min-h-[60px] flex items-center justify-center">
               {globalLoginError ? (
-                <div className="flex items-center gap-3 bg-red-950/40 border border-red-600/50 px-8 py-4 rounded-full animate-[shake_0.5s_ease-in-out]">
-                  <AlertTriangle className="text-red-500 animate-pulse" size={24} />
-                  <span className="text-red-500 font-bold uppercase tracking-wider text-sm md:text-base">
-                    {globalLoginError}
-                  </span>
+                <div className="flex items-center gap-3 bg-red-950/50 border border-red-500/50 px-8 py-4 rounded-full animate-shake">
+                  <AlertTriangle className="text-red-500" size={24} />
+                  <span className="text-red-500 font-bold text-lg">{globalLoginError}</span>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 opacity-40">
-                  <div className="w-16 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"></div>
-                  <p className="text-[10px] text-white font-mono uppercase tracking-[0.2em] animate-pulse">
-                    Awaiting Input Sequence...
-                  </p>
+                <div className="text-white/20 text-xs font-mono tracking-widest animate-pulse">
+                  SECURE CONNECTION ESTABLISHED
                 </div>
               )}
             </div>
 
+            {/* Success Overlay */}
+            {isLoginSuccess && (
+              <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-300">
+                <ShieldCheck size={140} className="text-green-500 animate-bounce mb-8" />
+                <h2 className="text-7xl font-black text-white italic">تـم الـتـصـريح</h2>
+              </div>
+            )}
+
           </div>
         </div>
-
         <style>{`
+          .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
           @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
           }
         `}</style>
       </div>
