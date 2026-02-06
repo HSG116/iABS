@@ -173,7 +173,7 @@ const App: React.FC = () => {
 
   const handleGlobalLogin = async (providedPin?: string) => {
     const pinToVerify = providedPin || globalPasswordInput;
-    if (pinToVerify.length !== 6) return;
+    if (!pinToVerify) return;
 
     const isValid = await leaderboardService.verifyAdminPassword(pinToVerify);
 
@@ -223,20 +223,40 @@ const App: React.FC = () => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+      // ALLOW ALL CHARACTERS (Letters + Numbers)
+      const val = e.target.value.slice(0, 8);
       setPin(val);
       setGlobalPasswordInput(val);
-      if (val.length === 6) {
+
+      // Auto-trigger only if it reaches 8 and we're sure it's the right length
+      // But better to let them press Enter if it's a variable password
+      if (val.length === 8) {
         handleGlobalLogin(val);
       }
     };
 
-    // Keep focus
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && pin.length > 0) {
+        handleGlobalLogin(pin);
+      }
+    };
+
+    // Robust Focus Management
     useEffect(() => {
-      const focus = () => inputRef.current?.focus();
-      focus();
-      window.addEventListener('click', focus);
-      return () => window.removeEventListener('click', focus);
+      const focusInput = () => {
+        if (!isLoginSuccess) inputRef.current?.focus();
+      };
+
+      focusInput();
+
+      // Listen to both click and touch for mobile reliability
+      window.addEventListener('click', focusInput);
+      window.addEventListener('touchstart', focusInput);
+
+      return () => {
+        window.removeEventListener('click', focusInput);
+        window.removeEventListener('touchstart', focusInput);
+      };
     }, []);
 
     // Reset pin on error
@@ -253,113 +273,115 @@ const App: React.FC = () => {
           <div className={`absolute inset-0 transition-all duration-1000 ${isLoginSuccess ? 'bg-green-600/10' : 'bg-red-600/10'}`}></div>
           <div className="absolute inset-0 bg-[#020202] [mask-image:radial-gradient(circle_at_center,transparent_0%,black_100%)] opacity-80"></div>
 
-          {/* Tech Grid */}
-          <div className="absolute inset-0 opacity-[0.03]"
-            style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '50px 50px' }}></div>
+          {/* Subtle Cyber Grid */}
+          <div className="absolute inset-0 opacity-[0.02]"
+            style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
 
-          <div className={`absolute top-0 left-0 w-full h-full blur-[120px] opacity-20 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
+          <div className={`absolute top-0 left-0 w-full h-full blur-[150px] opacity-25 transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-500' : 'bg-red-600'}`}></div>
         </div>
 
-        {/* The MASTER Input - Fully transparent but covers the screen area for easy clicking */}
+        {/* The MASTER Input - Transparent but captures everything */}
         <input
           ref={inputRef}
           type="text"
-          inputMode="numeric"
           autoFocus
-          maxLength={6}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+          maxLength={8}
           value={pin}
           onChange={handleInput}
+          onKeyDown={handleKeyDown}
           className="absolute inset-0 w-full h-full opacity-0 z-[100] cursor-default caret-transparent"
         />
 
         {/* UI Layer */}
         <div className="relative z-10 w-full max-w-5xl px-4 pointer-events-none">
-          <div className="relative">
+          <div className="relative animate-in slide-in-from-bottom-10 duration-1000">
             {/* Glow Aura */}
-            <div className={`absolute -inset-20 blur-[100px] rounded-full transition-all duration-1000 ${isLoginSuccess ? 'bg-green-500/20' : 'bg-red-600/20'}`}></div>
+            <div className={`absolute -inset-20 blur-[120px] rounded-full transition-all duration-1000 ${isLoginSuccess ? 'bg-green-500/15' : 'bg-red-600/15'}`}></div>
 
-            <div className={`bg-black/90 border border-white/10 rounded-[4rem] p-12 md:p-20 shadow-2xl backdrop-blur-3xl relative overflow-hidden transition-all duration-700 ${isLoginSuccess ? 'border-green-500 scale-105 shadow-green-500/20' : 'border-white/5'}`}>
+            <div className={`bg-black/90 border border-white/10 rounded-[4rem] p-10 md:p-16 shadow-2xl backdrop-blur-3xl relative overflow-hidden transition-all duration-700 ${isLoginSuccess ? 'border-green-500 scale-105 shadow-green-500/20' : 'border-white/5'}`}>
 
-              {/* Login Success Overlay */}
+              {/* Success Overlay */}
               {isLoginSuccess && (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-700">
                   <div className="relative mb-10">
                     <div className="absolute inset-0 bg-green-500 blur-3xl animate-pulse opacity-40 scale-150"></div>
-                    <ShieldCheck size={120} className="text-green-500 animate-[bounce_1s_infinite]" />
+                    <ShieldCheck size={140} className="text-green-500 animate-[bounce_1s_infinite]" />
                   </div>
                   <h2 className="text-8xl font-black text-white italic tracking-tighter mb-4">تـم الـتـصـريح</h2>
-                  <p className="text-green-500 font-black tracking-[0.6em] text-[10px] uppercase">Access Granted - Initializing Terminal</p>
+                  <p className="text-green-500 font-black tracking-[0.8em] text-[10px] uppercase">Access Granted</p>
                 </div>
               )}
 
-              <div className="text-center mb-16">
-                <div className="relative inline-block mb-8">
+              <div className="text-center mb-12">
+                <div className="relative inline-block mb-6">
                   <div className={`absolute inset-0 blur-[40px] rounded-full scale-150 animate-pulse transition-colors duration-1000 ${isLoginSuccess ? 'bg-green-600/30' : 'bg-red-600/30'}`}></div>
-                  <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-40 mx-auto relative z-10 drop-shadow-[0_0_40px_rgba(220,10,0,0.6)] animate-float" alt="Logo" />
+                  <img src="https://i.ibb.co/pvCN1NQP/95505180312.png" className="h-40 mx-auto relative z-10 drop-shadow-[0_0_50px_rgba(255,0,0,0.7)] animate-float" alt="Logo" />
                 </div>
 
-                <h1 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter uppercase mb-4">كـود الـدخول</h1>
-                <div className="flex items-center justify-center gap-6">
-                  <div className="h-[2px] w-20 bg-gradient-to-l from-transparent via-red-600/40 to-transparent"></div>
-                  <p className="text-red-500 font-black tracking-[0.8em] text-[10px] uppercase italic">Quantum Security Protocol</p>
-                  <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-red-600/40 to-transparent"></div>
-                </div>
+                <h1 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter uppercase mb-4 drop-shadow-2xl">كـود الـدخول</h1>
+                <p className="text-red-500 font-black tracking-[0.6em] text-[10px] uppercase italic opacity-60">Quantum Security Activation Layer</p>
               </div>
 
-              {/* Display Boxes */}
-              <div className="flex justify-center gap-3 md:gap-6 mb-16 direction-ltr">
-                {[0, 1, 2, 3, 4, 5].map((i) => {
-                  const digit = pin[i];
-                  const hasValue = !!digit;
+              {/* Display Boxes (Increased to 8) */}
+              <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-12 direction-ltr">
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+                  const char = pin[i];
+                  const hasValue = !!char;
                   const isCurrent = pin.length === i;
                   return (
-                    <div key={i} className="relative group">
+                    <div key={i} className="relative">
                       <div className={`
-                        w-14 h-24 md:w-28 md:h-40 rounded-3xl flex items-center justify-center transition-all duration-300
-                        border-2 text-white text-5xl font-black
-                        ${isCurrent ? 'bg-red-600/10 border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)] scale-110' : hasValue ? 'bg-white/5 border-red-600/40' : 'bg-black/60 border-white/10'}
+                        w-10 h-16 md:w-20 md:h-28 rounded-2xl flex items-center justify-center transition-all duration-300
+                        border-2 text-white text-3xl md:text-5xl font-black
+                        ${isCurrent ? 'bg-red-600/10 border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)] scale-110 translate-y-[-4px]' : hasValue ? 'bg-white/5 border-red-600/40' : 'bg-black/60 border-white/5'}
                       `}>
-                        {digit ? (
-                          <span className="drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">*</span>
+                        {char ? (
+                          <span className="drop-shadow-[0_0_15px_rgba(255,255,255,1)] opacity-80">*</span>
                         ) : isCurrent ? (
-                          <div className="w-[4px] h-12 bg-red-600 animate-pulse rounded-full shadow-[0_0_10px_rgba(220,38,38,1)]"></div>
+                          <div className="w-[3px] h-8 md:h-12 bg-red-600 animate-pulse rounded-full shadow-[0_0_15px_rgba(220,38,38,1)]"></div>
                         ) : null}
                       </div>
 
-                      {/* Technical Corners */}
-                      {isCurrent && (
-                        <div className="absolute top-0 left-0 w-full h-full">
-                          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-red-500 rounded-tl-xl animate-ping"></div>
-                          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-red-500 rounded-br-xl animate-ping"></div>
-                        </div>
-                      )}
+                      {/* Box Glow */}
+                      <div className={`absolute -inset-1 blur-md transition-opacity duration-500 ${isCurrent ? 'opacity-100 bg-red-600/10' : 'opacity-0'}`}></div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Error Status */}
-              <div className="min-h-[60px] flex items-center justify-center mb-8">
+              {/* Status Message */}
+              <div className="min-h-[80px] flex flex-col items-center justify-center mb-8">
                 {globalLoginError ? (
-                  <div className="flex items-center gap-4 text-red-500 font-black bg-red-950/20 px-10 py-5 rounded-full border border-red-600/30 animate-[shake_0.6s_ease-in-out]">
-                    <AlertTriangle size={24} className="animate-pulse" />
-                    <span className="text-xl md:text-2xl uppercase italic">{globalLoginError}</span>
+                  <div className="flex items-center gap-4 text-red-500 font-black bg-red-950/30 px-10 py-5 rounded-full border border-red-600/40 animate-[shake_0.6s_ease-in-out]">
+                    <AlertTriangle size={32} className="animate-pulse" />
+                    <span className="text-xl md:text-2xl uppercase tracking-tighter italic">{globalLoginError}</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3 text-white/20 font-black text-xs uppercase tracking-[0.8em] animate-pulse">
-                    <Zap size={16} />
-                    Awaiting authorization key...
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="text-white/20 font-black text-[9px] uppercase tracking-[0.8em] animate-pulse">
+                      Awaiting Authentication Key
+                    </div>
+                    {pin.length > 0 && (
+                      <div className="text-[10px] text-red-500 font-bold uppercase animate-pulse">
+                        Press Enter to confirm key
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col items-center gap-4 opacity-30">
+              {/* Technical Indicator */}
+              <div className="pt-8 border-t border-white/5 flex flex-col items-center gap-4">
                 <div className="flex gap-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="w-2 h-2 rounded-full bg-red-600 animate-pulse" style={{ animationDelay: `${i * 200}ms` }}></div>
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" style={{ animationDelay: `${i * 300}ms` }}></div>
                   ))}
                 </div>
-                <p className="text-white/40 text-[9px] uppercase tracking-[0.4em] font-bold">Encrypted via iABS Sovereign Core 2026</p>
+                <p className="text-white/10 text-[8px] uppercase tracking-[0.6em] font-black">Encrypted via iABS Sovereign Core 2026</p>
               </div>
             </div>
           </div>
@@ -368,8 +390,8 @@ const App: React.FC = () => {
         <style>{`
           @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
           }
           .direction-ltr { direction: ltr; }
           .caret-transparent { caret-color: transparent; }
