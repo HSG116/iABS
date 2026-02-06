@@ -147,70 +147,73 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
     }
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-black text-white font-sans overflow-hidden flex flex-col items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black text-white font-sans overflow-hidden flex flex-col items-center justify-center p-0 m-0">
             {/* Dynamic Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/20 via-black to-black animate-pulse"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/10 via-black to-black animate-pulse"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[100vh] bg-red-600/5 rounded-full blur-[150px] animate-pulse-slow"></div>
                 {/* Grid overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(20,0,0,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(20,0,0,0.3)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20"></div>
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(30,0,0,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(30,0,0,0.2)_1px,transparent_1px)] bg-[size:60px_60px] opacity-10"></div>
             </div>
 
-            {/* Content Container */}
-            <div className="relative z-10 w-full max-w-md flex flex-col items-center">
+            {/* Content Container - Perfectly Centered */}
+            <div className="relative z-10 w-full flex flex-col items-center justify-center min-h-screen">
 
                 {/* --- PASSWORD STEP --- */}
                 {step === 'PASSWORD' && (
-                    <div className={`w-full flex flex-col items-center animate-in fade-in zoom-in duration-500 ${shake ? 'animate-shake' : ''}`}>
-                        <div className="mb-8 relative group">
-                            <div className="absolute inset-0 bg-red-600/20 blur-xl rounded-full group-hover:bg-red-600/30 transition-all duration-500"></div>
-                            <Lock size={64} className={`relative z-10 transition-all duration-300 ${error ? 'text-red-500 drop-shadow-[0_0_20px_rgba(255,0,0,0.8)]' : 'text-white/80'}`} />
+                    <div className={`flex flex-col items-center animate-in fade-in zoom-in duration-700 ${shake ? 'animate-shake' : ''}`}>
+
+                        <div className="mb-12 relative group">
+                            <div className="absolute inset-0 bg-red-600/40 blur-[50px] rounded-full group-hover:bg-red-600/60 transition-all duration-500 animate-pulse"></div>
+                            <Lock size={80} strokeWidth={1.5} className={`relative z-10 transition-all duration-300 ${error ? 'text-red-500 drop-shadow-[0_0_30px_rgba(255,0,0,1)]' : 'text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]'}`} />
                         </div>
 
-                        <h2 className="text-4xl font-black italic tracking-tighter mb-2 text-center text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400">
+                        <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter mb-4 text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-500 drop-shadow-2xl">
                             {userType === 'NEW' ? 'بروتوكول الأمان' : 'تسجيل الدخول'}
                         </h2>
-                        <p className="text-red-500/80 font-bold tracking-[0.3em] text-xs uppercase mb-10 text-center">
+                        <p className="text-red-500 font-bold tracking-[0.5em] text-sm md:text-base uppercase mb-16 text-center drop-shadow-[0_0_10px_rgba(255,0,0,0.5)]">
                             RESTRICTED ACCESS AREA
                         </p>
 
-                        <div style={{ direction: 'ltr' }} className="flex flex-wrap items-center justify-center gap-2 mb-8">
+                        <div style={{ direction: 'ltr' }} className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-12">
                             {pin.map((digit, i) => (
-                                <input
-                                    key={i}
-                                    ref={el => inputs.current[i] = el}
-                                    type="text"
-                                    inputMode="text"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChange={(e) => handleInput(i, e.target.value)}
-                                    onKeyDown={(e) => handleKeyDown(i, e)}
-                                    className={`
-                        w-12 h-16 
-                        bg-black/40 border-2 rounded-xl 
-                        text-center text-2xl font-black text-white 
-                        focus:outline-none focus:border-red-500 focus:shadow-[0_0_20px_rgba(220,38,38,0.4)]
-                        transition-all duration-200
-                        ${error ? 'border-red-600 text-red-500' : 'border-white/10'}
-                        ${digit ? 'border-white/40 bg-white/5' : ''}
-                      `}
-                                />
+                                <div key={i} className="relative group">
+                                    <div className={`absolute inset-0 bg-red-600/20 blur-xl rounded-full transition-all duration-300 ${digit ? 'opacity-100 scale-150' : 'opacity-0'}`}></div>
+                                    <input
+                                        ref={el => inputs.current[i] = el}
+                                        type="text"
+                                        inputMode="text"
+                                        maxLength={1}
+                                        value={digit}
+                                        onChange={(e) => handleInput(i, e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(i, e)}
+                                        className={`
+                                            w-14 h-20 md:w-20 md:h-28 
+                                            bg-transparent border-b-4 
+                                            text-center text-4xl md:text-6xl font-black text-white 
+                                            focus:outline-none focus:border-red-500 focus:scale-110
+                                            transition-all duration-300 placeholder-transparent
+                                            ${error ? 'border-red-600 text-red-500 drop-shadow-[0_0_10px_rgba(255,0,0,0.8)]' : 'border-white/20'}
+                                            ${digit ? 'border-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]' : 'hover:border-white/50'}
+                                        `}
+                                    />
+                                </div>
                             ))}
                         </div>
 
-                        {error && <div className="text-red-500 font-bold tracking-widest animate-bounce">ACCESS DENIED</div>}
+                        {error && <div className="text-red-500 font-black tracking-[0.5em] animate-bounce text-lg drop-shadow-[0_0_10px_red]">ACCESS DENIED</div>}
                     </div>
                 )}
 
                 {/* --- FINGERPRINT / SCANNING STEP --- */}
                 {(step === 'FINGERPRINT' || step === 'SCANNING') && (
-                    <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
-                        <div className="mb-6 text-center space-y-2">
-                            <h2 className="text-3xl font-black italic tracking-tighter text-white">
-                                {userType === 'NEW' ? 'إعداد البصمة البيومترية' : 'المصادقة البيومترية'}
+                    <div className="flex flex-col items-center animate-in fade-in zoom-in duration-1000">
+                        <div className="mb-12 text-center space-y-4">
+                            <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                                {userType === 'NEW' ? 'تأكيد الهوية' : 'المصادقة البيومترية'}
                             </h2>
-                            <p className="text-white/40 text-sm font-bold tracking-wider">
-                                {step === 'SCANNING' ? 'SCANNING BIOMETRIC DATA...' : 'TOUCH TO AUTHENTICATE'}
+                            <p className="text-white/50 text-base md:text-lg font-bold tracking-[0.3em] uppercase">
+                                {step === 'SCANNING' ? 'SCANNING BIOMETRIC DATA...' : 'TOUCH SENSOR TO PROCEED'}
                             </p>
                         </div>
 
@@ -219,19 +222,23 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
                             disabled={step === 'SCANNING'}
                             className="relative group cursor-pointer active:scale-95 transition-transform duration-200 outline-none"
                         >
-                            {/* Fingerprint Container */}
-                            <div className={`w-40 h-40 rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-center relative overflow-hidden transition-all duration-300 ${step === 'SCANNING' ? 'border-red-500/50 shadow-[0_0_40px_rgba(220,38,38,0.3)]' : 'hover:border-white/30 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]'}`}>
+                            {/* Glow Effect */}
+                            <div className={`absolute inset-0 bg-red-600/30 blur-[60px] rounded-full transition-all duration-500 ${step === 'SCANNING' ? 'scale-150 opacity-100' : 'scale-100 opacity-50 group-hover:scale-125 group-hover:opacity-80'}`}></div>
 
-                                {/* Fingerprint Icon */}
+                            {/* Fingerprint Icon - No Container, Just Icon */}
+                            <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center">
                                 <Fingerprint
-                                    size={80}
-                                    className={`relative z-10 transition-colors duration-300 ${step === 'SCANNING' ? 'text-red-500 animate-pulse' : 'text-white/20 group-hover:text-white/80'}`}
-                                    strokeWidth={1}
+                                    size={180}
+                                    className={`relative z-10 transition-all duration-500 ${step === 'SCANNING' ? 'text-red-500 drop-shadow-[0_0_30px_rgba(255,0,0,0.8)]' : 'text-white/30 group-hover:text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]'}`}
+                                    strokeWidth={0.5}
                                 />
 
-                                {/* Scanning Line Animation */}
+                                {/* Modern Scanning Grid */}
                                 {step === 'SCANNING' && (
-                                    <div className="absolute top-0 left-0 w-full h-[2px] bg-red-500 shadow-[0_0_15px_#ef4444] z-20 animate-scan"></div>
+                                    <>
+                                        <div className="absolute inset-0 z-20 bg-[linear-gradient(transparent_50%,rgba(255,0,0,0.2)_50%)] bg-[size:100%_4px] animate-scan-grid pointer-events-none"></div>
+                                        <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500 shadow-[0_0_25px_#ef4444] z-30 animate-scan"></div>
+                                    </>
                                 )}
                             </div>
                         </button>
@@ -240,16 +247,16 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
 
                 {/* --- SUCCESS STEP --- */}
                 {step === 'SUCCESS' && (
-                    <div className="flex flex-col items-center animate-in zoom-in duration-500 text-center">
-                        <div className="relative mb-6">
-                            <div className="absolute inset-0 bg-green-500/20 blur-2xl rounded-full animate-pulse"></div>
-                            <Unlock size={80} className="text-green-500 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)]" />
+                    <div className="flex flex-col items-center animate-in zoom-in duration-700 text-center">
+                        <div className="relative mb-8">
+                            <div className="absolute inset-0 bg-green-500/30 blur-[80px] rounded-full animate-pulse"></div>
+                            <Unlock size={100} className="text-green-500 relative z-10 drop-shadow-[0_0_40px_rgba(34,197,94,0.8)] animate-bounce" />
                         </div>
 
-                        <h2 className="text-4xl font-black italic text-white mb-2 tracking-tighter">
-                            {userType === 'NEW' ? 'تم حفظ الهوية بنجاح' : 'مرحباً بك مجدداً'}
+                        <h2 className="text-5xl md:text-7xl font-black italic text-white mb-4 tracking-tighter drop-shadow-2xl">
+                            {userType === 'NEW' ? 'تم حفظ الهوية' : 'مرحباً بك مجدداً'}
                         </h2>
-                        <p className="text-green-500 font-bold tracking-[0.2em] text-sm uppercase">
+                        <p className="text-green-500 font-bold tracking-[0.5em] text-xl uppercase drop-shadow-[0_0_15px_rgba(34,197,94,0.6)]">
                             ACCESS GRANTED
                         </p>
                     </div>
@@ -257,9 +264,9 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
 
             </div>
 
-            <div className="absolute bottom-8 opacity-30 flex items-center gap-2">
-                <Sparkles size={14} className="text-white" />
-                <span className="text-[10px] text-white uppercase tracking-[0.3em]">SECURED BY iABS</span>
+            <div className="absolute bottom-10 opacity-40 flex items-center gap-3 animate-pulse">
+                <Sparkles size={18} className="text-white" />
+                <span className="text-xs text-white uppercase tracking-[0.5em] font-bold">SECURED BY iABS</span>
             </div>
 
             <style>{`
@@ -269,8 +276,15 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({ onSucces
           90% { opacity: 1; }
           100% { top: 100%; opacity: 0; }
         }
+        @keyframes scan-grid {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
+        }
         .animate-scan {
-          animation: scan 1.5s linear infinite;
+          animation: scan 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        .animate-scan-grid {
+            animation: scan-grid 1s linear infinite;
         }
         .animate-pulse-slow {
           animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
