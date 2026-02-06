@@ -261,7 +261,8 @@ const App: React.FC = () => {
                   <input
                     type="password"
                     value={globalPasswordInput}
-                    onChange={(e) => setGlobalPasswordInput(e.target.value)}
+                    onChange={(e) => setGlobalPasswordInput(e.target.value.slice(0, 6))}
+                    maxLength={6}
                     placeholder="أدخل كود التصريح..."
                     className="w-full bg-black/60 border-2 border-white/5 rounded-3xl p-7 pr-16 text-center text-white text-3xl font-black placeholder:text-white/5 focus:border-red-600/40 focus:outline-none transition-all tracking-[0.2em]"
                     onKeyDown={(e) => e.key === 'Enter' && handleGlobalLogin()}
