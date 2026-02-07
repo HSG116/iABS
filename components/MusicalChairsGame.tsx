@@ -318,7 +318,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
       const newChairs = chairIds.map((id, i) => {
          // توليد موقع عشوائي داخل حلبة دائرية
          const angle = Math.random() * 2 * Math.PI;
-         const radius = 50 + Math.random() * 450; // الابتعاد عن المركز قليلاً والتوزع حتى مسافة 500
+         const radius = 40 + Math.random() * 310; // الابتعاد عن المركز قليلاً والتوزع حتى مسافة 350
          return {
             id,
             occupiedBy: null,
@@ -432,14 +432,13 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
    };
 
    const getDynamicSize = (count: number) => {
-      // قمت بتصغير حجم الصناديق (box/chair) وتكبير المحتوى (icon/text/chairIcon) بشكل هائل
-      if (count < 12) return { box: 'w-24 h-24', icon: 80, text: 'text-2xl', chair: 'w-16 h-16', chairIcon: 90 };
-      if (count < 30) return { box: 'w-20 h-20', icon: 60, text: 'text-xl', chair: 'w-12 h-12', chairIcon: 70 };
-      if (count < 60) return { box: 'w-16 h-16', icon: 50, text: 'text-lg', chair: 'w-10 h-10', chairIcon: 55 };
-      if (count < 150) return { box: 'w-12 h-12', icon: 40, text: 'text-base', chair: 'w-8 h-8', chairIcon: 45 };
-      if (count < 300) return { box: 'w-10 h-10', icon: 30, text: 'text-sm', chair: 'w-6 h-6', chairIcon: 35 };
-      if (count < 600) return { box: 'w-8 h-8', icon: 20, text: 'text-[10px]', chair: 'w-5 h-5', chairIcon: 25 };
-      return { box: 'w-6 h-6', icon: 16, text: 'text-[8px]', chair: 'w-4 h-4', chairIcon: 20 };
+      if (count < 12) return { box: 'w-16 h-16', icon: 50, text: 'text-xl', chair: 'w-12 h-12', chairIcon: 65 };
+      if (count < 30) return { box: 'w-14 h-14', icon: 40, text: 'text-lg', chair: 'w-10 h-10', chairIcon: 55 };
+      if (count < 60) return { box: 'w-12 h-12', icon: 35, text: 'text-base', chair: 'w-8 h-8', chairIcon: 45 };
+      if (count < 150) return { box: 'w-10 h-10', icon: 30, text: 'text-sm', chair: 'w-6 h-6', chairIcon: 35 };
+      if (count < 300) return { box: 'w-8 h-8', icon: 20, text: 'text-[10px]', chair: 'w-5 h-5', chairIcon: 25 };
+      if (count < 600) return { box: 'w-6 h-6', icon: 16, text: 'text-[8px]', chair: 'w-4 h-4', chairIcon: 20 };
+      return { box: 'w-5 h-5', icon: 14, text: 'text-[7px]', chair: 'w-3 h-3', chairIcon: 16 };
    };
 
    // Improved coordinate math to ensure players orbit exactly around the center
@@ -961,11 +960,11 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
             <div className="w-full h-full relative flex flex-col items-center justify-center overflow-hidden bg-black">
 
                {/* UI Elements - Right Side */}
-               <div className="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-50 pointer-events-none">
+               <div className="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-50 pointer-events-none scale-75 origin-right">
                   {/* Round Counter */}
-                  <div className="bg-black/90 backdrop-blur-2xl px-12 py-8 rounded-[3rem] border-4 border-amber-500/50 shadow-[0_0_50px_rgba(0,0,0,0.8)] pointer-events-auto flex flex-col items-center">
-                     <span className="text-2xl font-black text-amber-500 block mb-4 text-center tracking-widest">جولات</span>
-                     <span className="text-8xl font-black text-white block text-center italic drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">{currentRound}</span>
+                  <div className="bg-black/90 backdrop-blur-2xl px-10 py-6 rounded-[3rem] border-4 border-amber-500/50 shadow-[0_0_50px_rgba(0,0,0,0.8)] pointer-events-auto flex flex-col items-center">
+                     <span className="text-xl font-black text-amber-500 block mb-2 text-center tracking-widest">جولات</span>
+                     <span className="text-7xl font-black text-white block text-center italic drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">{currentRound}</span>
                   </div>
 
                   {/* Timer */}
@@ -993,12 +992,12 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                <div className="relative w-full h-full flex items-center justify-center">
 
                   {/* Outer Glow Rings for Premium Effect */}
-                  <div className="absolute w-[1450px] h-[1450px] rounded-full opacity-20 animate-pulse-ring"
+                  <div className="absolute w-[1000px] h-[1000px] rounded-full opacity-20 animate-pulse-ring"
                      style={{
                         background: `radial-gradient(circle, transparent 65%, ${config.selectedMap.glowColor}40 70%, transparent 75%)`,
                      }}>
                   </div>
-                  <div className="absolute w-[1350px] h-[1350px] rounded-full opacity-30 animate-pulse-ring"
+                  <div className="absolute w-[920px] h-[920px] rounded-full opacity-30 animate-pulse-ring"
                      style={{
                         background: `radial-gradient(circle, transparent 68%, ${config.selectedMap.accentColor}50 72%, transparent 76%)`,
                         animationDelay: '1s',
@@ -1007,16 +1006,16 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   </div>
 
                   {/* Rotating Decorative Rings */}
-                  <div className="absolute w-[1280px] h-[1280px] border-2 rounded-full opacity-10 animate-rotate-slow"
+                  <div className="absolute w-[880px] h-[880px] border-2 rounded-full opacity-10 animate-rotate-slow"
                      style={{ borderColor: config.selectedMap.accentColor, borderStyle: 'dashed' }}>
                   </div>
-                  <div className="absolute w-[1180px] h-[1180px] border-2 rounded-full opacity-15 animate-rotate-reverse"
+                  <div className="absolute w-[820px] h-[820px] border-2 rounded-full opacity-15 animate-rotate-reverse"
                      style={{ borderColor: config.selectedMap.secondaryColor, borderStyle: 'dotted' }}>
                   </div>
 
                   {/* Main Arena - MUCH BIGGER AND PREMIUM */}
                   <div
-                     className={`absolute w-[1100px] h-[1100px] border-[20px] transition-all duration-1000 ${getArenaShapeClass(config.selectedMap.shape)} overflow-hidden backdrop-blur-2xl animate-glow`}
+                     className={`absolute w-[750px] h-[750px] border-[15px] transition-all duration-1000 ${getArenaShapeClass(config.selectedMap.shape)} overflow-hidden backdrop-blur-2xl animate-glow`}
                      style={{
                         borderColor: config.selectedMap.borderColor,
                         '--glow-color': config.selectedMap.glowColor,
@@ -1243,44 +1242,43 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                      ))}
 
                      {/* Red Energy Rings */}
-                     <div className="absolute w-[800px] h-[800px] rounded-full opacity-10 animate-pulse-ring"
+                     <div className="absolute w-[500px] h-[500px] rounded-full opacity-10 animate-pulse-ring"
                         style={{
                            background: 'radial-gradient(circle, transparent 60%, #dc262640 70%, transparent 80%)',
                         }}
                      />
-                     <div className="absolute w-[600px] h-[600px] rounded-full opacity-20 animate-pulse-ring"
+                     <div className="absolute w-[400px] h-[400px] rounded-full opacity-20 animate-pulse-ring"
                         style={{
                            background: 'radial-gradient(circle, transparent 65%, #ef444450 75%, transparent 85%)',
-                           animationDelay: '1.5s'
+                           animationDelay: '1s'
                         }}
                      />
 
                      {/* Main Content */}
                      <div className="relative z-10 text-center max-w-7xl w-full flex flex-col items-center">
-                        {/* Skull Icon with Premium Effects */}
-                        <div className="relative mb-8 group">
+                        <div className="relative mb-6 group scale-75">
                            <div className="absolute inset-0 bg-red-600/30 blur-[100px] scale-150 animate-pulse" />
-                           <div className="relative p-10 bg-gradient-to-br from-red-950/80 via-red-900/60 to-red-950/80 rounded-[3rem] border-4 shadow-2xl animate-in zoom-in duration-700"
+                           <div className="relative p-6 bg-gradient-to-br from-red-950/80 via-red-900/60 to-red-950/80 rounded-[2.5rem] border-4 shadow-2xl animate-in zoom-in duration-700"
                               style={{
                                  borderImage: 'linear-gradient(135deg, #dc2626, #991b1b, #dc2626) 1',
                                  boxShadow: '0 0 80px rgba(220, 38, 38, 0.6), 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(220, 38, 38, 0.2)'
                               }}
                            >
-                              <Skull size={140} className="text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse" strokeWidth={1.5} />
+                              <Skull size={80} className="text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse" strokeWidth={1.5} />
                            </div>
                         </div>
 
                         {/* Title with Glitch Effect */}
-                        <div className="relative mb-12">
-                           <h2 className="text-[120px] font-black text-transparent bg-clip-text bg-gradient-to-b from-red-400 via-red-500 to-red-600 italic uppercase tracking-tighter mb-2 leading-none drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] animate-in slide-in-from-top duration-700"
+                        <div className="relative mb-8">
+                           <h2 className="text-[70px] font-black text-transparent bg-clip-text bg-gradient-to-b from-red-400 via-red-500 to-red-600 italic uppercase tracking-tighter mb-2 leading-none drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] animate-in slide-in-from-top duration-700"
                               style={{
-                                 WebkitTextStroke: '2px rgba(220, 38, 38, 0.3)',
+                                 WebkitTextStroke: '1px rgba(220, 38, 38, 0.3)',
                                  textShadow: '0 0 80px rgba(239,68,68,0.8), 0 10px 40px rgba(0,0,0,0.9)'
                               }}
                            >
                               تم الإقصاء!
                            </h2>
-                           <div className="text-red-500/60 font-black text-xl uppercase tracking-[0.5em] animate-in fade-in duration-1000 delay-300">
+                           <div className="text-red-500/60 font-black text-base uppercase tracking-[0.5em] animate-in fade-in duration-1000 delay-300">
                               ELIMINATED PLAYERS
                            </div>
                         </div>
@@ -1442,12 +1440,12 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                ))}
 
                {/* Golden Energy Rings */}
-               <div className="absolute w-[1000px] h-[1000px] rounded-full opacity-10 animate-pulse-ring"
+               <div className="absolute w-[600px] h-[600px] rounded-full opacity-10 animate-pulse-ring"
                   style={{
                      background: 'radial-gradient(circle, transparent 60%, #fbbf2440 70%, transparent 80%)',
                   }}
                />
-               <div className="absolute w-[800px] h-[800px] rounded-full opacity-15 animate-pulse-ring"
+               <div className="absolute w-[450px] h-[450px] rounded-full opacity-15 animate-pulse-ring"
                   style={{
                      background: 'radial-gradient(circle, transparent 65%, #f59e0b50 75%, transparent 85%)',
                      animationDelay: '1s'
@@ -1461,7 +1459,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                      <div className="absolute inset-0 bg-yellow-500/40 blur-[120px] scale-[2] animate-pulse" />
                      <div className="relative">
                         <Trophy
-                           size={200}
+                           size={100}
                            className="text-yellow-400 drop-shadow-[0_0_60px_rgba(251,191,36,1)] animate-bounce"
                            strokeWidth={1.5}
                            fill="url(#goldGradient)"
@@ -1498,7 +1496,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   <div className="relative mb-12 animate-in slide-in-from-top duration-1000">
                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent blur-2xl" />
                      <div className="relative space-y-4">
-                        <div className="text-yellow-500 font-black text-5xl uppercase tracking-[0.8em] italic animate-pulse drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]">
+                        <div className="text-yellow-500 font-black text-3xl uppercase tracking-[0.8em] italic animate-pulse drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]">
                            WINNER SURVIVOR
                         </div>
                         <div className="flex items-center justify-center gap-4">
@@ -1522,7 +1520,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                         <div className="absolute -inset-12 border-4 border-dotted border-amber-500/20 rounded-full animate-rotate-reverse" />
 
                         {/* Avatar Container */}
-                        <div className="relative w-80 h-80 rounded-[5rem] border-[16px] overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 via-black to-gray-900 transform group-hover:rotate-3 group-hover:scale-105 transition-all duration-700"
+                        <div className="relative w-56 h-56 rounded-[4rem] border-[12px] overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 via-black to-gray-900 transform group-hover:rotate-3 group-hover:scale-105 transition-all duration-700"
                            style={{
                               borderImage: 'linear-gradient(135deg, #fef3c7, #fbbf24, #f59e0b, #fbbf24, #fef3c7) 1',
                               boxShadow: '0 0 100px rgba(251, 191, 36, 0.8), 0 40px 80px rgba(0, 0, 0, 0.8), inset 0 0 60px rgba(251, 191, 36, 0.2)'
@@ -1545,7 +1543,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                            )}
 
                            {/* Champion Badge */}
-                           <div className="absolute bottom-0 w-full bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-white font-black py-5 text-2xl tracking-[0.5em] italic z-30 border-t-4 border-yellow-300/50 relative overflow-hidden">
+                           <div className="absolute bottom-0 w-full bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-white font-black py-3 text-lg tracking-[0.5em] italic z-30 border-t-4 border-yellow-300/50 relative overflow-hidden">
                               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
                               <span className="relative flex items-center justify-center gap-3">
                                  <Trophy size={24} className="animate-bounce" />
@@ -1568,7 +1566,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   {/* Winner Username */}
                   <div className="relative mb-16 animate-in slide-in-from-bottom duration-1000 delay-500">
                      <div className="absolute inset-0 bg-yellow-500/20 blur-[100px]" />
-                     <h1 className="relative text-[140px] font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 italic tracking-tighter uppercase leading-none"
+                     <h1 className="relative text-[80px] font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 italic tracking-tighter uppercase leading-none"
                         style={{
                            WebkitTextStroke: '3px rgba(251, 191, 36, 0.3)',
                            textShadow: '0 0 100px rgba(251,191,36,0.9), 0 20px 60px rgba(0,0,0,1), 0 0 40px rgba(251,191,36,0.6)'
@@ -1760,7 +1758,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   <div className="relative mb-10 animate-in slide-in-from-top duration-1000">
                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/20 to-transparent blur-2xl" />
                      <div className="relative space-y-4">
-                        <h1 className="text-[140px] font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-300 via-orange-500 to-orange-700 italic uppercase tracking-tighter leading-none"
+                        <h1 className="text-[80px] font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-300 via-orange-500 to-orange-700 italic uppercase tracking-tighter leading-none"
                            style={{
                               WebkitTextStroke: '3px rgba(249, 115, 22, 0.3)',
                               textShadow: '0 0 100px rgba(249,115,22,0.9), 0 20px 60px rgba(0,0,0,1), 0 0 40px rgba(249,115,22,0.6)'
@@ -1780,9 +1778,9 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   </div>
 
                   {/* Message Box */}
-                  <div className="relative mb-16 w-full max-w-3xl animate-in fade-in duration-1000 delay-300">
+                  <div className="relative mb-8 w-full max-w-xl animate-in fade-in duration-1000 delay-300 scale-90">
                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-950/30 to-transparent blur-xl" />
-                     <div className="relative bg-black/60 backdrop-blur-2xl border-2 rounded-[4rem] p-12 shadow-2xl overflow-hidden"
+                     <div className="relative bg-black/60 backdrop-blur-2xl border-2 rounded-[3rem] p-8 shadow-2xl overflow-hidden"
                         style={{
                            borderImage: 'linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(234, 88, 12, 0.5), rgba(249, 115, 22, 0.3)) 1',
                            boxShadow: '0 0 60px rgba(249, 115, 22, 0.3), inset 0 0 80px rgba(0, 0, 0, 0.5)'
