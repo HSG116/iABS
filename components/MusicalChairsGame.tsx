@@ -1206,14 +1206,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   </div>
                </div>
 
-               {/* Bottom Instructions - Like the image */}
-               {phase === 'MUSIC_OFF' && (
-                  <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50">
-                     <div className="bg-black/90 backdrop-blur-2xl px-24 py-10 rounded-[4rem] border-4 border-amber-500 shadow-[0_0_60px_rgba(251,191,36,0.6)] animate-bounce-slow">
-                        <span className="text-6xl font-black text-amber-500 tracking-wider text-shadow-glow">اكتب رقم اقرب كرسي</span>
-                     </div>
-                  </div>
-               )}
+               
 
                {/* RESULTS OVERLAY - PREMIUM REDESIGN */}
                {phase === 'RESULTS' && (
