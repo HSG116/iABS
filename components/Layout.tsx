@@ -92,14 +92,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
           <div className="w-px h-6 bg-white/10 mx-3"></div>
 
           {/* OBS Link Button */}
-          <button
-            onClick={onOBSLinks}
-            title="روابط OBS"
-            className="relative p-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white transition-all rounded-xl border border-purple-600/30 active:scale-95 shadow-[0_0_10px_rgba(147,51,234,0.2)] hover:shadow-[0_0_20px_rgba(147,51,234,0.6)] group"
-          >
-            <Link size={18} className="relative z-10" />
-            <div className="absolute inset-0 rounded-xl bg-purple-500/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          </button>
+          <div className="relative group/dev">
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 bg-yellow-500 text-black text-[8px] font-black rounded-lg opacity-0 group-hover/dev:opacity-100 transition-all duration-300 whitespace-nowrap z-50 pointer-events-none shadow-[0_0_10px_rgba(234,179,8,0.4)]">
+              تحت التطوير
+            </div>
+            <button
+              onClick={onOBSLinks}
+              title="روابط OBS"
+              className="relative p-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white transition-all rounded-xl border border-purple-600/30 active:scale-95 shadow-[0_0_10px_rgba(147,51,234,0.2)] hover:shadow-[0_0_20px_rgba(147,51,234,0.6)] group"
+            >
+              <Link size={18} className="relative z-10" />
+              <div className="absolute inset-0 rounded-xl bg-purple-500/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </button>
+          </div>
         </div>
 
         {/* Top Section: Chat Content */}
