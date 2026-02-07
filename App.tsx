@@ -494,7 +494,7 @@ const App: React.FC = () => {
                 <PremiumGameButton title="صائد الكنز" icon={Gem} onClick={() => setCurrentView('GRID_HUNT')} />
                 <PremiumGameButton title="تحدي الأكواب" icon={Coffee} onClick={() => setCurrentView('CUP_SHUFFLE')} />
                 <PremiumGameButton title="حرب الألوان" icon={PaintBucket} onClick={() => setCurrentView('TERRITORY_WAR')} />
-                <PremiumGameButton title="صادق أو كاذب" icon={AlertTriangle} isComingSoon={true} onClick={() => setCurrentView('TRUTH_OR_LIE')} />
+                <PremiumGameButton title="صادق أم كذاب" icon={AlertTriangle} isComingSoon={false} onClick={() => setCurrentView('TRUTH_OR_LIE')} />
               </div>
             </div>
 

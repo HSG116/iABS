@@ -32,7 +32,7 @@ const GAMES: GameLink[] = [
     { id: 'GRID_HUNT', label: 'صائد الكنز', icon: Gem },
     { id: 'CUP_SHUFFLE', label: 'تحدي الأكواب', icon: Coffee },
     { id: 'TERRITORY_WAR', label: 'حرب الألوان', icon: PaintBucket },
-    { id: 'TRUTH_OR_LIE', label: 'صادق أو كاذب', icon: AlertTriangle },
+    { id: 'TRUTH_OR_LIE', label: 'صادق أم كذاب', icon: AlertTriangle },
 ];
 
 export const OBSLinksModal: React.FC<OBSLinksModalProps> = ({ isOpen, onClose }) => {
@@ -159,7 +159,7 @@ export const OBSLinksModal: React.FC<OBSLinksModalProps> = ({ isOpen, onClose })
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 ml-2 text-yellow-500">
                             <Shield className="animate-pulse" size={20} />
-                            <h3 className="text-xl font-black uppercase tracking-wider">روابط احترافية (صادق أو كاذب)</h3>
+                            <h3 className="text-xl font-black uppercase tracking-wider">روابط احترافية (صادق أم كذاب)</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

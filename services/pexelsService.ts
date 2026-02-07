@@ -37,7 +37,8 @@ export const pexelsService = {
             return selectedPhoto.src.large2x || selectedPhoto.src.large || selectedPhoto.src.original;
         } catch (error) {
             console.error('Error fetching Pexels image:', error);
-            return null;
+            // Fallback to Pollinations AI (free, no key needed)
+            return `https://image.pollinations.ai/prompt/${encodeURIComponent(query)}?width=1080&height=1080&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
         }
     }
 };
