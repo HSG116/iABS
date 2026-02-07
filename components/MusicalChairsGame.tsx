@@ -166,6 +166,8 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
    const [rotationAngle, setRotationAngle] = useState(0);
    const [walkingOffset, setWalkingOffset] = useState(0);
    const [lastPlayedSongId, setLastPlayedSongId] = useState<string | null>(null);
+   const [playlist, setPlaylist] = useState<string[]>([]);
+   const [playlistIndex, setPlaylistIndex] = useState(0);
 
    const audioRef = useRef<HTMLAudioElement | null>(null);
    const phaseRef = useRef(phase);
@@ -332,37 +334,51 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
       setPhase('MUSIC_ON');
 
       if (audioRef.current) {
-         const songs = SONGS_DB.filter(s => config.selectedSongs.includes(s.id));
-         if (songs.length === 0) return;
+         const songsInDb = SONGS_DB.filter(s => config.selectedSongs.includes(s.id));
+         if (songsInDb.length === 0) return;
 
-         // اختيار أغنية مختلفة عن الأغنية السابقة
-         let selectedSong;
+         let currentPlaylist = [...playlist];
+         let currentIndex = playlistIndex;
 
-         if (songs.length === 1) {
-            // إذا كان لدينا أغنية واحدة فقط، نشغلها
-            selectedSong = songs[0];
-         } else {
-            // اختيار أغنية عشوائية مختلفة عن السابقة
-            const availableSongs = songs.filter(s => s.id !== lastPlayedSongId);
-            selectedSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
+         // إعادة بناء القائمة إذا كانت فارغة أو انتهت الأغاني
+         if (currentRound === 0 || currentIndex >= currentPlaylist.length) {
+            // خلط الأغاني
+            let shuffled = [...songsInDb].sort(() => Math.random() - 0.5);
+
+            // إذا كانت أغنية "حميد" موجودة، نجعلها في المركز الأول أو الثاني دائماً كما طلب المستخدم
+            const hamidIdx = shuffled.findIndex(s => s.id === 'song_13');
+            if (hamidIdx !== -1) {
+               const hamid = shuffled.splice(hamidIdx, 1)[0];
+               // اختيار عشوائي بين المركز الأول أو الثاني
+               const targetIdx = Math.random() > 0.5 ? 0 : Math.min(1, shuffled.length);
+               shuffled.splice(targetIdx, 0, hamid);
+            }
+
+            currentPlaylist = shuffled.map(s => s.id);
+            currentIndex = 0;
+            setPlaylist(currentPlaylist);
          }
 
-         // تحديث الأغنية الأخيرة المشغلة
+         const selectedSongId = currentPlaylist[currentIndex];
+         const selectedSong = SONGS_DB.find(s => s.id === selectedSongId) || songsInDb[0];
+
+         setPlaylistIndex(currentIndex + 1);
          setLastPlayedSongId(selectedSong.id);
 
-         // تشغيل الأغنية مع معالجة أفضل للأخطاء
+         // تشغيل الأغنية مع معالجة الأخطاء
          audioRef.current.src = selectedSong.url;
          audioRef.current.volume = config.volume;
 
-         // إعادة المحاولة عند فشل التحميل
          audioRef.current.onerror = () => {
-            console.error('فشل تحميل الأغنية:', selectedSong.title);
-            // محاولة تشغيل أغنية أخرى
-            if (songs.length > 1) {
-               const fallbackSongs = songs.filter(s => s.id !== selectedSong.id);
-               const fallbackSong = fallbackSongs[Math.floor(Math.random() * fallbackSongs.length)];
-               audioRef.current!.src = fallbackSong.url;
-               audioRef.current!.play().catch(err => console.error('فشل تشغيل الأغنية البديلة:', err));
+            console.error('فشل تحميل الأغنية:', selectedSong.title);
+            // محاولة تلقائية للانتقال للأغنية التالية في القائمة
+            if (currentPlaylist.length > 1) {
+               const nextIdx = (currentIndex + 1) % currentPlaylist.length;
+               const nextSong = SONGS_DB.find(s => s.id === currentPlaylist[nextIdx]);
+               if (nextSong && audioRef.current) {
+                  audioRef.current.src = nextSong.url;
+                  audioRef.current.play().catch(e => console.error(e));
+               }
             }
          };
 
@@ -410,6 +426,8 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
       setChairs([]);
       setRotationAngle(0);
       setLastPlayedSongId(null);
+      setPlaylist([]);
+      setPlaylistIndex(0);
       if (audioRef.current) audioRef.current.pause();
    };
 
@@ -456,7 +474,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
 
    return (
       <div className={`w-full h-full flex flex-col items-center bg-transparent text-right font-display select-none ${isOBS ? 'overflow-hidden' : ''}`} dir="rtl">
-         <audio ref={audioRef} />
+         <audio ref={audioRef} crossOrigin="anonymous" preload="auto" />
 
          <style>{`
         .clip-path-hexagon { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }

@@ -6,28 +6,28 @@ import { Category, Question, Song } from './types';
 export const SONGS_DB: Song[] = [
   {
     id: 'song_13',
-    title: 'محمود التركي يمة حميد حصرياً',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059542/%D9%85%D8%AD%D9%85%D9%88%D8%AF_%D8%A7%D9%84%D8%AA%D8%B1%D9%83%D9%8A_-%D9%8A%D9%85%D8%A9%D8%AD%D9%85%D9%8A%D8%AF_%D8%AD%D8%B5%D8%B1%D9%8A%D8%A7%D9%8B___Mahmood_Al_Turky_-Yema_Hamid_Exclusive___2015_g9ymfv.mp3'
+    title: 'محمود التركي - يمة حميد (حصرياً) _ Mahmood Al Turky - Yema Hamid (Exclusive) _ 2015',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059542/%D9%85%D8%AD%D9%85%D9%88%D8%AF_%D8%A7%D9%84%D8%AA%D8%B1%D9%83%D9%8A_-_%D9%8A%D9%85%D8%A9_%D8%AD%D9%85%D9%8A%D8%AF_%D8%AD%D8%B5%D8%B1%D9%8A%D8%A7%D9%8B___Mahmood_Al_Turky_-_Yema_Hamid_Exclusive___2015_g9ymfv.mp3'
   },
   {
     id: 'song_1',
-    title: 'سيستم واحد - خلودي 25 - باور',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059642/%D8%A7%D8%BA%D9%86%D9%8A%D8%A9%D8%B3%D9%8A%D8%B3%D8%AA%D9%85_%D9%88%D8%A7%D8%AD%D8%AF___%D8%AD%D8%B5%D8%B1%D9%8A%D8%A7%D9%8B_%D8%AE%D9%84%D9%88%D8%AF%D9%8A_25___%D8%A8%D8%A7%D9%88%D8%B1_rpapsi.mp3'
+    title: 'اغنية سيستم واحد _ ( حصرياً خلودي 25 ) _ باور',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059642/%D8%A7%D8%BA%D9%86%D9%8A%D8%A9_%D8%B3%D9%8A%D8%B3%D8%AA%D9%85_%D9%88%D8%A7%D8%AD%D8%AF___%D8%AD%D8%B5%D8%B1%D9%8A%D8%A7%D9%8B_%D8%AE%D9%84%D9%88%D8%AF%D9%8A_25___%D8%A8%D8%A7%D9%88%D8%B1_rpapsi.mp3'
   },
   {
     id: 'song_2',
-    title: 'فضل شاكر - فين لياليك',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059580/Fadl_Shaker_...Fen_Layalik__%D9%81%D8%B6%D9%84_%D8%B4%D8%A7%D9%83%D8%B1_...%D9%81%D9%8A%D9%86%D9%84%D9%8A%D8%A7%D9%84%D9%8A%D9%83_bhaogu.mp3'
+    title: 'Fadl Shaker ... Fen Layalik _ فضل شاكر ... فين لياليك',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059580/Fadl_Shaker_..._Fen_Layalik___%D9%81%D8%B6%D9%84_%D8%B4%D8%A7%D9%83%D8%B1_..._%D9%81%D9%8A%D9%86_%D9%84%D9%8A%D8%A7%D9%84%D9%8A%D9%83_bhaogu.mp3'
   },
   {
     id: 'song_3',
-    title: 'فهد بن فصلا - لايهمك (حصرياً) 2025',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059562/%D9%81%D9%87%D8%AF_%D8%A8%D9%86_%D9%81%D8%B5%D9%84%D8%A7_-%D9%84%D8%A7%D9%8A%D9%87%D9%85%D9%83%D8%AD%D8%B5%D8%B1%D9%8A%D8%A7%D9%8B___2025_wo5kym.mp3'
+    title: 'فهد بن فصلا - لايهمك (حصرياً) _ 2025',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059562/%D9%81%D9%87%D8%AF_%D8%A8%D9%86_%D9%81%D8%B5%D9%84%D8%A7_-_%D9%84%D8%A7%D9%8A%D9%87%D9%85%D9%83_%D8%AD%D8%B5%D8%B1%D9%8A%D8%A7%D9%8B___2025_wo5kym.mp3'
   },
   {
     id: 'song_4',
-    title: 'شيلة يالله يالي بك نعز - جفران المري',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059552/%D8%B4%D9%8A%D9%84%D8%A9_%D9%8A%D8%A7%D9%84%D9%84%D9%87_%D9%8A%D8%A7%D9%84%D9%8A_%D8%A8%D9%83_%D9%86%D8%B9%D8%B2_%D9%88%D9%86%D9%87%D8%AA%D8%AF%D9%8A%D8%A7%D8%AF%D8%A7%D8%A1_%D8%AC%D9%81%D8%B1%D8%A7%D9%86_%D8%A7%D9%84%D9%85%D8%B1%D9%8A_itltaw.mp3'
+    title: 'شيلة_يالله_يالي_بك_نعز_ونهتدياداء_جفران_المري',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059552/%D8%B4%D9%8A%D9%84%D8%A9_%D9%82%D8%AD%D8%B7%D8%A7%D9%86_%D9%82%D8%AD%D8%B7%D8%A7%D9%86_%D8%A7%D9%84%D9%88%D9%81%D8%A7%D8%A1_enqk9w.mp3'
   },
   {
     id: 'song_5',
@@ -36,37 +36,37 @@ export const SONGS_DB: Song[] = [
   },
   {
     id: 'song_6',
-    title: 'رعد و ميثاق السامرائي - اذيه 2017',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059549/%D8%B1%D8%B9%D8%AF_%D9%88_%D9%85%D9%8A%D8%AF%D8%A7%D9%82_%D8%A7%D9%84%D8%B3%D8%A7%D9%85%D8%B1%D8%A7%D9%8A%D9%94%D9%8A_-%D8%A7%D8%B0%D9%8A%D9%87%D9%81%D9%8A%D8%AF%D9%8A%D9%88_%D9%83%D9%84%D9%8A%D8%A8__2017_j1kcjr.mp3'
+    title: 'رعد و ميثاق السامرائي - اذيه ( فيديو كليب )_2017',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059549/%D8%B1%D8%B9%D8%AF_%D9%88_%D9%85%D9%8A%D8%AB%D8%A7%D9%82_%D8%A7%D9%84%D8%B3%D8%A7%D9%85%D8%B1%D8%A7%D9%8A%D9%94%D9%8A_-_%D8%A7%D8%B0%D9%8A%D9%87_%D9%81%D9%8A%D8%AF%D9%8A%D9%88_%D9%83%D9%84%D9%8A%D8%A8__2017_j1kcjr.mp3'
   },
   {
     id: 'song_7',
-    title: 'هيفاء وهبي - فاكرني (عيال مضيم)',
+    title: 'هيفاء-وهبيفاكرني',
     url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059547/%D8%B9%D9%8A%D8%A7%D9%84_%D9%85%D8%B6%D9%8A%D9%85_xzgrxz.mp3'
   },
   {
     id: 'song_8',
-    title: 'تركي العلي - سبحانه مغير الاحوال',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059544/%D8%AA%D8%B1%D9%83%D9%8A_%D8%A7%D9%84%D8%B9%D9%84%D9%8A_-%D8%B3%D8%A8%D8%AD%D8%A9%D9%86%D9%85%D8%BA%D9%8A%D8%B1_%D8%A7%D9%84%D8%A7%D8%AD%D9%88%D8%A7%D9%84_%D8%AC%D8%AF%D9%8A%D8%AF_2011_mxz6wr.mp3'
+    title: 'تركي العلي - سبحانه مغير الاحوال (جديد 2011)',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059544/%D8%AA%D8%B1%D9%83%D9%8A_%D8%A7%D9%84%D8%B9%D9%84%D9%8A_-_%D8%B3%D8%A8%D8%AD%D8%A9%D9%86%D9%87_%D9%85%D8%BA%D9%8A%D8%B1_%D8%A7%D9%84%D8%A7%D8%AD%D9%88%D8%A7%D9%84_%D8%AC%D8%AF%D9%8A%D8%AF_2011_mxz6wr.mp3'
   },
   {
     id: 'song_9',
-    title: 'محمد عبده - ألا وا شيب عيني (2005)',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059540/%D9%85%D8%AD%D9%85%D8%AF_%D8%B9%D8%A8%D8%AF%D9%87_-%D8%A3%D9%84%D8%A7%D9%88%D8%A7_%D8%B4%D9%8A%D8%A8_%D8%B9%D9%8A%D9%86%D9%8A_-%D1%81%D8%A8%D8%AA%D9%85%D8%A8%D8%B1_2005-HD_tdwb97.mp3'
+    title: 'محمد عبده - ألا وا شيب عيني - فبراير 2005',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059540/%D9%85%D8%AD%D9%85%D8%AF_%D8%B9%D8%A8%D8%AF%D9%87_-_%D8%A3%D9%84%D8%A7_%D9%88%D8%A7_%D8%B4%D9%8A%D8%A8_%D8%B9%D9%8A%D9%86%D9%8A_-_%D9%81%D8%A8%D8%B1%D8%A7%D9%8A%D8%B1_2005_-_HD_tdwb97.mp3'
   },
   {
     id: 'song_10',
-    title: 'محمد عبده - توصيني على الكتمان',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059538/%D9%85%D8%AD%D9%85%D8%AF%D8%B9%D8%A8%D8%AF%D9%87___%D8%AA%D9%88%D8%B5%D9%8A%D9%86%D9%8A_%D8%B9%D9%84%D9%89_%D8%A7%D9%84%D9%83%D8%AA%D9%85%D8%A7%D9%86_..%D9%88%D8%AA%D8%A8%D8%BA%D9%89%D8%AD%D8%A8%D9%86%D8%A7_%D9%85%D8%A7_%D9%8A%D8%A8%D8%A7%D9%86_HQ_axy5ye.mp3'
+    title: 'محمد عبده _ توصيني على الكتمان .. وتبغى حبنا ما يبان !',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059538/%D9%85%D8%AD%D9%85%D8%AF_%D8%B9%D8%A8%D8%AF%D9%87___%D8%AA%D9%88%D8%B5%D9%8A%D9%86%D9%8A_%D8%B9%D9%84%D9%89_%D8%A7%D9%84%D9%83%D8%AA%D9%85%D8%A7%D9%86_.._%D9%88%D8%AA%D8%A8%D8%BA%D9%89_%D8%AD%D8%A8%D9%86%D8%A7_%D9%85%D8%A7_%D9%8A%D8%A8%D8%A7%D9%86_HQ_axy5ye.mp3'
   },
   {
     id: 'song_11',
-    title: 'نانسي عجرم - يا قلبو',
-    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059538/Nancy_Ajram_-Ya_Albo__Official_Music_Video%D9%86%D8%A7%D9%86%D8%B3%D9%8A_%D8%B9%D8%AC%D8%B1%D9%85_-%D9%8A%D8%A7%D9%82%D9%84%D8%A8%D9%88___maxkpx.mp3'
+    title: 'Nancy Ajram - Ya Albo_ (Official Music Video) نانسي عجرم - يا قلبو',
+    url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059538/Nancy_Ajram_-_Ya_Albo__Official_Music_Video_%D9%86%D8%A7%D9%86%D8%B3%D9%8A_%D8%B9%D8%AC%D8%B1%D9%85_-_%D9%8A%D8%A7_%D9%82%D9%84%D8%A8%D9%88___maxkpx.mp3'
   },
   {
     id: 'song_12',
-    title: 'VIDRADO EM VOCE - Pode Sentar',
+    title: 'VIDRADO EM VOCE - DJ GUUGA e MC LIVINHO (Pode Sentار)',
     url: 'https://res.cloudinary.com/dekkgp3rb/video/upload/v1770059537/VIDRADO_EM_VOCE_-_DJ_GUUGA_e_MC_LIVINHO_Pode_Sentar_omzkgz.mp3'
   },
 ];

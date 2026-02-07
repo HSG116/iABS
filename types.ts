@@ -32,7 +32,8 @@ export type ViewState =
   | 'TYPING_RACE'
   | 'GRID_HUNT'
   | 'CUP_SHUFFLE'
-  | 'TERRITORY_WAR';
+  | 'TERRITORY_WAR'
+  | 'TRUTH_OR_LIE';
 
 // Added GameType to fix import error in TournamentManager.tsx
 export type GameType = 'TRIVIA' | 'BLUR' | 'FLAGS' | 'TYPING' | 'CUPS' | 'GRID' | 'WHEEL' | 'PAINT' | 'BATTLE' | 'BOMB';

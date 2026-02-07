@@ -14,6 +14,7 @@ import { TypingRace } from './components/TypingRace';
 import { GridHunt } from './components/GridHunt';
 import { CupShuffle } from './components/CupShuffle';
 import { TerritoryWar } from './components/TerritoryWar';
+import { TruthOrLie } from './components/TruthOrLie';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GlobalAnnouncement } from './components/GlobalAnnouncement';
 import { ViewState } from './types';
@@ -196,25 +197,35 @@ const App: React.FC = () => {
 
   const handleGoHome = () => setCurrentView('HOME');
 
-  const PremiumGameButton = ({ title, icon: Icon, onClick, isPrimary = false }: any) => (
+  const PremiumGameButton = ({ title, icon: Icon, onClick, isPrimary = false, isComingSoon = false }: any) => (
     <button
-      onClick={onClick}
-      className={`group relative flex items-center justify-center gap-4 md:gap-6 overflow-hidden border-2 border-white/10 transition-all duration-300 active:scale-95 bg-iabs-red text-white font-black italic
+      onClick={isComingSoon ? undefined : onClick}
+      disabled={isComingSoon}
+      className={`group relative flex items-center justify-center gap-4 md:gap-6 overflow-hidden border-2 border-white/10 transition-all duration-300 active:scale-95 text-white font-black italic
+        ${isComingSoon ? "bg-zinc-900 cursor-not-allowed grayscale pointer-events-none" : "bg-iabs-red shadow-[0_15px_40px_rgba(255,0,0,0.3)]"}
         ${isPrimary
-          ? "px-10 py-5 text-2xl md:text-3xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(255,0,0,0.4)] hover:scale-105 w-full lg:max-w-md"
-          : "px-4 py-4 text-lg md:text-xl rounded-[2rem] shadow-[0_15px_40px_rgba(255,0,0,0.3)] hover:scale-110 w-full"
+          ? "px-10 py-5 text-2xl md:text-3xl rounded-[2.5rem] hover:scale-105 w-full lg:max-w-md shadow-[0_20px_50px_rgba(255,0,0,0.4)]"
+          : "px-4 py-4 text-lg md:text-xl rounded-[2rem] hover:scale-110 w-full"
         }`}
     >
       <div className="absolute inset-0 bg-white/30 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000 skew-x-[-35deg] pointer-events-none z-20"></div>
       <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/30 to-transparent pointer-events-none z-10"></div>
 
-      <div className={`relative z-30 flex-shrink-0 transition-transform duration-500 transform group-hover:scale-115 group-hover:rotate-6 flex items-center justify-center ${isPrimary ? 'w-12 h-12' : 'w-10 h-10'}`}>
+      <div className={`relative z-30 flex-shrink-0 transition-transform duration-500 transform group-hover:scale-115 group-hover:rotate-6 flex items-center justify-center ${isPrimary ? 'w-12 h-12' : 'w-10 h-10'} ${isComingSoon ? 'opacity-30' : ''}`}>
         <Icon size={isPrimary ? 40 : 28} color="#FFFFFF" strokeWidth={2.5} className="drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
       </div>
 
-      <span className="relative z-30 drop-shadow-[0_3px_6px_rgba(0,0,0,0.5)] tracking-tighter uppercase leading-tight" style={{ color: '#FFFFFF' }}>
+      <span className={`relative z-30 drop-shadow-[0_3px_6px_rgba(0,0,0,0.5)] tracking-tighter uppercase leading-tight ${isComingSoon ? 'opacity-30' : ''}`} style={{ color: '#FFFFFF' }}>
         {title}
       </span>
+
+      {isComingSoon && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
+          <div className="bg-yellow-500 text-black px-6 py-1 rounded-full font-black text-sm -rotate-12 shadow-[0_0_20px_rgba(234,179,8,0.5)] animate-pulse">
+            قريباً
+          </div>
+        </div>
+      )}
     </button>
   );
 
@@ -289,6 +300,7 @@ const App: React.FC = () => {
       case 'GRID_HUNT': return <GridHunt channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
       case 'CUP_SHUFFLE': return <CupShuffle channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
       case 'TERRITORY_WAR': return <TerritoryWar channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'TRUTH_OR_LIE': return <TruthOrLie channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
 
       case 'LEADERBOARD': return (
         <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto w-full pt-10 px-6 h-full flex flex-col items-center">
@@ -482,6 +494,7 @@ const App: React.FC = () => {
                 <PremiumGameButton title="صائد الكنز" icon={Gem} onClick={() => setCurrentView('GRID_HUNT')} />
                 <PremiumGameButton title="تحدي الأكواب" icon={Coffee} onClick={() => setCurrentView('CUP_SHUFFLE')} />
                 <PremiumGameButton title="حرب الألوان" icon={PaintBucket} onClick={() => setCurrentView('TERRITORY_WAR')} />
+                <PremiumGameButton title="صادق أو كاذب" icon={AlertTriangle} isComingSoon={true} onClick={() => setCurrentView('TRUTH_OR_LIE')} />
               </div>
             </div>
 
