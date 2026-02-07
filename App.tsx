@@ -504,17 +504,6 @@ const App: React.FC = () => {
                 لوحة الصدارة
               </button>
 
-              <div className="relative group">
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black text-[11px] font-black rounded-full shadow-[0_0_20px_rgba(234,179,8,0.5)] border border-yellow-200/50 animate-pulse whitespace-nowrap z-50 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-black rounded-full animate-ping"></span>
-                  تحت التطوير الان
-                </div>
-                <button onClick={() => setShowOBSModal(true)} className="flex items-center gap-6 text-white/40 hover:text-purple-500 font-black text-3xl tracking-[0.2em] transition-all hover:scale-110 group italic border-l-4 border-white/5 pl-10 md:pl-20">
-                  <Video size={32} className="group-hover:animate-pulse text-purple-500 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" />
-                  روابط البث
-                </button>
-              </div>
-
               <button onClick={() => setCurrentView('ADMIN_LOGIN')} className="flex items-center gap-6 text-white/10 hover:text-white/40 font-black text-3xl tracking-[0.2em] transition-all hover:scale-110 group border-l-4 border-white/5 pl-10 md:pl-20 italic">
                 <ShieldCheck size={32} className="group-hover:text-blue-500 transition-colors" />
                 الإدارة
