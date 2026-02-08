@@ -501,94 +501,94 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ channelConnected, onHome }
                <div className="w-full h-full flex flex-col items-center justify-center relative p-8">
                   {winner && (
                      <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/98 backdrop-blur-3xl animate-in zoom-in duration-500">
-                        <div className="bg-[#050505] p-24 rounded-[6rem] border-[4px] border-red-600 shadow-[0_0_200px_rgba(255,0,0,0.5)] text-center relative max-w-2xl w-full mx-4 overflow-hidden group">
-                           <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+                        <div className="bg-[#050505] p-10 rounded-[3rem] border-[3px] border-red-600 shadow-[0_0_150px_rgba(255,0,0,0.4)] text-center relative max-w-lg w-full mx-4 overflow-hidden group">
+                           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
 
                            {config.showAvatars && winner.avatar ? (
-                              <div className="w-64 h-64 rounded-[4rem] border-8 border-red-600 mx-auto mb-10 overflow-hidden shadow-[0_0_80px_rgba(255,0,0,0.6)] relative transform hover:scale-110 transition-transform">
+                              <div className="w-32 h-32 rounded-[2rem] border-4 border-red-600 mx-auto mb-6 overflow-hidden shadow-[0_0_60px_rgba(255,0,0,0.5)] relative transform hover:scale-110 transition-transform">
                                  <img src={winner.avatar} className="w-full h-full object-cover" alt="winner" />
                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                               </div>
                            ) : (
-                              <Trophy className="text-yellow-400 mx-auto mb-12 animate-bounce drop-shadow-[0_0_50px_rgba(255,215,0,0.6)]" size={160} fill="currentColor" />
+                              <Trophy className="text-yellow-400 mx-auto mb-6 animate-bounce drop-shadow-[0_0_40px_rgba(255,215,0,0.5)]" size={80} fill="currentColor" />
                            )}
 
-                           <div className="text-red-600 font-black uppercase tracking-[0.8em] text-sm mb-10 italic flex items-center justify-center gap-6">
-                              <span className="w-16 h-px bg-red-600/40"></span> بـطل الـساحة <span className="w-16 h-px bg-red-600/40"></span>
+                           <div className="text-red-600 font-black uppercase tracking-[0.5em] text-[10px] mb-6 italic flex items-center justify-center gap-4">
+                              <span className="w-10 h-px bg-red-600/40"></span> بـطل الـساحة <span className="w-10 h-px bg-red-600/40"></span>
                            </div>
-                           <div className="text-9xl font-black text-white mb-16 italic tracking-tighter uppercase drop-shadow-[0_20px_40px_rgba(0,0,0,1)]">{winner.username}</div>
+                           <div className="text-5xl font-black text-white mb-8 italic tracking-tighter uppercase drop-shadow-[0_10px_20px_rgba(0,0,0,1)]">{winner.username}</div>
 
-                           <div className="flex gap-8 justify-center">
-                              <button onClick={() => setWinner(null)} className="flex-1 max-w-[220px] py-7 bg-white/10 border border-white/10 text-white font-black text-3xl rounded-[2rem] hover:bg-white/20 transition-all italic">إغلاق</button>
-                              <button onClick={onHome} className="flex-1 max-w-[220px] py-7 bg-red-600 text-white font-black text-3xl rounded-[2rem] hover:scale-105 transition-all italic shadow-2xl shadow-red-600/40 border-t-2 border-white/20">الرئيسية</button>
+                           <div className="flex gap-4 justify-center">
+                              <button onClick={() => setWinner(null)} className="flex-1 max-w-[160px] py-4 bg-white/10 border border-white/10 text-white font-black text-xl rounded-[1.5rem] hover:bg-white/20 transition-all italic">إغلاق</button>
+                              <button onClick={onHome} className="flex-1 max-w-[160px] py-4 bg-red-600 text-white font-black text-xl rounded-[1.5rem] hover:scale-105 transition-all italic shadow-xl shadow-red-600/30 border-t-2 border-white/20">الرئيسية</button>
                            </div>
                         </div>
                      </div>
                   )}
 
-                  <div className="relative w-[1100px] h-[1100px] flex items-center justify-center transform scale-90 xxl:scale-100">
+                     <div className="relative w-[600px] h-[600px] flex items-center justify-center mx-auto my-auto">
                      {/* Pointer - Enhanced */}
-                     <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-[60]">
+                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-[60]">
                         <div className="relative">
-                           <div className="w-0 h-0 border-l-[55px] border-l-transparent border-r-[55px] border-r-transparent border-t-[85px] border-t-red-600 drop-shadow-[0_15px_30px_rgba(255,0,0,0.8)] filter"></div>
-                           <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white shadow-[0_0_25px_white] animate-pulse"></div>
-                           <div className="absolute top-2 w-px h-20 bg-red-600/50 blur-[2px] left-1/2 -translate-x-1/2"></div>
+                           <div className="w-0 h-0 border-l-[25px] border-l-transparent border-r-[25px] border-r-transparent border-t-[45px] border-t-red-600 drop-shadow-[0_10px_20px_rgba(255,0,0,0.8)] filter"></div>
+                           <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white shadow-[0_0_20px_white] animate-pulse"></div>
+                           <div className="absolute top-1 w-px h-10 bg-red-600/50 blur-[1px] left-1/2 -translate-x-1/2"></div>
                         </div>
                      </div>
 
                      {/* The Wheel */}
-                     <div className={`relative w-[1000px] h-[1000px] rounded-full p-8 bg-[#0a0a0c] border-[25px] border-[#16161a] shadow-[0_0_150px_rgba(0,0,0,1)] overflow-hidden transition-all ease-out ${config.neonGlow ? 'premium-neon' : ''}`} style={{ transform: `rotate(${rotation}deg)`, transitionDuration: isSpinning ? `${config.spinDuration}s` : '0s', transitionTimingFunction: 'cubic-bezier(0.1, 0, 0.1, 1)' }}>
+                     <div className={`relative w-[500px] h-[500px] rounded-full p-4 bg-[#0a0a0c] border-[15px] border-[#16161a] shadow-[0_0_80px_rgba(0,0,0,1)] overflow-hidden transition-all ease-out ${config.neonGlow ? 'premium-neon' : ''}`} style={{ transform: `rotate(${rotation}deg)`, transitionDuration: isSpinning ? `${config.spinDuration}s` : '0s', transitionTimingFunction: 'cubic-bezier(0.1, 0, 0.1, 1)' }}>
                         <canvas
                            ref={canvasRef}
-                           width={1500}
-                           height={1500}
+                           width={1000}
+                           height={1000}
                            className="w-full h-full"
                         />
                      </div>
 
                      {/* Center Hub Premium */}
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#0a0a0c] rounded-full z-[70] border-[18px] border-[#16161a] flex items-center justify-center shadow-[0_0_100px_black]">
-                        <div className="w-40 h-40 bg-gradient-to-br from-red-500 to-red-800 rounded-[3.5rem] flex items-center justify-center shadow-[0_0_80px_rgba(255,0,0,0.7)] relative overflow-hidden transform rotate-45 border-4 border-white/20 hover:scale-110 transition-transform cursor-pointer group" onClick={() => !isSpinning && participants.length >= config.minParticipants && spinTheWheel()}>
-                           <div className="text-white font-black text-6xl -rotate-45 italic tracking-tighter drop-shadow-2xl">iABS</div>
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 bg-[#0a0a0c] rounded-full z-[70] border-[10px] border-[#16161a] flex items-center justify-center shadow-[0_0_50px_black]">
+                        <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-800 rounded-[2rem] flex items-center justify-center shadow-[0_0_40px_rgba(255,0,0,0.6)] relative overflow-hidden transform rotate-45 border-2 border-white/20 hover:scale-110 transition-transform cursor-pointer group" onClick={() => !isSpinning && participants.length >= config.minParticipants && spinTheWheel()}>
+                           <div className="text-white font-black text-2xl -rotate-45 italic tracking-tighter drop-shadow-xl">iABS</div>
                            <div className="absolute inset-0 bg-white/30 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-30"></div>
                         </div>
                         {/* Static indicator for top pointer */}
-                        <div className="absolute top-[-30px] w-4 h-4 rounded-full bg-red-600/20 blur-[5px]"></div>
+                        <div className="absolute top-[-20px] w-3 h-3 rounded-full bg-red-600/20 blur-[3px]"></div>
                      </div>
 
                      {/* Advanced Decorative Outer Rings */}
-                     <div className="absolute inset-[-100px] border-[2px] border-white/5 rounded-full pointer-events-none opacity-20"></div>
-                     <div className="absolute inset-[-180px] border-[1px] border-red-600/5 rounded-full pointer-events-none opacity-10 animate-spin-slow"></div>
-                     <div className="absolute inset-[-250px] border-[1px] border-white/5 rounded-full pointer-events-none opacity-5 animate-reverse-slow"></div>
+                     <div className="absolute inset-[-40px] border-[2px] border-white/5 rounded-full pointer-events-none opacity-20"></div>
+                     <div className="absolute inset-[-80px] border-[1px] border-red-600/5 rounded-full pointer-events-none opacity-10 animate-spin-slow"></div>
+                     <div className="absolute inset-[-120px] border-[1px] border-white/5 rounded-full pointer-events-none opacity-5 animate-reverse-slow"></div>
 
                      {/* Outer floating particles decorative */}
-                     <div className="absolute -top-[10%] -left-[10%] w-64 h-64 bg-red-600/5 blur-[120px] rounded-full"></div>
-                     <div className="absolute -bottom-[10%] -right-[10%] w-64 h-64 bg-blue-600/5 blur-[120px] rounded-full"></div>
+                     <div className="absolute -top-[5%] -left-[5%] w-48 h-48 bg-red-600/5 blur-[80px] rounded-full"></div>
+                     <div className="absolute -bottom-[5%] -right-[5%] w-48 h-48 bg-blue-600/5 blur-[80px] rounded-full"></div>
                   </div>
 
                   {/* Bottom Giant Info Bar */}
-                  <div className="mt-8 bg-black/60 backdrop-blur-3xl border border-white/5 px-20 py-8 rounded-[4rem] flex items-center gap-20 shadow-[0_20px_80px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-10 duration-1000">
-                     <div className="flex flex-col items-center px-10 border-l border-white/10">
-                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                           <Users size={16} /> الـمقاتـلون
+                  <div className="mt-4 bg-black/60 backdrop-blur-3xl border border-white/5 px-8 py-4 rounded-[2.5rem] flex items-center gap-8 shadow-[0_15px_60px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-10 duration-1000">
+                     <div className="flex flex-col items-center px-6 border-l border-white/10">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                           <Users size={12} /> الـمقاتـلون
                         </span>
-                        <span className="text-6xl font-black text-white italic font-mono leading-none">{participants.length}</span>
+                        <span className="text-2xl font-black text-white italic font-mono leading-none">{participants.length}</span>
                      </div>
-                     <div className="flex flex-col items-center px-10 border-l border-white/10">
-                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                           <Zap size={16} /> كـلمة الـدخول
+                     <div className="flex flex-col items-center px-6 border-l border-white/10">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                           <Zap size={12} /> كـلمة الـدخول
                         </span>
-                        <div className="flex items-center gap-4">
-                           <span className="text-5xl font-black text-red-500 italic uppercase leading-none">{config.joinKeyword}</span>
-                           {selectedSticker && <img src={selectedSticker} className="w-12 h-12 object-contain" alt="s" />}
+                        <div className="flex items-center gap-3">
+                           <span className="text-2xl font-black text-red-500 italic uppercase leading-none">{config.joinKeyword}</span>
+                           {selectedSticker && <img src={selectedSticker} className="w-8 h-8 object-contain" alt="s" />}
                         </div>
                      </div>
-                     <div className="flex flex-col items-center px-10">
-                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">الـحالة الـحالية</span>
-                        <div className={`px-8 py-2 rounded-2xl flex items-center gap-3 border-2 ${isOpen ? 'bg-green-600/10 border-green-500 text-green-500' : 'bg-red-600/10 border-red-600 text-red-600'}`}>
-                           {isOpen ? <Unlock size={24} className="animate-bounce" /> : <Lock size={24} />}
-                           <span className="text-3xl font-black italic uppercase">
-                              {isOpen ? 'انـضمام مـفـتوح' : 'الانـضمام مـغـلق'}
+                     <div className="flex flex-col items-center px-6">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">الـحالة الـحالية</span>
+                        <div className={`px-4 py-1.5 rounded-xl flex items-center gap-2 border ${isOpen ? 'bg-green-600/10 border-green-500 text-green-500' : 'bg-red-600/10 border-red-600 text-red-600'}`}>
+                           {isOpen ? <Unlock size={16} className="animate-bounce" /> : <Lock size={16} />}
+                           <span className="text-xl font-black italic uppercase">
+                              {isOpen ? 'مـفـتوح' : 'مـغـلق'}
                            </span>
                         </div>
                      </div>

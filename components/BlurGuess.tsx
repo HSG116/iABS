@@ -252,16 +252,6 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
                 </div>
               </div>
 
-              {/* Live Chat Overlay */}
-              <div className="absolute top-10 right-10 flex flex-col gap-3 w-80 pointer-events-none">
-                {recentMessages.map((m, i) => (
-                  <div key={i} className="bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 animate-in slide-in-from-right duration-300 flex flex-col items-end">
-                    <span className="text-[10px] font-black italic mb-1" style={{ color: m.color || '#ef4444' }}>{m.user}</span>
-                    <span className="text-sm font-bold text-white text-right">{m.content}</span>
-                  </div>
-                ))}
-              </div>
-
               {/* Sleek Bottom HUD Bar */}
               <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/80 to-transparent p-10 flex items-end justify-between">
                 <div className="flex gap-8">
@@ -275,14 +265,7 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <button onClick={onHome} className="bg-white/5 hover:bg-red-600 text-gray-400 hover:text-white px-8 py-5 rounded-[2rem] border border-white/10 transition-all font-black text-xl italic flex items-center gap-3">
-                    <Home size={24} /> خـروج
-                  </button>
-                  <button onClick={resetGame} className="bg-white/5 hover:bg-white/10 text-white px-8 py-5 rounded-[2rem] border border-white/10 transition-all font-black text-xl italic flex items-center gap-3">
-                    <RotateCcw size={24} /> إعادة
-                  </button>
-                </div>
+
               </div>
             </div>
           </div>

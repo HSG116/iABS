@@ -99,33 +99,33 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
     <div className="flex flex-col h-full w-full bg-[#050505]/90 backdrop-blur-2xl relative border-l border-white/5">
 
       {/* Header */}
-      <div className="h-16 shrink-0 bg-gradient-to-r from-red-600/10 to-transparent border-b border-white/5 flex items-center justify-between px-5 z-20">
+      <div className="h-20 shrink-0 bg-gradient-to-r from-red-600/10 to-transparent border-b border-white/5 flex items-center justify-between px-6 z-20">
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-500 shadow-lg ${status.connected ? 'bg-red-600' : 'bg-zinc-800'}`}>
-            <MessageSquare size={16} className="text-white" />
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 shadow-lg ${status.connected ? 'bg-red-600' : 'bg-zinc-800'}`}>
+            <MessageSquare size={24} className="text-white" />
           </div>
           <div className="flex flex-col">
-            <h2 className="text-white font-black text-xs uppercase tracking-tighter italic">{t.title}</h2>
-            <div className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${status.connected ? 'bg-red-500 animate-pulse shadow-[0_0_5px_red]' : 'bg-zinc-600'}`}></span>
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{status.connected ? t.connected : t.connecting}</span>
+            <h2 className="text-white font-black text-sm uppercase tracking-tighter italic">{t.title}</h2>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${status.connected ? 'bg-red-500 animate-pulse shadow-[0_0_5px_red]' : 'bg-zinc-600'}`}></span>
+              <span className="text-[12px] text-gray-500 font-bold uppercase tracking-widest">{status.connected ? t.connected : t.connecting}</span>
             </div>
           </div>
         </div>
-        <button onClick={connect} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all">
-          <RefreshCw size={14} className={!status.connected && !status.error ? 'animate-spin' : ''} />
+        <button onClick={connect} className="p-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-all">
+          <RefreshCw size={20} className={!status.connected && !status.error ? 'animate-spin' : ''} />
         </button>
       </div>
 
       {/* Messages Container */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 custom-scrollbar"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 custom-scrollbar"
       >
         {messages.length === 0 && status.connected && (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
-            <Ghost size={40} className="mb-3 text-red-600" />
-            <p className="text-[10px] font-black text-white uppercase tracking-[0.3em]">{t.placeholder}</p>
+            <Ghost size={60} className="mb-4 text-red-600" />
+            <p className="text-[12px] font-black text-white uppercase tracking-[0.3em]">{t.placeholder}</p>
           </div>
         )}
 
@@ -139,7 +139,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
 
         {messages.map((msg) => (
           <div key={msg.id} className="animate-in slide-in-from-right-4 duration-300 group">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2">
               {/* Badge & Avatar logic simplified for performance */}
               <div className="shrink-0 mt-0.5">
                 {msg.role !== 'user' ? getBadge(msg.role) : (
@@ -157,18 +157,18 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
                   >
                     {msg.user.username}
                   </span>
-                  <span className="text-[8px] text-gray-700 font-mono items-center gap-1 hidden group-hover:flex">
-                    <Clock size={8} /> {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <span className="text-[10px] text-gray-700 font-mono items-center gap-1 hidden group-hover:flex">
+                    <Clock size={10} /> {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
 
                 {msg.deleted ? (
-                  <div className="flex items-center gap-2 text-zinc-600 italic bg-white/[0.02] p-2 rounded-lg border border-white/5">
-                    <Ban size={10} />
-                    <span className="text-[11px] font-bold">{t.deleted}</span>
+                  <div className="flex items-center gap-2 text-zinc-600 italic bg-white/[0.02] p-1 rounded-lg border border-white/5">
+                    <Ban size={12} />
+                    <span className="text-[10px] font-bold">{t.deleted}</span>
                   </div>
                 ) : (
-                  <div className="text-[15px] text-gray-200 font-bold leading-tight break-words whitespace-pre-wrap -tracking-tight drop-shadow-sm">
+                  <div className="text-[13px] text-gray-200 font-bold leading-tight break-words whitespace-pre-wrap -tracking-tight drop-shadow-sm">
                     {parseMessageContent(msg.content)}
                   </div>
                 )}
@@ -181,7 +181,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
 
 
       {/* Bottom Glow */}
-      <div className="h-8 bg-gradient-to-t from-black to-transparent shrink-0"></div>
+      <div className="h-12 bg-gradient-to-t from-black to-transparent shrink-0"></div>
     </div>
   );
 };
@@ -204,7 +204,7 @@ const parseMessageContent = (content: string) => {
         key={`${emoteId}-${match.index}`}
         src={`https://files.kick.com/emotes/${emoteId}/fullsize`}
         alt={emoteName}
-        className="inline-block w-7 h-7 align-middle mx-1 hover:scale-110 transition-transform"
+        className="inline-block w-10 h-10 align-middle mx-1 hover:scale-110 transition-transform"
         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
       />
     );

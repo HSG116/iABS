@@ -5,7 +5,7 @@ import { ChatWidget } from './ChatWidget';
 import {
   MessageSquare, X, Settings2, ChevronRight,
   Maximize2, Minimize2, PanelRightClose,
-  LayoutGrid, ArrowLeftRight, Link, Video
+  LayoutGrid, ArrowLeftRight, Link, Video, Home
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -91,30 +91,29 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
 
           <div className="w-px h-6 bg-white/10 mx-3"></div>
 
-          {/* OBS Link Button */}
-          <div className="relative group/dev">
-            <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 bg-yellow-500 text-black text-[8px] font-black rounded-lg opacity-0 group-hover/dev:opacity-100 transition-all duration-300 whitespace-nowrap z-50 pointer-events-none shadow-[0_0_10px_rgba(234,179,8,0.4)]">
-              تحت التطوير
+          {/* Home Button */}
+          <div className="relative group/home">
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 bg-red-600 text-white text-[8px] font-black rounded-lg opacity-0 group-hover/home:opacity-100 transition-all duration-300 whitespace-nowrap z-50 pointer-events-none shadow-[0_0_10px_rgba(220,38,38,0.4)]">
+              العودة للرئيسية
             </div>
             <button
-              onClick={onOBSLinks}
-              title="روابط OBS"
-              className="relative p-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white transition-all rounded-xl border border-purple-600/30 active:scale-95 shadow-[0_0_10px_rgba(147,51,234,0.2)] hover:shadow-[0_0_20px_rgba(147,51,234,0.6)] group"
+              onClick={() => onChangeView('HOME')}
+              title="العودة للقائمة الرئيسية"
+              className="relative p-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white transition-all rounded-xl border border-red-600/30 active:scale-95 shadow-[0_0_10px_rgba(220,38,38,0.2)] hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] group"
             >
-              <Link size={18} className="relative z-10" />
-              <div className="absolute inset-0 rounded-xl bg-purple-500/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <Home size={18} className="relative z-10" />
             </button>
           </div>
         </div>
 
         {/* Top Section: Chat Content */}
-        <div className="flex-[1.2] min-h-0 overflow-hidden flex flex-col">
+        <div className="flex-[1.5] min-h-0 overflow-hidden flex flex-col">
           <ChatWidget lang="ar" />
         </div>
 
         {/* Bottom Section: Game Controls */}
         {!isHome && (
-          <div className="flex-1 border-t-2 border-white/10 bg-gradient-to-b from-black/60 to-red-950/10 backdrop-blur-3xl flex flex-col relative">
+          <div className="flex-1 min-h-0 border-t-2 border-white/10 bg-gradient-to-b from-black/60 to-red-950/10 backdrop-blur-3xl flex flex-col relative">
             <div className="p-5 border-b border-white/10 flex items-center gap-4 bg-black/40">
               <div className="p-2 bg-red-600 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)]">
                 <Settings2 size={20} className="text-white animate-spin-slow" />
