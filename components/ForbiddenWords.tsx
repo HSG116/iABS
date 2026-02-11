@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Play, Users, Trophy, Clock, Volume2, ChevronLeft, User, Trash2, Sparkles, CheckCircle2, Loader2, Gauge, Zap, Star, LogOut, Home, AlertTriangle, ShieldOff, Brain, Target, MessageSquare, EyeOff, Monitor, BarChart3, Cloud, Hash, Flame, Copy } from 'lucide-react';
 import { ChatUser } from '../types';
 import { chatService } from '../services/chatService';
-import { leaderboardService } from '../services/supabase';
+import { leaderboardService, supabase } from '../services/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ForbiddenWordsProps {
     onHome: () => void;
@@ -97,6 +98,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     const configRef = useRef(config);
     const currentChallengeRef = useRef(currentChallenge);
     const participantsRef = useRef(participants);
+    const channelRef = useRef<RealtimeChannel | null>(null);
 
     useEffect(() => {
         phaseRef.current = phase;
@@ -106,6 +108,62 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     }, [phase, config, currentChallenge, participants]);
 
     const [suggestedChallenges, setSuggestedChallenges] = useState<ForbiddenChallenge[]>([]);
+
+    // --- SYNC LOGIC ---
+    useEffect(() => {
+        const channel = supabase.channel('forbidden-words-game', {
+            config: {
+                broadcast: { self: false }
+            }
+        });
+        channelRef.current = channel;
+
+        if (isOBS) {
+            channel.on('broadcast', { event: 'game_state' }, ({ payload }) => {
+                const state = payload;
+                if (state.phase) setPhase(state.phase);
+                if (state.participants) setParticipants(state.participants);
+                if (state.scores) setScores(state.scores);
+                if (typeof state.timer === 'number') setTimer(state.timer);
+                if (state.currentRound) setCurrentRound(state.currentRound);
+                if (state.currentChallenge !== undefined) setCurrentChallenge(state.currentChallenge);
+                if (state.roundWinner !== undefined) setRoundWinner(state.roundWinner);
+                if (state.guessStats) setGuessStats(state.guessStats);
+                if (state.closestGuess !== undefined) setClosestGuess(state.closestGuess);
+                if (state.suggestedChallenges) setSuggestedChallenges(state.suggestedChallenges);
+            }).subscribe();
+        } else {
+            channel.subscribe();
+        }
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [isOBS]);
+
+    // Broadcast state changes (Streamer Only)
+    useEffect(() => {
+        if (isOBS || !channelRef.current) return;
+
+        // Throttle broadcasts if needed, but for local 1s timer it's fine
+        channelRef.current.send({
+            type: 'broadcast',
+            event: 'game_state',
+            payload: {
+                phase,
+                participants,
+                scores,
+                timer,
+                currentRound,
+                currentChallenge,
+                roundWinner,
+                guessStats,
+                closestGuess,
+                suggestedChallenges
+            }
+        });
+    }, [phase, participants, scores, timer, currentRound, currentChallenge, roundWinner, guessStats, closestGuess, suggestedChallenges, isOBS]);
+
 
     const prepareNextChallenge = () => {
         const shuffled = [...CHALLENGES].sort(() => Math.random() - 0.5).slice(0, 3);
@@ -157,7 +215,8 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
                 }
             }
 
-            if (phaseRef.current === 'PLAYING' && currentChallengeRef.current) {
+            // Only process game logic if NOT in OBS mode (Streamer is the source of truth)
+            if (!isOBS && phaseRef.current === 'PLAYING' && currentChallengeRef.current) {
                 if (!participantsRef.current.some(p => p.username === username)) return;
 
                 const challenge = currentChallengeRef.current;
@@ -193,7 +252,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
             }
         });
         return () => unsubscribe();
-    }, []);
+    }, [isOBS]);
 
     const handleWin = (user: ChatUser) => {
         setRoundWinner(user);
@@ -213,11 +272,12 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
 
     useEffect(() => {
         let interval: number;
-        if (phase === 'PLAYING' && timer > 0) {
+        // Timer only runs on Streamer side
+        if (!isOBS && phase === 'PLAYING' && timer > 0) {
             interval = window.setInterval(() => {
                 setTimer(prev => prev - 1);
             }, 1000);
-        } else if (phase === 'PLAYING' && timer === 0) {
+        } else if (!isOBS && phase === 'PLAYING' && timer === 0) {
             setPhase('REVEAL');
             setTimeout(() => {
                 if (currentRound >= config.totalRounds) {
@@ -229,7 +289,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
             }, 5000);
         }
         return () => clearInterval(interval);
-    }, [phase, timer]);
+    }, [phase, timer, isOBS]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -646,6 +706,13 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
                             </button>
                         ))}
                     </div>
+
+                    <button
+                        onClick={copyOBSLink}
+                        className="absolute top-10 right-10 flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 text-white font-bold transition-all hover:scale-105"
+                    >
+                        <Copy size={20} /> نسخ رابط OBS
+                    </button>
                 </div>
             )}
 
