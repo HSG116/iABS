@@ -341,7 +341,6 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
         setCurrentRound(1);
         setScores({});
         setHasShownWarning(false);
-        hasShownWarningRef.current = false;
         prepareNextChallenge();
     };
     const resetGame = () => {
@@ -350,7 +349,6 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
         setScores({});
         setCurrentRound(1);
         setHasShownWarning(false);
-        hasShownWarningRef.current = false;
     };
 
     const copyOBSLink = () => {
