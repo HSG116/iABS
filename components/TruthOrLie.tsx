@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase';
 import {
     Timer, Sparkles, Trophy, Play, Home,
     CheckCircle, XCircle, Users, Volume2, VolumeX,
-    Settings, RefreshCw, Lock, Zap,
+    Settings, RefreshCw, Lock, Zap, User,
     AlertTriangle, Wand2, MonitorPlay, Video, Copy
 } from 'lucide-react';
 import { pexelsService } from '../services/pexelsService';
@@ -45,7 +45,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
 
     const [votes, setVotes] = useState<Vote[]>([]);
     const [soundEnabled, setSoundEnabled] = useState(true);
-    
+
     // Auto Input State (replaces manual)
     const [autoQuestion, setAutoQuestion] = useState('');
     const [autoAnswer, setAutoAnswer] = useState<'truth' | 'lie' | null>(null);
@@ -120,13 +120,24 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
 
             if (voteType) {
                 setVotes(prev => {
-                    if (prev.find(v => v.username === username)) return prev;
-                    const newVotes = [...prev, {
+                    if (prev.find(v => v.username === username)) return prev; // User already voted
+
+                    const newVote: Vote = {
                         username,
                         vote: voteType!,
-                        avatar_url: msg.user?.avatar
-                    }];
-                    
+                        avatar_url: msg.user?.avatar // Initial avatar from message
+                    };
+                    const newVotes = [...prev, newVote];
+
+                    // Asynchronously fetch real Kick avatar
+                    chatService.fetchKickAvatar(username).then(avatar => {
+                        if (avatar) {
+                            setVotes(current => current.map(v =>
+                                v.username === username ? { ...v, avatar_url: avatar } : v
+                            ));
+                        }
+                    });
+
                     if (!isOBS) {
                         channel.send({
                             type: 'broadcast',
@@ -154,18 +165,18 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
             timerInterval.current = setInterval(() => {
                 setGameState(prev => {
                     const newTime = prev.timeLeft - 1;
-                    
+
                     supabase.channel('truth_or_lie_v2').send({
                         type: 'broadcast',
                         event: 'game_update',
-                        payload: { 
-                            type: 'STATE_UPDATE', 
-                            data: { ...prev, timeLeft: newTime } 
+                        payload: {
+                            type: 'STATE_UPDATE',
+                            data: { ...prev, timeLeft: newTime }
                         }
                     });
 
                     if (newTime <= 5 && newTime > 0) playSound('tick');
-                    
+
                     if (newTime <= 0) {
                         if (timerInterval.current) clearInterval(timerInterval.current);
                     }
@@ -209,7 +220,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
             questionText: autoQuestion,
             correctAnswer: autoAnswer
         });
-        
+
         playSound('start');
         supabase.channel('truth_or_lie_v2').send({
             type: 'broadcast',
@@ -281,7 +292,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
     if (isOBS) {
         return (
             <div className="w-full h-screen bg-transparent overflow-hidden relative font-sans flex flex-col items-center justify-center p-8">
-                
+
                 {/* IDLE PHASE */}
                 {gameState.phase === 'idle' && (
                     <div className="flex flex-col items-center justify-center gap-8 animate-in zoom-in duration-700">
@@ -303,14 +314,14 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                 {/* VOTING & REVEAL PHASE */}
                 {(gameState.phase === 'voting' || gameState.phase === 'reveal') && (
                     <div className="w-full max-w-5xl flex flex-col gap-6 animate-in slide-in-from-bottom-10 duration-500">
-                        
+
                         {/* Timer & Total Votes */}
                         <div className="flex items-center justify-center gap-8 mb-4">
                             <div className={`px-8 py-3 rounded-full flex items-center gap-4 border-2 shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-300 ${gameState.timeLeft <= 5 && gameState.phase === 'voting' ? 'bg-red-950/80 border-red-500 text-red-500 animate-pulse' : 'bg-black/80 border-white/10 text-white'}`}>
                                 <Timer size={32} className={gameState.timeLeft <= 5 && gameState.phase === 'voting' ? 'animate-bounce' : ''} />
                                 <span className="text-5xl font-black font-display tabular-nums">{gameState.timeLeft}s</span>
                             </div>
-                            
+
                             <div className="px-8 py-3 rounded-full bg-black/80 border-2 border-white/10 backdrop-blur-md flex items-center gap-4 shadow-lg">
                                 <Users size={32} className="text-blue-400" />
                                 <span className="text-5xl font-black font-display tabular-nums text-white">{totalVotes}</span>
@@ -319,7 +330,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
 
                         {/* VS Battle Cards */}
                         <div className="grid grid-cols-2 gap-8 items-stretch h-[500px]">
-                            
+
                             {/* Truth Side */}
                             <div className={`
                                 relative rounded-[3rem] p-8 flex flex-col items-center justify-between border-4 overflow-hidden transition-all duration-700
@@ -328,7 +339,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                                 ${gameState.phase === 'voting' ? 'bg-gradient-to-b from-green-950/80 to-black/80 border-green-500/30' : ''}
                             `}>
                                 {/* Progress Background */}
-                                <div 
+                                <div
                                     className="absolute bottom-0 left-0 w-full bg-green-600/20 transition-all duration-1000 ease-out"
                                     style={{ height: `${truthPercentage}%` }}
                                 ></div>
@@ -367,7 +378,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                                 ${gameState.phase === 'voting' ? 'bg-gradient-to-b from-red-950/80 to-black/80 border-red-500/30' : ''}
                             `}>
                                 {/* Progress Background */}
-                                <div 
+                                <div
                                     className="absolute bottom-0 left-0 w-full bg-red-600/20 transition-all duration-1000 ease-out"
                                     style={{ height: `${liePercentage}%` }}
                                 ></div>
@@ -409,7 +420,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
     return (
         <div className="min-h-screen bg-black text-white font-sans p-4 md:p-8 flex flex-col gap-6 bg-[url('https://i.ibb.co/kWJRhSN/1000126060.png')] bg-cover bg-center bg-fixed bg-no-repeat">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-sm fixed z-0"></div>
-            
+
             {/* Header */}
             <div className="relative z-10 flex items-center justify-between bg-black/60 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 shadow-2xl">
                 <div className="flex items-center gap-6">
@@ -425,7 +436,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                         </p>
                     </div>
                 </div>
-                
+
                 <div className="flex gap-3">
                     <button
                         onClick={handleCopyObs}
@@ -433,7 +444,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                     >
                         <Video size={20} /> {obsCopied ? 'تم نسخ الرابط' : 'نسخ رابط OBS'}
                     </button>
-                    <button 
+                    <button
                         onClick={() => setSoundEnabled(!soundEnabled)}
                         className={`p-4 rounded-2xl border transition-all duration-300 ${soundEnabled ? 'bg-iabs-red/20 border-iabs-red text-iabs-red shadow-[0_0_15px_rgba(255,0,0,0.2)]' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}
                     >
@@ -447,21 +458,21 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
             </div>
 
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 h-full min-h-[600px]">
-                
+
                 {/* Left: Main Stage (Image & Controls) */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    
+
                     {/* Image Area */}
                     <div className="flex-1 relative rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl group bg-black/40 backdrop-blur-sm min-h-[500px]">
                         {gameState.imageUrl ? (
                             <>
-                                <img 
-                                    src={gameState.imageUrl} 
-                                    className="w-full h-full object-cover transition-transform duration-[30s] ease-linear group-hover:scale-110" 
-                                    alt="Challenge" 
+                                <img
+                                    src={gameState.imageUrl}
+                                    className="w-full h-full object-cover transition-transform duration-[30s] ease-linear group-hover:scale-110"
+                                    alt="Challenge"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
-                                
+
                                 {/* Info Overlay */}
                                 <div className="absolute inset-0 p-8 flex">
                                     <div className="ml-auto flex flex-col gap-4 w-[320px]">
@@ -505,7 +516,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                     {/* Controls Bar */}
                     <div className="h-28">
                         {!gameState.imageUrl ? (
-                            <button 
+                            <button
                                 onClick={handleAutoGenerate}
                                 disabled={isLoadingImage}
                                 className="premium-square-btn w-full h-full rounded-[2rem] text-3xl font-black flex items-center justify-center gap-6 disabled:opacity-50 group hover:scale-[1.02] transition-all"
@@ -521,14 +532,14 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                             <div className="grid grid-cols-2 gap-6 h-full">
                                 {gameState.phase === 'idle' ? (
                                     <>
-                                        <button 
+                                        <button
                                             onClick={handleStartVoting}
                                             className="premium-square-btn col-span-1 rounded-[2rem] text-2xl font-black flex items-center justify-center gap-4 hover:scale-[1.02] transition-all"
                                         >
                                             <span className="shine-layer"></span>
                                             <Play size={32} fill="currentColor" /> ابدأ التصويت
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={handleReset}
                                             className="col-span-1 bg-zinc-800 hover:bg-zinc-700 text-white rounded-[2rem] font-black text-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-4 border border-white/10"
                                         >
@@ -536,14 +547,14 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                                         </button>
                                     </>
                                 ) : gameState.phase === 'voting' ? (
-                                    <button 
+                                    <button
                                         onClick={handleReveal}
                                         className="col-span-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black rounded-[2rem] font-black text-3xl shadow-[0_0_40px_rgba(234,179,8,0.4)] transition-all active:scale-95 flex items-center justify-center gap-6 border-t-2 border-yellow-300"
                                     >
                                         <Trophy size={40} /> كشف النتيجة
                                     </button>
                                 ) : (
-                                    <button 
+                                    <button
                                         onClick={handleReset}
                                         className="col-span-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-[2rem] font-black text-3xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-6 border border-white/10"
                                     >
@@ -574,7 +585,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                         <h3 className="text-zinc-400 font-bold mb-6 flex items-center gap-3 text-lg border-b border-white/5 pb-4">
                             <Users size={20} className="text-iabs-red" /> تصويت الجمهور ({totalVotes})
                         </h3>
-                        
+
                         <div className="space-y-8 mb-8">
                             {/* Truth Bar */}
                             <div>
@@ -606,13 +617,13 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                                 {votes.slice().reverse().map((v, i) => (
                                     <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-white/5 animate-in slide-in-from-right duration-300">
                                         <div className="flex items-center gap-3">
-                                            {v.avatar_url ? (
-                                                <img src={v.avatar_url} className="w-6 h-6 rounded-full" alt="" />
-                                            ) : (
-                                                <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400">
-                                                    {v.username.charAt(0).toUpperCase()}
-                                                </div>
-                                            )}
+                                            <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center bg-black/40">
+                                                {v.avatar_url ? (
+                                                    <img src={v.avatar_url} className="w-full h-full object-cover" alt="" />
+                                                ) : (
+                                                    <User size={12} className="text-gray-400" />
+                                                )}
+                                            </div>
                                             <span className="text-zinc-300 text-xs font-medium truncate max-w-[80px]">{v.username}</span>
                                         </div>
                                         <div className={`w-2 h-2 rounded-full ${v.vote === 'truth' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.8)]' : 'bg-red-500 shadow-[0_0_5px_rgba(220,38,38,0.8)]'}`}></div>

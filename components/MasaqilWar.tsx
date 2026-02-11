@@ -128,18 +128,7 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
     settingsRef.current = { enableSupplies, supplyRate, enableHazards, weaponMode };
   }, [enableSupplies, supplyRate, enableHazards, weaponMode]);
 
-  const fetchKickAvatar = async (username: string) => {
-    try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${username.toLowerCase()}`)}`;
-      const res = await fetch(proxyUrl);
-      if (res.ok) {
-        const data = await res.json();
-        const content = JSON.parse(data.contents);
-        return content.user?.profile_pic || null;
-      }
-    } catch (e) { }
-    return null;
-  };
+
 
   // Enhanced Preloader
   const processPreloadQueue = async () => {
@@ -157,7 +146,7 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
     }
 
     try {
-      const realAvatar = await fetchKickAvatar(user as string);
+      const realAvatar = await chatService.fetchKickAvatar(user as string);
       if (realAvatar) {
         const img = new Image();
         img.crossOrigin = "anonymous";
@@ -1224,9 +1213,7 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[200px] font-black text-white bg-gradient-to-br from-zinc-700 to-zinc-900 uppercase leading-none select-none">
-                          {winner.username.charAt(0)}
-                        </div>
+                        <User size={180} className="text-gray-500" />
                       )}
 
                       {/* Inner Badge */}

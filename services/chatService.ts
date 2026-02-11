@@ -180,6 +180,33 @@ class ChatService {
     this.statusListeners.forEach(cb => cb(connected, error, details));
   }
 
+  async fetchKickAvatar(username: string): Promise<string> {
+    try {
+      const slug = username.toLowerCase().trim();
+
+      const proxies = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
+        `https://corsproxy.io/?${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`
+      ];
+
+      for (const proxyUrl of proxies) {
+        try {
+          const response = await fetch(proxyUrl);
+          if (!response.ok) continue;
+
+          const rawData = await response.json();
+          const data = proxyUrl.includes('allorigins') ? JSON.parse(rawData.contents) : rawData;
+
+          const avatar = data.user?.profile_pic || data.profile_pic || '';
+          if (avatar) return avatar;
+        } catch (e) { }
+      }
+    } catch (e) {
+      console.warn(`[ChatService] Failed to fetch avatar for ${username}`, e);
+    }
+    return '';
+  }
+
   disconnect() {
     if (this.channel) {
       this.channel.unbind_all();

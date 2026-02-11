@@ -15,6 +15,11 @@ import { GridHunt } from './components/GridHunt';
 import { CupShuffle } from './components/CupShuffle';
 import { TerritoryWar } from './components/TerritoryWar';
 import { TruthOrLie } from './components/TruthOrLie';
+import { WordRound } from './components/WordRound';
+import { DrawingChallenge } from './components/DrawingChallenge';
+import { FruitWar } from './components/FruitWar';
+import { LogoRound } from './components/LogoRound';
+import { ForbiddenWords } from './components/ForbiddenWords';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GlobalAnnouncement } from './components/GlobalAnnouncement';
 import { ViewState } from './types';
@@ -24,8 +29,10 @@ import {
   RotateCw, Gift, Flag, Users2, Keyboard, Gem, Coffee,
   PaintBucket, Sparkles, ShieldCheck, Zap, Armchair,
   Maximize2, MonitorOff, CheckCircle2, AlertTriangle,
-  Crown, Medal, Loader2, RefreshCw, ChevronRight, Video
+  Crown, Medal, Loader2, RefreshCw, ChevronRight, Video,
+  BookOpen, Sword, Globe, Brain
 } from 'lucide-react';
+import { chatService } from './services/chatService';
 import { supabase, leaderboardService } from './services/supabase';
 import { OBSLinksModal } from './components/OBSLinksModal';
 
@@ -43,18 +50,11 @@ const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, userna
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      // Use AllOrigins with a different approach to ensure it fetches JSON
-      const targetUrl = `https://kick.com/api/v2/channels/${username.toLowerCase()}`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-      const res = await fetch(proxyUrl);
-      if (res.ok) {
-        const raw = await res.json();
-        const data = JSON.parse(raw.contents);
-        if (data.user?.profile_pic) {
-          setSrc(data.user.profile_pic);
-          // Optional: Update in Supabase for next time
-          await supabase.from('profiles').update({ avatar_url: data.user.profile_pic }).eq('username', username);
-        }
+      const realAvatar = await chatService.fetchKickAvatar(username);
+      if (realAvatar) {
+        setSrc(realAvatar);
+        // Optional: Update in Supabase for next time
+        await supabase.from('profiles').update({ avatar_url: realAvatar }).eq('username', username);
       }
     } catch (e) {
       console.warn("Failed to fix avatar for", username);
@@ -165,7 +165,7 @@ const App: React.FC = () => {
 
   const loadLeaderboard = () => {
     setIsLoadingLeaderboard(true);
-    leaderboardService.getTopPlayers(10).then(data => {
+    leaderboardService.getAllRankedPlayers().then(data => {
       setLeaderboardData(data);
       setIsLoadingLeaderboard(false);
     });
@@ -174,6 +174,15 @@ const App: React.FC = () => {
   useEffect(() => {
     if (currentView === 'LEADERBOARD') {
       loadLeaderboard();
+    }
+  }, [currentView]);
+
+  useEffect(() => {
+    if (currentView === 'LEADERBOARD') {
+      const t = setInterval(() => {
+        loadLeaderboard();
+      }, 5000);
+      return () => clearInterval(t);
     }
   }, [currentView]);
 
@@ -301,6 +310,11 @@ const App: React.FC = () => {
       case 'CUP_SHUFFLE': return <CupShuffle channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
       case 'TERRITORY_WAR': return <TerritoryWar channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
       case 'TRUTH_OR_LIE': return <TruthOrLie channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
+      case 'WORD_ROUND': return <WordRound onHome={handleGoHome} isOBS={obsMode} />;
+      case 'DRAWING_CHALLENGE': return <DrawingChallenge onHome={handleGoHome} isOBS={obsMode} />;
+      case 'FRUIT_WAR': return <FruitWar onHome={handleGoHome} isOBS={obsMode} />;
+      case 'LOGO_ROUND': return <LogoRound onHome={handleGoHome} isOBS={obsMode} />;
+      case 'FORBIDDEN_WORDS': return <ForbiddenWords onHome={handleGoHome} isOBS={obsMode} />;
 
       case 'LEADERBOARD': return (
         <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto w-full pt-10 px-6 h-full flex flex-col items-center">
@@ -329,9 +343,9 @@ const App: React.FC = () => {
                     </div>
                     <div className="text-2xl font-black text-white mb-2">{leaderboardData[1].username}</div>
                     <div className="flex gap-4">
-                      <span className="text-slate-400 font-bold">{leaderboardData[1].score} نقطة</span>
+                      <span className="text-slate-400 font-bold">{leaderboardData[1].score || 0} نقطة</span>
                       <span className="text-white/20">|</span>
-                      <span className="text-slate-400 font-bold">{leaderboardData[1].wins} فوز</span>
+                      <span className="text-slate-400 font-bold">{leaderboardData[1].wins || 0} فوز</span>
                     </div>
                   </div>
                 )}
@@ -349,9 +363,9 @@ const App: React.FC = () => {
                     </div>
                     <div className="text-4xl font-black text-white italic mb-3 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">{leaderboardData[0].username}</div>
                     <div className="flex gap-6 relative z-10 bg-black/40 px-6 py-2 rounded-full border border-yellow-500/20">
-                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].score} PTS</span>
+                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].score || 0} PTS</span>
                       <span className="text-white/20">|</span>
-                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].wins} WINS</span>
+                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].wins || 0} WINS</span>
                     </div>
                   </div>
                 )}
@@ -368,9 +382,9 @@ const App: React.FC = () => {
                     </div>
                     <div className="text-xl font-black text-white mb-2">{leaderboardData[2].username}</div>
                     <div className="flex gap-4">
-                      <span className="text-orange-700 font-bold">{leaderboardData[2].score} نقطة</span>
+                      <span className="text-orange-700 font-bold">{leaderboardData[2].score || 0} نقطة</span>
                       <span className="text-white/20">|</span>
-                      <span className="text-orange-700 font-bold">{leaderboardData[2].wins} فوز</span>
+                      <span className="text-orange-700 font-bold">{leaderboardData[2].wins || 0} فوز</span>
                     </div>
                   </div>
                 )}
@@ -411,12 +425,12 @@ const App: React.FC = () => {
                           </td>
                           <td className="p-6 text-center">
                             <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 border border-white/5 font-black text-xl text-gray-300 group-hover:text-white group-hover:border-white/20 transition-all font-mono">
-                              {user.wins}
+                              {user.wins || 0}
                             </div>
                           </td>
                           <td className="p-6 text-left">
                             <div className="font-black text-3xl text-kick-green font-mono tracking-tighter drop-shadow-[0_0_15px_rgba(83,252,24,0.4)] group-hover:scale-110 transition-transform origin-left">
-                              {user.score}
+                              {user.score || 0}
                             </div>
                           </td>
                         </tr>
@@ -495,6 +509,11 @@ const App: React.FC = () => {
                 <PremiumGameButton title="تحدي الأكواب" icon={Coffee} onClick={() => setCurrentView('CUP_SHUFFLE')} />
                 <PremiumGameButton title="حرب الألوان" icon={PaintBucket} onClick={() => setCurrentView('TERRITORY_WAR')} />
                 <PremiumGameButton title="صادق أم كذاب" icon={AlertTriangle} isComingSoon={false} onClick={() => setCurrentView('TRUTH_OR_LIE')} />
+                <PremiumGameButton title="جولة الكلمات" icon={BookOpen} onClick={() => setCurrentView('WORD_ROUND')} />
+                <PremiumGameButton title="تحدي الرسم" icon={PaintBucket} onClick={() => setCurrentView('DRAWING_CHALLENGE')} />
+                <PremiumGameButton title="حرب الفواكه" icon={Sword} onClick={() => setCurrentView('FRUIT_WAR')} />
+                <PremiumGameButton title="جولة الشعارات" icon={Globe} onClick={() => setCurrentView('LOGO_ROUND')} />
+                <PremiumGameButton title="تخمين الكلمات" icon={Brain} onClick={() => setCurrentView('FORBIDDEN_WORDS')} />
               </div>
             </div>
 

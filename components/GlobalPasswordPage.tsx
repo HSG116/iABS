@@ -44,13 +44,27 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
     useEffect(() => {
         const initAuth = async () => {
             // 1. Check LocalStorage for existing access
-            const hasAccess = localStorage.getItem(storageKey);
-            if (hasAccess === 'true') {
-                setUserType('RETURNING');
-                setStep('FINGERPRINT'); // Skip password, go to fingerprint
-            } else {
-                setUserType('NEW');
-                setStep('PASSWORD'); // Show password first
+            const storedSession = localStorage.getItem(storageKey);
+            let storedToken: string | null = null;
+            let hasStoredSession = false;
+
+            try {
+                if (storedSession) {
+                    // Try parsing as JSON first (new format)
+                    const parsed = JSON.parse(storedSession);
+                    if (parsed && parsed.token) {
+                        storedToken = parsed.token;
+                        hasStoredSession = true;
+                    }
+                } else {
+                    // Check for legacy format (though we prefer to invalidate it)
+                    // If we want to support legacy 'true' string temporarily:
+                    // if (storedSession === 'true') hasStoredSession = true;
+                    // BUT: user wants to logout everyone. So we ignore legacy.
+                }
+            } catch (e) {
+                // If parse fails, it might be the old 'true' string.
+                // We treat it as invalid to force logout/upgrade.
             }
 
             // 2. Fetch Password Config (needed for new users OR verification)
@@ -65,16 +79,34 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                     setTargetPin(data.value);
                     setPin(new Array(data.value.length).fill(''));
                     inputs.current = inputs.current.slice(0, data.value.length);
+
+                    // Check if stored token matches current password
+                    if (hasStoredSession && storedToken === data.value) {
+                        setUserType('RETURNING');
+                        setStep('FINGERPRINT');
+                    } else {
+                        // Invalid token or no token -> New User
+                        if (hasStoredSession) {
+                            // If we had a session but it's invalid (password changed), clear it
+                            localStorage.removeItem(storageKey);
+                        }
+                        setUserType('NEW');
+                        setStep('PASSWORD');
+                    }
                 } else {
                     const fallback = "123456";
                     setTargetPin(fallback);
                     setPin(new Array(fallback.length).fill(''));
+                    setUserType('NEW');
+                    setStep('PASSWORD');
                 }
             } catch (e) {
                 console.error("Auth init error:", e);
                 const fallback = "123456";
                 setTargetPin(fallback);
                 setPin(new Array(fallback.length).fill(''));
+                setUserType('NEW');
+                setStep('PASSWORD');
             }
         };
 
@@ -147,8 +179,12 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
         }
         setStep('SUCCESS');
 
-        // Save persistence now
-        localStorage.setItem(storageKey, 'true');
+        // Save persistence now with TOKEN for security validation
+        localStorage.setItem(storageKey, JSON.stringify({
+            token: targetPin,
+            timestamp: Date.now(),
+            valid: true
+        }));
 
         // Wait for "Access Granted" / "Welcome Back" message
         setTimeout(() => {

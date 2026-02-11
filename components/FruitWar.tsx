@@ -1,0 +1,466 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Settings, Play, Users, Trophy, Clock, ChevronLeft, User, Skull, Sword, Crown, Ban, Zap, Sparkles, RefreshCw } from 'lucide-react';
+import { ChatUser } from '../types';
+import { chatService } from '../services/chatService';
+import { leaderboardService } from '../services/supabase';
+
+interface FruitWarProps {
+    onHome: () => void;
+    isOBS?: boolean;
+}
+
+interface GameConfig {
+    votingDuration: number;
+}
+
+type GamePhase = 'SETUP' | 'PLAYING' | 'ELIMINATION' | 'WINNER';
+
+interface FruitParticipant extends ChatUser {
+    fruitId: string;
+    joinedAt: number;
+}
+
+interface Fruit {
+    id: string;
+    name: string;
+    image: string;
+    color: string;
+}
+
+// Arabic normalization for robust matching
+const normalizeTxt = (str: string) => {
+    return str
+        .toLowerCase()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/[\ufe0f\u200d]/g, '') // Strip emoji modifiers
+        .trim();
+};
+
+const FRUITS: Fruit[] = [
+    { id: 'kiwi', name: 'كيوي', image: '🥝', color: '#a3e635' },
+    { id: 'coconut', name: 'جوز هند', image: '🥥', color: '#78350f' },
+    { id: 'grapes', name: 'عنب', image: '🍇', color: '#a855f7' },
+    { id: 'melon', name: 'شمام', image: '🍈', color: '#d9f99d' },
+    { id: 'watermelon', name: 'بطيخ', image: '🍉', color: '#22c55e' },
+    { id: 'orange', name: 'برتقال', image: '🍊', color: '#f97316' },
+    { id: 'lemon', name: 'ليمون', image: '🍋', color: '#facc15' },
+    { id: 'banana', name: 'موز', image: '🍌', color: '#eab308' },
+    { id: 'pineapple', name: 'أناناس', image: '🍍', color: '#fbbf24' },
+    { id: 'mango', name: 'مانجو', image: '🥭', color: '#f59e0b' },
+    { id: 'apple_red', name: 'تفاح', image: '🍎', color: '#ef4444' },
+    { id: 'apple_green', name: 'تفاح اخضر', image: '🍏', color: '#84cc16' },
+    { id: 'pear', name: 'كمثرى', image: '🍐', color: '#a3e635' },
+    { id: 'peach', name: 'خوخ', image: '🍑', color: '#fb923c' },
+    { id: 'cherry', name: 'كرز', image: '🍒', color: '#be123c' },
+    { id: 'strawberry', name: 'فراولة', image: '🍓', color: '#dc2626' },
+    { id: 'tomato', name: 'طماطم', image: '🍅', color: '#ef4444' },
+    { id: 'eggplant', name: 'باذنجان', image: '🍆', color: '#7e22ce' },
+    { id: 'corn', name: 'ذرة', image: '🌽', color: '#fde047' },
+    { id: 'pepper', name: 'فلفل', image: '🌶️', color: '#b91c1c' },
+    { id: 'mushroom', name: 'فطر', image: '🍄', color: '#f43f5e' },
+    { id: 'avocado', name: 'أفوكادو', image: '🥑', color: '#65a30d' },
+    { id: 'cucumber', name: 'خيار', image: '🥒', color: '#16a34a' },
+    { id: 'leaf_green', name: 'خس', image: '🥬', color: '#22c55e' },
+    { id: 'broccoli', name: 'بروكلي', image: '🥦', color: '#15803d' },
+    { id: 'potato', name: 'بطاطس', image: '🥔', color: '#a8a29e' },
+    { id: 'garlic', name: 'ثوم', image: '🧄', color: '#f5f5f4' },
+    { id: 'onion', name: 'بصل', image: '🧅', color: '#a855f7' },
+    { id: 'carrot', name: 'جزر', image: '🥕', color: '#ea580c' },
+    { id: 'chestnut', name: 'كستناء', image: '🌰', color: '#78350f' },
+    { id: 'peanut', name: 'فول سوداني', image: '🥜', color: '#f59e0b' },
+];
+
+export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
+    const [config, setConfig] = useState<GameConfig>({
+        votingDuration: 60
+    });
+
+    const [phase, setPhase] = useState<GamePhase>('SETUP');
+    const [participants, setParticipants] = useState<FruitParticipant[]>([]);
+    const [bannedUsers, setBannedUsers] = useState<Set<string>>(new Set());
+    const [timer, setTimer] = useState(0);
+    const [sortedFruits, setSortedFruits] = useState<Fruit[]>(FRUITS);
+    const [lastEliminatedFruit, setLastEliminatedFruit] = useState<{ fruit: Fruit, count: number } | null>(null);
+    const [winningTeam, setWinningTeam] = useState<{ fruit: Fruit, players: FruitParticipant[] } | null>(null);
+    const [round, setRound] = useState(1);
+
+    const phaseRef = useRef(phase);
+    const participantsRef = useRef(participants);
+    const bannedRef = useRef(bannedUsers);
+
+    useEffect(() => {
+        phaseRef.current = phase;
+        participantsRef.current = participants;
+        bannedRef.current = bannedUsers;
+    }, [phase, participants, bannedUsers]);
+
+    // Sorting Logic: Sort by Participant Count DESC for the display grid
+    useEffect(() => {
+        if (phase === 'PLAYING' || phase === 'ELIMINATION') {
+            const sorted = [...FRUITS].sort((a, b) => {
+                const countA = participants.filter(p => p.fruitId === a.id).length;
+                const countB = participants.filter(p => p.fruitId === b.id).length;
+                return countB - countA; // DESC
+            });
+            setSortedFruits(sorted);
+        } else {
+            setSortedFruits(FRUITS);
+        }
+    }, [participants, phase]);
+
+    // Chat Handler
+    useEffect(() => {
+        const unsubscribe = chatService.onMessage((msg) => {
+            if (phaseRef.current !== 'PLAYING') return;
+
+            const username = msg.user.username;
+            if (bannedRef.current.has(username)) return; // Ignored banned users
+
+            const normContent = normalizeTxt(msg.content);
+
+            const matchingFruit = FRUITS.find(f =>
+                normContent === normalizeTxt(f.name) ||
+                normContent === normalizeTxt(f.image) ||
+                (normContent.length > 2 && normalizeTxt(f.name).includes(normContent))
+            );
+
+            if (matchingFruit) {
+                setParticipants(prev => {
+                    // If user already joined, update their team
+                    const existing = prev.find(p => p.username === username);
+                    if (existing) {
+                        return prev.map(p => p.username === username ? { ...p, fruitId: matchingFruit.id } : p);
+                    }
+
+                    // New User
+                    const newParticipant: FruitParticipant = {
+                        ...msg.user,
+                        fruitId: matchingFruit.id,
+                        joinedAt: Date.now()
+                    };
+
+                    chatService.fetchKickAvatar(username).then(avatar => {
+                        if (avatar) {
+                            setParticipants(current => current.map(p =>
+                                p.username === username ? { ...p, avatar } : p
+                            ));
+                        }
+                    });
+
+                    return [...prev, newParticipant];
+                });
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Timer Logic
+    useEffect(() => {
+        let interval: number;
+        if (phase === 'PLAYING' && timer > 0) {
+            interval = window.setInterval(() => {
+                setTimer(prev => prev - 1);
+            }, 1000);
+        } else if (phase === 'PLAYING' && timer === 0) {
+            setPhase('ELIMINATION'); // Switch to Streamer Elimination Phase
+        }
+        return () => clearInterval(interval);
+    }, [phase, timer]);
+
+    const startGame = () => {
+        setParticipants([]);
+        setBannedUsers(new Set());
+        setLastEliminatedFruit(null);
+        setWinningTeam(null);
+        setTimer(config.votingDuration);
+        setRound(1);
+        setPhase('PLAYING');
+    };
+
+    const startNextRound = () => {
+        setTimer(config.votingDuration);
+        setLastEliminatedFruit(null);
+        setRound(r => r + 1);
+        setPhase('PLAYING');
+    };
+
+    const handleFruitClick = (fruit: Fruit) => {
+        if (phase !== 'ELIMINATION') return; // Streamer can only eliminate in Elimination phase
+
+        // Eliminate ALL players in this fruit
+        const targetPlayers = participants.filter(p => p.fruitId === fruit.id);
+
+        const newBanned = new Set(bannedUsers);
+        targetPlayers.forEach(p => newBanned.add(p.username));
+        setBannedUsers(newBanned);
+
+        // Remove from active
+        const remainingPlayers = participants.filter(p => p.fruitId !== fruit.id);
+        setParticipants(remainingPlayers);
+
+        setLastEliminatedFruit({ fruit, count: targetPlayers.length });
+
+        // Check Win Condition
+        const activeFruitsRaw = new Set(remainingPlayers.map(p => p.fruitId));
+
+        // If NO players remain
+        if (remainingPlayers.length === 0) {
+            return;
+        }
+
+        // If only 1 Fruit Team remains
+        if (activeFruitsRaw.size === 1) {
+            const winnerFruitId = Array.from(activeFruitsRaw)[0];
+            const winnerFruit = FRUITS.find(f => f.id === winnerFruitId);
+            if (winnerFruit) {
+                setWinningTeam({
+                    fruit: winnerFruit,
+                    players: remainingPlayers
+                });
+
+                // Record Wins
+                remainingPlayers.forEach(p => {
+                    leaderboardService.recordWin(p.username, p.avatar || '', 500);
+                });
+
+                setTimeout(() => setPhase('WINNER'), 2000);
+            }
+        }
+    };
+
+    return (
+        <div className="w-full h-full flex flex-col items-center bg-transparent text-right font-display select-none overflow-hidden" dir="rtl">
+            {/* Dynamic Background */}
+            <div className={`absolute inset-0 transition-colors duration-1000 ${phase === 'WINNER' ? 'bg-black' : 'bg-[#0a0a0a]'} -z-20`}></div>
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 -z-10"></div>
+
+            {/* Header / Info Bar */}
+            {(phase === 'PLAYING' || phase === 'ELIMINATION') && (
+                <div className="w-full px-8 py-6 flex justify-between items-center z-10 animate-in slide-in-from-top duration-700">
+                    <div className="flex items-center gap-4">
+                        <div className="glass-card px-8 py-3 rounded-full border border-white/10 bg-black/40 backdrop-blur-md flex items-center gap-4">
+                            <Users className="text-green-500" />
+                            <div className="text-right">
+                                <div className="text-[10px] font-bold text-gray-500 uppercase">الناجين</div>
+                                <div className="text-2xl font-black text-white">{participants.length}</div>
+                            </div>
+                        </div>
+                        {/* Next Round Button - Only for Streamer in Elimination Phase */}
+                        {!isOBS && phase === 'ELIMINATION' && (
+                            <button
+                                onClick={startNextRound}
+                                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-sm flex items-center gap-2 shadow-lg transition-all hover:scale-105 animate-in zoom-in"
+                            >
+                                <RefreshCw size={18} /> جولة تصويت جديدة ({round + 1})
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col items-center">
+                        <div className={`text-6xl font-black italic tracking-tighter drop-shadow-2xl transition-all duration-500 ${phase === 'ELIMINATION' ? 'text-red-500 animate-pulse scale-110' : 'text-white'}`}>
+                            {phase === 'ELIMINATION' ? '🔥 إقــصــاء 🔥' : 'حــرب الــفــواكــه'}
+                        </div>
+                        {phase === 'PLAYING' && (
+                            <div className="mt-2 flex items-center gap-2 bg-green-500/10 px-4 py-1 rounded-full border border-green-500/20 animate-bounce">
+                                <span className="text-green-400 font-bold text-sm">اكتب اسم الفاكهة للانضمام!</span>
+                            </div>
+                        )}
+                        {phase === 'ELIMINATION' && (
+                            <div className="mt-2 text-red-500 font-bold text-lg animate-pulse">اضغط على الفاكهة لإقصاء فريقها!</div>
+                        )}
+                    </div>
+
+                    <div className={`glass-card px-8 py-3 rounded-full border flex items-center gap-4 ${timer < 10 && phase === 'PLAYING' ? 'border-red-500/50 bg-red-900/10' : 'border-white/10 bg-black/40'} backdrop-blur-md`}>
+                        <Clock className={timer < 10 && phase === 'PLAYING' ? 'text-red-500' : 'text-blue-500'} />
+                        <div className="text-right">
+                            <div className="text-[10px] font-bold text-gray-500 uppercase">الوقت</div>
+                            <div className="text-2xl font-black text-white font-mono">
+                                {phase === 'ELIMINATION' ? 'انتهى' : `${timer}s`}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {phase === 'SETUP' && (
+                <div className="w-full max-w-4xl mt-12 animate-in fade-in zoom-in duration-700">
+                    <div className="text-center mb-12">
+                        <Crown size={80} className="mx-auto text-yellow-500 mb-6 drop-shadow-[0_0_30px_rgba(234,179,8,0.5)]" />
+                        <h1 className="text-8xl font-black text-white italic tracking-tighter mb-2">حـرب الـفـواكـه</h1>
+                        <p className="text-yellow-500 font-black tracking-[0.5em] text-sm uppercase">Ultimate Fruit Battle</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Settings */}
+                        <div className="glass-card p-10 rounded-[3rem] border border-white/10 bg-white/5 backdrop-blur-2xl">
+                            <h3 className="text-2xl font-black text-white flex items-center gap-3 mb-8">
+                                <Settings className="text-gray-400" /> إعـدادات الـمـعـركـة
+                            </h3>
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-sm font-bold text-gray-400">وقت التجميع (ثانية)</label>
+                                        <span className="text-xl font-black text-yellow-500">{config.votingDuration}</span>
+                                    </div>
+                                    <input
+                                        type="range" min="15" max="180" step="5"
+                                        value={config.votingDuration}
+                                        onChange={e => setConfig({ ...config, votingDuration: +e.target.value })}
+                                        className="w-full h-3 bg-white/10 rounded-full appearance-none accent-yellow-500 cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Start Action */}
+                        <div className="flex flex-col gap-4">
+                            <div className="glass-card p-8 rounded-[3rem] border border-white/10 bg-white/5 backdrop-blur-2xl flex-1 flex flex-col justify-center items-center text-center">
+                                <p className="text-gray-300 font-bold leading-relaxed px-4">
+                                    الجماهير تختار وانضمام فوري بكتابة اسم الفاكهة.
+                                    <br />
+                                    الأكثر تصويتاً يظهر في المقدمة.
+                                    <br /><span className="text-red-400">الإقصاء بيد الستريمر!</span>
+                                </p>
+                            </div>
+                            <button
+                                onClick={startGame}
+                                className="w-full py-8 bg-yellow-500 hover:bg-yellow-400 text-black font-black text-4xl rounded-[3rem] shadow-[0_10px_40px_rgba(234,179,8,0.4)] transition-all transform hover:scale-[1.02] flex items-center justify-center gap-4"
+                            >
+                                <Sword className="fill-black" /> بـــدء الــنــزال
+                            </button>
+                        </div>
+                    </div>
+
+                    <button onClick={onHome} className="mt-12 mx-auto flex items-center gap-2 text-white/30 hover:text-white font-bold transition-all">
+                        <ChevronLeft /> خروج
+                    </button>
+                </div>
+            )}
+
+            {(phase === 'PLAYING' || phase === 'ELIMINATION') && (
+                <div className="w-full flex-1 overflow-y-auto px-8 pb-20 custom-scrollbar animate-in fade-in duration-1000">
+                    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 content-start">
+                        {sortedFruits.map((fruit, idx) => {
+                            const team = participants.filter(p => p.fruitId === fruit.id);
+                            const count = team.length;
+
+                            return (
+                                <div
+                                    key={fruit.id}
+                                    onClick={() => !isOBS && handleFruitClick(fruit)}
+                                    className={`
+                                        relative aspect-square rounded-[2rem] p-2 flex flex-col items-center justify-between
+                                        transition-all duration-700 transform
+                                        ${count > 0 ? 'bg-white/10 border-white/20' : 'bg-black/20 border-white/5'}
+                                        border-2 group overflow-hidden
+                                        ${phase === 'ELIMINATION' && !isOBS ? 'cursor-pointer hover:bg-red-500/20 hover:border-red-500 hover:scale-105 hover:shake' : ''}
+                                        ${phase === 'PLAYING' && count > 0 ? 'order-first' : ''}
+                                    `}
+                                    style={{
+                                        borderColor: count > 0 ? fruit.color : undefined,
+                                        boxShadow: count > 0 ? `0 10px 30px -5px ${fruit.color}40` : 'none',
+                                    }}
+                                >
+                                    {/* Rank Badge */}
+                                    {count > 0 && (
+                                        <div className="absolute top-2 left-2 w-8 h-8 bg-white text-black font-black rounded-full flex items-center justify-center text-sm shadow-lg z-20">
+                                            #{idx + 1}
+                                        </div>
+                                    )}
+
+                                    {/* Player Count Badge */}
+                                    {count > 0 && (
+                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full font-bold text-xs flex items-center gap-1 z-20">
+                                            <Users size={10} /> {count}
+                                        </div>
+                                    )}
+
+                                    {/* Main Image */}
+                                    <div className="flex-1 flex items-center justify-center relative z-10 w-full">
+                                        <span className="text-6xl drop-shadow-2xl transition-transform group-hover:scale-125">{fruit.image}</span>
+                                    </div>
+
+                                    {/* Name */}
+                                    <div className="w-full text-center py-1 relative z-10">
+                                        <span className="text-sm font-black text-white/80 uppercase tracking-tight">{fruit.name}</span>
+                                    </div>
+
+                                    {/* Hover elimination text */}
+                                    {!isOBS && phase === 'ELIMINATION' && (
+                                        <div className="absolute inset-0 bg-red-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-[2rem]">
+                                            <div className="flex flex-col items-center text-white">
+                                                <Ban size={40} className="mb-2" />
+                                                <span className="font-black text-xl uppercase">إقـــصـــاء</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Avatars Preview (Top 3) */}
+                                    {count > 0 && (
+                                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex -space-x-2 opacity-0 group-hover:opacity-100 group-hover:bottom-2 transition-all duration-300 z-30">
+                                            {team.slice(0, 3).map(p => (
+                                                <div key={p.username} className="w-8 h-8 rounded-full border-2 border-white bg-zinc-800 overflow-hidden">
+                                                    {p.avatar && <img src={p.avatar} className="w-full h-full object-cover" />}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {phase === 'WINNER' && winningTeam && (
+                <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center animate-in fade-in duration-1000">
+                    <div className="absolute inset-0 overflow-hidden">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-yellow-500/20 rounded-full blur-[120px] animate-pulse"></div>
+                    </div>
+
+                    <Crown size={120} className="text-yellow-400 mb-8 animate-bounce drop-shadow-[0_0_50px_rgba(250,204,21,0.8)]" />
+
+                    <h1 className="text-9xl font-black text-white italic tracking-tighter mb-4 drop-shadow-2xl">الــفــريــق الــنــاجــي</h1>
+
+                    <div className="scale-150 my-10 relative">
+                        <div className="w-48 h-48 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-[3rem] rotate-12 flex items-center justify-center shadow-[0_0_100px_rgba(250,204,21,0.6)] animate-wiggle">
+                            <span className="text-9xl drop-shadow-2xl">{winningTeam.fruit.image}</span>
+                        </div>
+                    </div>
+
+                    <h2 className="text-6xl font-black text-yellow-500 mb-8 drop-shadow-lg">{winningTeam.fruit.name}</h2>
+
+                    <div className="flex flex-wrap justify-center gap-4 max-w-4xl px-4">
+                        {winningTeam.players.map((p, i) => (
+                            <div key={p.username} className="flex flex-col items-center animate-in zoom-in duration-500" style={{ animationDelay: `${i * 50}ms` }}>
+                                <div className="w-20 h-20 rounded-full border-4 border-yellow-400 overflow-hidden mb-2 shadow-lg">
+                                    {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <User className="w-full h-full p-2 bg-zinc-800 text-white/50" />}
+                                </div>
+                                <span className="text-sm font-bold text-white/90">{p.username}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-16 flex gap-6">
+                        <button onClick={onHome} className="px-12 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full transition-all border border-white/5">الرئيسية</button>
+                        <button onClick={startGame} className="px-12 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-full shadow-[0_0_40px_rgba(250,204,21,0.4)] transition-all hover:scale-105">جولة جديدة</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Elimination Overlay Effect */}
+            {lastEliminatedFruit && phase === 'ELIMINATION' && (
+                <div key={lastEliminatedFruit.fruit.id} className="absolute top-32 left-1/2 -translate-x-1/2 pointer-events-none z-50 animate-out fade-out slide-out-to-top duration-[2000ms] fill-mode-forwards">
+                    <div className="flex flex-col items-center">
+                        <div className="text-9xl animate-ping opacity-50 absolute text-red-600">❌</div>
+                        <div className="bg-red-600 text-white font-black text-5xl px-12 py-6 rounded-[3rem] border-8 border-white shadow-2xl skew-x-[-10deg] rotate-[-5deg] drop-shadow-[0_20px_50px_rgba(220,38,38,0.5)]">
+                            وداعـــاً {lastEliminatedFruit.fruit.name}!
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};

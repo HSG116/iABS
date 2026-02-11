@@ -8,7 +8,8 @@ import {
   Music, Sparkles, Wind, Flame, Ticket, Fingerprint,
   Users2, Gavel, Radio, LayoutDashboard, Terminal
 } from 'lucide-react';
-import { leaderboardService, adminService } from '../services/supabase';
+import { leaderboardService, adminService, supabase } from '../services/supabase';
+import { chatService } from '../services/chatService';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -35,17 +36,84 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // New states for additions
   const [newPromo, setNewPromo] = useState({ code: '', amount: 1000, maxUses: 10 });
   const [newAnnouncement, setNewAnnouncement] = useState('');
+  const [chatMonitorActive, setChatMonitorActive] = useState(false);
+  const [chatStatus, setChatStatus] = useState<{ connected: boolean; error: boolean; details?: string }>({ connected: false, error: false });
 
   useEffect(() => {
     fetchData();
   }, [activeTab]);
 
+  useEffect(() => {
+    const validateSession = async () => {
+      const raw = localStorage.getItem('admin_access_granted');
+      let token: string | null = null;
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          token = parsed?.token || null;
+        } catch {}
+      }
+      const { data } = await supabase
+        .from('app_config')
+        .select('value')
+        .eq('key', 'admin_password')
+        .single();
+      if (!data || !token || token !== data.value) {
+        localStorage.removeItem('admin_access_granted');
+        onLogout();
+      }
+    };
+    validateSession();
+    const channel = supabase
+      .channel('admin_password_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, validateSession)
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    let unbindMsg: (() => void) | null = null;
+    let unbindStatus: (() => void) | null = null;
+    if (activeTab === 'promo') {
+      const channel = localStorage.getItem('kick_channel_name') || 'iabs';
+      chatService.connect(channel);
+      setChatMonitorActive(true);
+      unbindStatus = chatService.onStatusChange((connected, error, details) => {
+        setChatStatus({ connected, error, details });
+      });
+      unbindMsg = chatService.onMessage(async (msg) => {
+        const raw = msg.content.trim().toUpperCase();
+        const matched = promoCodes.find(p => p.is_active && (raw === p.code.toUpperCase() || raw === `!${p.code.toUpperCase()}`));
+        if (matched) {
+          const res = await leaderboardService.claimPromoCode(msg.user.username, matched.code);
+          if ((res as any).success) {
+            showStatus(`تم منح §${matched.reward_amount} لـ ${msg.user.username} باستخدام الكود ${matched.code}`);
+            fetchData();
+          } else {
+            showStatus('فشل منح الكود أو انتهت صلاحياته', true);
+          }
+        }
+      });
+    }
+    return () => {
+      if (unbindMsg) unbindMsg();
+      if (unbindStatus) unbindStatus();
+      if (chatMonitorActive) {
+        chatService.disconnect();
+        setChatMonitorActive(false);
+      }
+    };
+  }, [activeTab, promoCodes]);
   const fetchData = async () => {
     setIsLoading(true);
     try {
       if (activeTab === 'users' || activeTab === 'overview' || activeTab === 'bans') {
         const { data } = await adminService.getAllProfiles();
         setProfiles(data);
+        const { data: recentLogs } = await adminService.getAuditLogs(200);
+        setLogs(recentLogs);
       }
       if (activeTab === 'announcements') {
         const { data } = await adminService.getAnnouncements();
@@ -283,7 +351,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                           </div>
                         </td>
                         <td className="p-6 text-2xl font-black italic text-white/80">{p.score || 0}</td>
-                        <td className="p-6 text-2xl font-black text-kick-green italic">§ {p.credits || 0}</td>
+                        <td className="p-6 text-2xl font-black text-kick-green italic">
+                          § {p.credits || 0}
+                          <div className="text-[10px] font-mono text-zinc-500 mt-2">
+                            {(() => {
+                              const entry = (logs || []).find(l => (l.details?.username === p.username) && (l.action === 'PROMO_REDEEM' || l.action === 'CREDITS_ADJUST'));
+                              if (!entry) return 'آخر تعديل: غير متوفر';
+                              if (entry.action === 'PROMO_REDEEM') return `آخر تعديل: PROMO (${entry.details?.code})`;
+                              if (entry.action === 'CREDITS_ADJUST') return `آخر تعديل: ADMIN (${entry.details?.amount > 0 ? '+' : ''}${entry.details?.amount})`;
+                              return 'آخر تعديل: غير متوفر';
+                            })()}
+                          </div>
+                        </td>
                         <td className="p-6">
                           {p.is_banned
                             ? <span className="inline-flex items-center gap-2 bg-red-600/10 text-red-500 border border-red-500/20 px-5 py-2 rounded-full text-[10px] font-black tracking-widest uppercase shadow-[0_0_20px_rgba(255,0,0,0.1)]">Restricted</span>
@@ -465,7 +544,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <div className="glass-card p-12 rounded-[4rem] border border-yellow-500/20 bg-yellow-500/[0.01] shadow-2xl">
-                  <h3 className="text-3xl font-black text-white italic mb-10 flex items-center gap-4"><Sparkles className="text-yellow-500" /> كود ترويجي جديد</h3>
+                  <h3 className="text-3xl font-black text-white italic mb-4 flex items-center gap-4"><Sparkles className="text-yellow-500" /> كود ترويجي جديد</h3>
+                  <div className="mb-6 text-xs text-zinc-500 font-bold">
+                    حالة مراقبة الشات: {chatStatus.connected ? <span className="text-kick-green">متصل</span> : <span className="text-red-500">غير متصل</span>}
+                    {chatStatus.details ? <span className="ml-2 opacity-60">({chatStatus.details})</span> : null}
+                  </div>
                   <div className="space-y-8">
                     <div className="space-y-3">
                       <label className="text-xs font-black text-zinc-600 uppercase tracking-widest pl-4">Secret Sequence</label>
@@ -527,10 +610,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                             <span className="text-yellow-500 font-black text-lg italic">§ {promo.reward_amount}</span>
                             <div className="h-4 w-[1px] bg-zinc-700"></div>
                             <span className="text-zinc-500 text-xs font-bold uppercase">{promo.current_uses} / {promo.max_uses} USES</span>
+                            <div className="h-4 w-[1px] bg-zinc-700"></div>
+                            <span className={`text-xs font-black uppercase ${promo.is_active ? 'text-kick-green' : 'text-red-500'}`}>{promo.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
                           </div>
                         </div>
                       </div>
-                      <button onClick={() => adminService.deletePromoCode(promo.id).then(fetchData)} className="relative z-10 p-5 bg-red-600/10 text-red-500 rounded-2xl hover:bg-red-600 hover:text-white transition-all opacity-0 group-hover:opacity-100"><Trash2 size={24} /></button>
+                      <div className="relative z-10 opacity-0 group-hover:opacity-100 flex items-center gap-3">
+                        <button onClick={() => adminService.togglePromoActive(promo.id, !promo.is_active).then(fetchData)} className={`p-4 rounded-2xl transition-all ${promo.is_active ? 'bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white' : 'bg-kick-green/10 text-kick-green hover:bg-kick-green hover:text-black'}`}>{promo.is_active ? <EyeOff size={22} /> : <Eye size={22} />}</button>
+                        <button onClick={() => adminService.deletePromoCode(promo.id).then(fetchData)} className="p-5 bg-red-600/10 text-red-500 rounded-2xl hover:bg-red-600 hover:text-white transition-all"><Trash2 size={24} /></button>
+                      </div>
                     </div>
                   ))}
                 </div>

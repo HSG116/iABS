@@ -99,37 +99,12 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
     updateBackground(settings.backgroundId);
   }, [settings.backgroundId]);
 
-  const fetchKickAvatar = async (username: string): Promise<string> => {
-    const slug = username.toLowerCase().trim();
-    if (avatarCache[slug]) return avatarCache[slug];
 
-    const proxies = [
-      `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
-      `https://corsproxy.io/?${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`
-    ];
-
-    for (const proxyUrl of proxies) {
-      try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) continue;
-
-        const rawData = await response.json();
-        const data = proxyUrl.includes('allorigins') ? JSON.parse(rawData.contents) : rawData;
-
-        const avatar = data?.user?.profile_pic || data?.profile_pic || '';
-        if (avatar) {
-          setAvatarCache(prev => ({ ...prev, [slug]: avatar }));
-          return avatar;
-        }
-      } catch (e) { }
-    }
-    return '';
-  };
 
   // Auto-repair missing avatars for the round winner
   useEffect(() => {
     if (roundWinner && !roundWinner.avatar) {
-      fetchKickAvatar(roundWinner.user).then(av => {
+      chatService.fetchKickAvatar(roundWinner.user).then(av => {
         if (av) {
           setRoundWinner(prev => (prev && prev.user === roundWinner.user) ? { ...prev, avatar: av } : prev);
         }
@@ -191,7 +166,7 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
         const winnerObj = { user: username, avatar: avatarUrl };
 
         if (!avatarUrl) {
-          fetchKickAvatar(username).then(av => {
+          chatService.fetchKickAvatar(username).then(av => {
             if (av) {
               const uLower = username.toLowerCase();
               setRoundWinner(prev => (prev && prev.user.toLowerCase() === uLower) ? { ...prev, avatar: av } : prev);

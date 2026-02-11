@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import {
     X, Copy, Check, Sparkles, Armchair, Swords,
     Image as ImageIcon, Zap, Gift, Flag, Users2,
     Keyboard, Gem, Coffee, PaintBucket, ExternalLink, AlertTriangle, Shield, TrendingUp, Eye,
-    CheckCircle2, Share2, Monitor, Layout as LayoutIcon, Globe, Info
+    CheckCircle2, Share2, Monitor, Layout as LayoutIcon, Globe, Info, BookOpen
 } from 'lucide-react';
 import { ViewState } from '../types';
 
@@ -33,6 +32,7 @@ const GAMES: GameLink[] = [
     { id: 'CUP_SHUFFLE', label: 'تحدي الأكواب', icon: Coffee },
     { id: 'TERRITORY_WAR', label: 'حرب الألوان', icon: PaintBucket },
     { id: 'TRUTH_OR_LIE', label: 'صادق أم كذاب', icon: AlertTriangle },
+    { id: 'WORD_ROUND', label: 'جولة الكلمات', icon: BookOpen },
 ];
 
 export const OBSLinksModal: React.FC<OBSLinksModalProps> = ({ isOpen, onClose }) => {

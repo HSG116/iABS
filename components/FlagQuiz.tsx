@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { chatService } from '../services/chatService';
 import { leaderboardService } from '../services/supabase';
 import { FLAGS_DATA } from '../constants';
-import { Flag, Play, RotateCcw, Award, CheckCircle2, LogOut, Home, Star, Globe, Zap, Settings2 } from 'lucide-react';
+import { Flag, Play, RotateCcw, Award, CheckCircle2, LogOut, Home, Star, Globe, Zap, Settings2, User } from 'lucide-react';
 
 interface FlagQuizProps {
    channelConnected: boolean;
@@ -87,7 +87,20 @@ export const FlagQuiz: React.FC<FlagQuizProps> = ({ channelConnected, onHome }) 
          // Using .some to check all valid names for the flag
          const isCorrect = currentFlagRef.current.names.some(name => content.includes(name.toLowerCase()));
 
-         if (isCorrect) await handleRoundWin(msg.user.username, currentFlagRef.current.names[0], msg.user.avatar);
+         if (isCorrect) {
+            const username = msg.user.username;
+            const currentAvatar = msg.user.avatar;
+            const correctName = currentFlagRef.current.names[0];
+
+            await handleRoundWin(username, correctName, currentAvatar);
+
+            // Fetch high-res avatar in background
+            chatService.fetchKickAvatar(username).then(realPic => {
+               if (realPic) {
+                  setLastWinner(prev => (prev && prev.name === username) ? { ...prev, avatar: realPic } : prev);
+               }
+            });
+         }
       });
       return cleanup;
    }, [channelConnected]);
@@ -298,11 +311,13 @@ export const FlagQuiz: React.FC<FlagQuizProps> = ({ channelConnected, onHome }) 
                               <CheckCircle2 size={18} /> Round Winner
                            </div>
 
-                           {lastWinner.avatar && (
-                              <div className="w-24 h-24 rounded-full border-4 border-green-500 mx-auto mb-4 overflow-hidden shadow-2xl">
+                           <div className="w-24 h-24 rounded-full border-4 border-green-500 mx-auto mb-4 overflow-hidden shadow-2xl flex items-center justify-center bg-black/40">
+                              {lastWinner.avatar ? (
                                  <img src={lastWinner.avatar} className="w-full h-full object-cover" />
-                              </div>
-                           )}
+                              ) : (
+                                 <User size={40} className="text-gray-500" />
+                              )}
+                           </div>
 
                            <div className="text-6xl font-black text-white italic tracking-tighter uppercase drop-shadow-lg mb-2">{lastWinner.name}</div>
                            <div className="flex items-center justify-center gap-3 text-lg font-bold text-gray-400 uppercase tracking-widest bg-white/5 px-6 py-2 rounded-full mx-auto w-fit">

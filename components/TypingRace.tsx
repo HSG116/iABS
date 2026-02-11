@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { chatService } from '../services/chatService';
 import { leaderboardService } from '../services/supabase';
 import { TYPING_WORDS } from '../constants';
-import { Keyboard as KeyboardIcon, Play, RotateCcw, Trophy, Zap, Timer, LogOut, Home, History } from 'lucide-react';
+import { Keyboard as KeyboardIcon, Play, RotateCcw, Trophy, Zap, Timer, LogOut, Home, History, User } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface TypingRaceProps {
@@ -113,7 +113,7 @@ export const TypingRace: React.FC<TypingRaceProps> = ({ channelConnected, onHome
             triggerWinEffect();
 
             // 2. SLOW UPDATE: Fetch high-res avatar in background
-            fetchRealAvatar(userWinner.name).then((realPic) => {
+            chatService.fetchKickAvatar(userWinner.name).then((realPic) => {
                if (realPic) {
                   setWinner(prev => prev ? { ...prev, avatar: realPic } : prev);
                }
@@ -247,16 +247,15 @@ export const TypingRace: React.FC<TypingRaceProps> = ({ channelConnected, onHome
 
                      <div className="flex flex-col items-center justify-center gap-6 mb-12">
                         <div className="w-32 h-32 rounded-[2.5rem] bg-zinc-900 border-4 border-white/10 flex items-center justify-center overflow-hidden shadow-2xl relative">
-                           {/* Enhanced Image Handling */}
-                           <img
-                              src={winner.avatar || `https://ui-avatars.com/api/?name=${winner.name}&background=random&color=fff&size=512`}
-                              className="w-full h-full object-cover animate-in fade-in duration-500"
-                              crossOrigin="anonymous"
-                              alt={winner.name}
-                              onError={(e) => {
-                                 (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${winner.name}&background=111&color=fff&size=512`;
-                              }}
-                           />
+                           {winner.avatar ? (
+                              <img
+                                 src={winner.avatar}
+                                 className="w-full h-full object-cover animate-in fade-in duration-500"
+                                 alt={winner.name}
+                              />
+                           ) : (
+                              <User size={64} className="text-gray-500" />
+                           )}
                            <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-black p-2 rounded-tl-2xl rounded-br-2xl border-4 border-black">
                               <Trophy size={20} fill="black" />
                            </div>

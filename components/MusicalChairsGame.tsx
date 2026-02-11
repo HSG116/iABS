@@ -193,18 +193,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
       return result.slice(0, count);
    };
 
-   const fetchKickAvatar = async (username: string): Promise<string> => {
-      try {
-         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${username.toLowerCase()}`)}`;
-         const response = await fetch(proxyUrl);
-         if (response.ok) {
-            const rawData = await response.json();
-            const data = JSON.parse(rawData.contents);
-            return data.user?.profile_pic || '';
-         }
-      } catch (e) { }
-      return '';
-   };
+
 
    useEffect(() => {
       const unsubscribe = chatService.onMessage(async (msg) => {
@@ -238,7 +227,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   if (prev.some(p => p.username.toLowerCase() === username.toLowerCase())) return prev;
 
                   const newUser: ChatUser = { ...msg.user };
-                  fetchKickAvatar(newUser.username).then(avatar => {
+                  chatService.fetchKickAvatar(newUser.username).then(avatar => {
                      if (avatar) {
                         setParticipants(current => current.map(p =>
                            p.username.toLowerCase() === username.toLowerCase() ? { ...p, avatar } : p
@@ -1206,7 +1195,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   </div>
                </div>
 
-               
+
 
                {/* RESULTS OVERLAY - PREMIUM REDESIGN */}
                {phase === 'RESULTS' && (

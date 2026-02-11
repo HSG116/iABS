@@ -9,7 +9,7 @@ import {
    Trash2, LogOut, Home, Settings, Zap, Clock,
    Sparkles, Volume2, VolumeX, History, Palette,
    ChevronRight, Check, ShieldCheck, UserPlus, Image as ImageIcon,
-   UserMinus, RefreshCcw, Loader2
+   UserMinus, RefreshCcw, Loader2, User
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -119,6 +119,16 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ channelConnected, onHome }
                if (exists) {
                   return prev;
                }
+
+               // Fetch real Kick avatar asynchronously
+               chatService.fetchKickAvatar(msg.user.username).then(avatar => {
+                  if (avatar) {
+                     setParticipants(current => current.map(p =>
+                        p.username === msg.user.username ? { ...p, avatar } : p
+                     ));
+                  }
+               });
+
                return [...prev, msg.user];
             });
          }
@@ -253,7 +263,7 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ channelConnected, onHome }
       const angleStep = 360 / participants.length;
 
       // We want the winner to land at the top (270 degrees)
-      // Canvas draw starts at 0 (3 o'clock). 
+      // Canvas draw starts at 0 (3 o'clock).
       // Current rotation + dynamic spins + target offset
       const extraSpins = 360 * (12 + Math.floor(Math.random() * 8));
       const targetOffset = (270 - (winIndex * angleStep) - (angleStep / 2));
@@ -361,8 +371,12 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ channelConnected, onHome }
                         ) : (
                            [...participants].reverse().map((p, i) => (
                               <div key={i} className="flex items-center gap-3 p-2.5 rounded-2xl transition-all border border-white/5 bg-black/20 hover:bg-white/5 group animate-in slide-in-from-right duration-300">
-                                 <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
-                                    {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-[10px] font-black text-white">{p.username.charAt(0)}</div>}
+                                 <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 flex items-center justify-center bg-black/40">
+                                    {p.avatar ? (
+                                       <img src={p.avatar} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                       <User className="w-5 h-5 text-gray-400" />
+                                    )}
                                  </div>
                                  <span className="text-[11px] font-black text-white truncate">{p.username}</span>
                               </div>
@@ -379,8 +393,12 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ channelConnected, onHome }
                         </h4>
                         <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
                            {history.map((h, i) => (
-                              <div key={i} className="w-10 h-10 rounded-xl border border-amber-500/30 overflow-hidden shrink-0 shadow-lg" title={h.username}>
-                                 {h.avatar ? <img src={h.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-[10px] font-black text-white">{h.username.charAt(0)}</div>}
+                              <div key={i} className="w-10 h-10 rounded-xl border border-amber-500/30 overflow-hidden shrink-0 shadow-lg flex items-center justify-center bg-black/40" title={h.username}>
+                                 {h.avatar ? (
+                                    <img src={h.avatar} className="w-full h-full object-cover" alt="" />
+                                 ) : (
+                                    <User className="w-6 h-6 text-gray-400" />
+                                 )}
                               </div>
                            ))}
                         </div>
@@ -526,7 +544,7 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ channelConnected, onHome }
                      </div>
                   )}
 
-                     <div className="relative w-[600px] h-[600px] flex items-center justify-center mx-auto my-auto">
+                  <div className="relative w-[600px] h-[600px] flex items-center justify-center mx-auto my-auto">
                      {/* Pointer - Enhanced */}
                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-[60]">
                         <div className="relative">

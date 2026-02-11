@@ -65,11 +65,15 @@ export const adminService = {
   },
 
   async addPromoCode(code: string, amount: number, maxUses: number) {
-    return await supabase.from('promo_codes').insert([{ code, reward_amount: amount, max_uses: maxUses }]);
+    return await supabase.from('promo_codes').insert([{ code, reward_amount: amount, max_uses: maxUses, is_active: true, current_uses: 0 }]);
   },
 
   async deletePromoCode(id: string) {
     return await supabase.from('promo_codes').delete().eq('id', id);
+  },
+
+  async togglePromoActive(id: string, isActive: boolean) {
+    return await supabase.from('promo_codes').update({ is_active: isActive }).eq('id', id);
   },
 
   // Arena Status
@@ -112,6 +116,62 @@ export const leaderboardService = {
       credits: item.profiles?.credits
     }));
   },
+ 
+  async getPlayersWithPoints() {
+    const { data, error } = await supabase
+      .from('leaderboard')
+      .select('*, profiles(avatar_url, is_banned, credits)')
+      .or('score.gt.0,wins.gt.0')
+      .order('score', { ascending: false });
+    if (error) return [];
+    return (data || []).map(item => ({
+      ...item,
+      avatar_url: item.profiles?.avatar_url || item.avatar_url,
+      is_banned: item.profiles?.is_banned,
+      credits: item.profiles?.credits
+    }));
+  },
+ 
+  async getAllRankedPlayers() {
+    const { data: lb } = await supabase
+      .from('leaderboard')
+      .select('*, profiles(avatar_url, is_banned, credits)')
+      .order('score', { ascending: false });
+    const { data: profs } = await supabase
+      .from('profiles')
+      .select('*')
+      .gt('credits', 0);
+    const byUser: Record<string, any> = {};
+    (lb || []).forEach(item => {
+      byUser[item.username] = {
+        ...item,
+        score: item.score || 0,
+        wins: item.wins || 0,
+        avatar_url: item.profiles?.avatar_url || item.avatar_url,
+        is_banned: item.profiles?.is_banned,
+        credits: item.profiles?.credits
+      };
+    });
+    (profs || []).forEach(p => {
+      if (!byUser[p.username]) {
+        byUser[p.username] = {
+          id: p.id,
+          username: p.username,
+          score: 0,
+          wins: 0,
+          avatar_url: p.avatar_url,
+          is_banned: p.is_banned,
+          credits: p.credits
+        };
+      }
+    });
+    const combined = Object.values(byUser);
+    combined.sort((a: any, b: any) => {
+      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+      return (b.credits || 0) - (a.credits || 0);
+    });
+    return combined;
+  },
 
   async checkIsBanned(username: string): Promise<boolean> {
     const { data } = await supabase.from('profiles').select('is_banned').eq('username', username).maybeSingle();
@@ -124,12 +184,16 @@ export const leaderboardService = {
     if (promo.current_uses >= promo.max_uses) return { error: 'انتهت صلاحية الكود' };
 
     const { data: profile } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle();
-    if (!profile) return { error: 'المستخدم غير موجود' };
+    if (!profile) {
+      const insertRes = await supabase.from('profiles').insert([{ username }]).select('*').maybeSingle();
+      if (insertRes.error) return { error: 'فشل إنشاء ملف المستخدم' };
+    }
 
     const { error: updateError } = await supabase.from('profiles').update({ credits: (profile.credits || 0) + promo.reward_amount }).eq('username', username);
     if (updateError) return { error: 'فشل التحديث' };
 
     await supabase.from('promo_codes').update({ current_uses: promo.current_uses + 1 }).eq('id', promo.id);
+    await adminService.logAction('SYSTEM_AUTO', 'PROMO_REDEEM', { username, code, amount: promo.reward_amount });
     return { success: true, amount: promo.reward_amount };
   },
 
