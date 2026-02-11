@@ -99,17 +99,22 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
             100% { transform: translateY(-200px) scale(0.8); opacity: 0; }
         }
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.8); }
-            50% { box-shadow: 0 0 80px rgba(245, 158, 11, 0.8); border-color: rgba(255, 255, 255, 0.8); }
+            0%, 100% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.8); }
+            50% { box-shadow: 0 0 80px rgba(239, 68, 68, 0.8); border-color: rgba(255, 255, 255, 0.8); }
         }
-        @keyframes rotate-slow {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes drift {
+             0% { background-position: 0% 50%; }
+             50% { background-position: 100% 50%; }
+             100% { background-position: 0% 50%; }
         }
         .celebration-particle {
             position: absolute;
             animation: float-up 3s ease-out forwards;
             opacity: 0;
+        }
+        .animate-drift {
+            background-size: 200% 200%;
+            animation: drift 10s ease infinite;
         }
     `;
 
@@ -350,30 +355,31 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
         alert('تم نسخ رابط OBS بنجاح!');
     };
 
-    // --- OBS VIEW ---
+    // --- OBS VIEW (REDESIGNED 1366x768) ---
     if (isOBS) {
         return (
-            <div className="w-[1920px] h-[1080px] flex flex-col p-8 bg-transparent text-right font-display select-none overflow-hidden" dir="rtl">
+            <div className="w-[1366px] h-[768px] flex flex-col p-6 bg-transparent text-right font-display select-none overflow-hidden" dir="rtl">
                 <style>{customStyles}</style>
-                <div className="absolute inset-0 bg-black/80 -z-10"></div>
+                {/* Background - Dark Red gradient for Forbidden Vibe */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black via-[#1a0505] to-[#2a0a0a] -z-10 animate-drift"></div>
 
                 {/* Header - Always visible */}
-                <div className="flex justify-between items-center mb-6 pl-4 pr-4">
-                    <div className="flex items-center gap-6">
-                        <div className="glass-card px-8 py-3 rounded-full bg-amber-900/50 border border-amber-500/30 flex items-center gap-4 shadow-lg">
-                            <Clock size={36} className="text-white" />
-                            <span className={`text-5xl font-black font-mono ${timer < 10 && phase === 'PLAYING' ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                <div className="flex justify-between items-center mb-4 pl-2 pr-2">
+                    <div className="flex items-center gap-4">
+                        <div className="glass-card px-6 py-2 rounded-full bg-red-900/50 border border-red-500/30 flex items-center gap-3 shadow-lg backdrop-blur-md">
+                            <Clock size={28} className="text-white" />
+                            <span className={`text-4xl font-black font-mono ${timer < 10 && phase === 'PLAYING' ? 'text-red-500 animate-pulse' : 'text-white'}`}>
                                 {phase === 'PLAYING' ? `${timer}s` : '--'}
                             </span>
                         </div>
-                        <div className="glass-card px-6 py-3 rounded-full bg-white/5 border border-white/10">
-                            <span className="text-2xl font-black text-gray-300">الجولة {currentRound} / {config.totalRounds}</span>
+                        <div className="glass-card px-5 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                            <span className="text-xl font-black text-gray-300">الجولة {currentRound} / {config.totalRounds}</span>
                         </div>
                     </div>
 
-                    <div className="glass-card px-8 py-3 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center gap-3">
-                        <Users size={28} className="text-amber-500" />
-                        <span className="text-white font-black text-3xl">{participants.length}</span>
+                    <div className="glass-card px-6 py-2 rounded-full bg-red-500/10 border border-red-500/30 flex items-center gap-3 backdrop-blur-md">
+                        <Users size={24} className="text-red-500" />
+                        <span className="text-white font-black text-2xl">{participants.length}</span>
                     </div>
                 </div>
 
@@ -382,28 +388,28 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
                     <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in duration-500">
                         {phase === 'SETUP' ? (
                             <>
-                                <Loader2 size={100} className="text-amber-500 animate-spin mb-8" />
-                                <h1 className="text-8xl font-black text-white italic tracking-tighter mb-4">بانتظار البث...</h1>
-                                <p className="text-3xl text-gray-400 font-bold">المذيع يقوم بإعداد اللعبة</p>
+                                <Loader2 size={80} className="text-red-500 animate-spin mb-6" />
+                                <h1 className="text-6xl font-black text-white italic tracking-tighter mb-4 drop-shadow-xl">بانتظار البث...</h1>
+                                <p className="text-2xl text-gray-400 font-bold bg-black/40 px-6 py-2 rounded-full border border-white/5">المذيع يقوم بإعداد اللعبة</p>
                             </>
                         ) : (
                             <>
-                                <h1 className="text-7xl font-black text-white italic tracking-tighter mb-6">قائمة الانتظار</h1>
-                                <div className="flex items-center gap-4 px-12 py-4 bg-amber-500/10 rounded-full border border-amber-500/30 mb-12">
-                                    <span className="text-2xl font-bold text-gray-300">أرسل الكلمة للانضمام:</span>
-                                    <span className="text-6xl font-black text-amber-500">{config.joinKeyword}</span>
+                                <h1 className="text-6xl font-black text-white italic tracking-tighter mb-4 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">قائمة الانتظار</h1>
+                                <div className="flex items-center gap-4 px-10 py-3 bg-gradient-to-r from-red-600/20 to-orange-600/20 rounded-full border border-red-500/30 mb-8 backdrop-blur-sm">
+                                    <span className="text-xl font-bold text-gray-200">أرسل الكلمة للانضمام:</span>
+                                    <span className="text-5xl font-black text-red-500 drop-shadow-md">{config.joinKeyword}</span>
                                 </div>
 
-                                <div className="grid grid-cols-6 gap-6 w-full max-w-[1600px] px-8">
+                                <div className="grid grid-cols-6 gap-4 w-full max-w-[1200px] px-6 max-h-[500px] overflow-y-auto custom-scrollbar p-4">
                                     {participants.map((p, i) => (
-                                        <div key={p.username} className="glass-card p-4 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center gap-3 animate-in fade-in zoom-in">
-                                            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-zinc-800">
-                                                {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <User className="text-white/20 m-auto mt-4" />}
+                                        <div key={p.username} className="glass-card p-3 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center gap-2 animate-in fade-in zoom-in hover:border-red-500/50 transition-colors">
+                                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 border-2 border-white/5">
+                                                {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <User className="text-white/20 m-auto mt-3" />}
                                             </div>
-                                            <span className="text-white font-bold truncate w-full text-center">{p.username}</span>
+                                            <span className="text-white font-bold truncate w-full text-center text-sm">{p.username}</span>
                                         </div>
                                     ))}
-                                    {participants.length === 0 && <div className="col-span-full text-center text-white/20 text-2xl">بانتظار اللاعبين...</div>}
+                                    {participants.length === 0 && <div className="col-span-full text-center text-white/20 text-xl py-20">بانتظار اللاعبين...</div>}
                                 </div>
                             </>
                         )}
@@ -412,162 +418,160 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
 
                 {/* GAME PLAY PHASES */}
                 {!['SETUP', 'LOBBY'].includes(phase) && (
-                    <div className="flex-1 grid grid-cols-12 gap-8 pl-4 pr-4 pb-4">
+                    <div className="flex-1 grid grid-cols-12 gap-6 pl-2 pr-2 pb-2 h-full overflow-hidden">
                         {/* LEFT: Stats & Cloud */}
-                        <div className="col-span-3 flex flex-col gap-6">
-                            <div className="glass-card flex-1 bg-black/40 border border-white/10 rounded-[2.5rem] p-6 relative overflow-hidden flex flex-col">
-                                <div className="flex items-center gap-3 text-amber-500 mb-6 font-black text-2xl z-10 relative border-b border-white/5 pb-4">
-                                    <Cloud size={28} /> الكلمات المتكررة
+                        <div className="col-span-3 flex flex-col gap-4 h-full">
+                            <div className="glass-card flex-1 bg-black/40 border border-red-500/20 rounded-[2rem] p-5 relative overflow-hidden flex flex-col backdrop-blur-lg">
+                                <div className="flex items-center gap-2 text-red-500 mb-4 font-black text-xl z-10 relative border-b border-red-500/10 pb-2">
+                                    <Cloud size={24} /> الكلمات المتكررة
                                 </div>
-                                <div className="flex flex-wrap gap-3 relative z-10 content-start">
+                                <div className="flex flex-wrap gap-2 relative z-10 content-start overflow-hidden">
                                     {guessStats.slice(0, 15).map((g, i) => (
-                                        <div key={g.word} className="bg-white/10 px-4 py-2 rounded-xl text-white font-bold transition-all"
-                                            style={{ fontSize: `${Math.max(1, 2.5 - i * 0.15)}rem`, opacity: Math.max(0.4, 1 - i * 0.05) }}>
+                                        <div key={g.word} className="bg-white/5 border border-white/5 px-3 py-1 rounded-lg text-white font-bold transition-all"
+                                            style={{ fontSize: `${Math.max(0.8, 1.5 - i * 0.1)}rem`, opacity: Math.max(0.4, 1 - i * 0.05) }}>
                                             {g.word}
                                         </div>
                                     ))}
-                                    {guessStats.length === 0 && <div className="text-white/30 text-center w-full mt-20 text-xl font-bold">...</div>}
+                                    {guessStats.length === 0 && <div className="text-white/20 text-center w-full mt-10 text-lg font-bold">...</div>}
                                 </div>
                             </div>
 
                             {/* Closest Guess */}
-                            <div className="glass-card bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-8">
-                                <div className="flex items-center gap-3 text-blue-400 mb-4 font-black text-2xl">
-                                    <Target size={28} /> أقرب محاولة
+                            <div className="glass-card bg-zinc-900/80 border border-blue-500/20 rounded-[2rem] p-5 backdrop-blur-lg">
+                                <div className="flex items-center gap-2 text-blue-400 mb-2 font-black text-xl">
+                                    <Target size={24} /> أقرب محاولة
                                 </div>
                                 {closestGuess ? (
-                                    <div className="flex flex-col gap-2">
-                                        <span className="text-5xl text-white font-black truncate">{closestGuess.word}</span>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400"><User size={16} /></div>
-                                            <span className="text-xl text-gray-300 font-bold">{closestGuess.user}</span>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-3xl text-white font-black truncate">{closestGuess.word}</span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400"><User size={12} /></div>
+                                            <span className="text-sm text-gray-300 font-bold">{closestGuess.user}</span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-white/30 text-xl font-bold">لا يوجد محاولات قريبة بعد</div>
+                                    <div className="text-white/20 text-sm font-bold py-2">لا يوجد محاولات قريبة بعد</div>
                                 )}
                             </div>
                         </div>
 
                         {/* CENTER: Game State */}
-                        <div className="col-span-6 flex flex-col items-center justify-center relative px-4">
+                        <div className="col-span-6 flex flex-col items-center justify-center relative px-2">
                             {(phase === 'PRE_ROUND' || phase === 'SELECT_WORD') && (
                                 <div className="text-center animate-pulse">
-                                    <Loader2 size={120} className="text-amber-500 animate-spin mx-auto mb-10" />
-                                    <h2 className="text-6xl font-black text-white mb-6">جاري اختيار التحدي...</h2>
-                                    <p className="text-gray-400 font-bold text-3xl">استعدوا للمنافسة!</p>
+                                    <Loader2 size={80} className="text-red-500 animate-spin mx-auto mb-6" />
+                                    <h2 className="text-5xl font-black text-white mb-4">جاري اختيار التحدي...</h2>
+                                    <p className="text-gray-400 font-bold text-2xl">استعدوا للمنافسة!</p>
                                 </div>
                             )}
 
                             {(phase === 'PLAYING' || phase === 'REVEAL') && (
-                                <div className="flex flex-col items-center gap-10 w-full">
+                                <div className="flex flex-col items-center gap-6 w-full h-full justify-center">
                                     {currentChallenge?.image && (
-                                        <div className="w-full h-[400px] rounded-[3rem] overflow-hidden border-8 border-amber-500/20 relative shadow-[0_20px_60px_rgba(0,0,0,0.5)] bg-black">
-                                            <img src={currentChallenge.image} className="w-full h-full object-cover opacity-80" />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-                                                <div className="px-8 py-4 bg-black/60 rounded-full backdrop-blur-md border border-white/10">
-                                                    <span className="text-white font-black text-2xl tracking-wider">IMAGE CLUE</span>
+                                        <div className="w-[80%] h-[280px] rounded-[2rem] overflow-hidden border-4 border-red-500/20 relative shadow-[0_10px_40px_rgba(0,0,0,0.6)] bg-black group transition-all duration-500 hover:scale-[1.02]">
+                                            <img src={currentChallenge.image} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                                                <div className="px-6 py-2 bg-black/70 rounded-full backdrop-blur-md border border-white/10">
+                                                    <span className="text-white font-black text-lg tracking-wider">IMAGE CLUE</span>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
                                     <div className="text-center w-full">
-                                        <h1 className="text-[7rem] font-black text-white italic drop-shadow-2xl mb-8 leading-none">خـــمّـــن!</h1>
+                                        <h1 className="text-[5rem] font-black text-white italic drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] mb-6 leading-none tracking-tighter">خـــمّـــن!</h1>
 
-                                        <div className="bg-red-900/20 border-2 border-red-500/20 rounded-[3rem] p-8 w-full backdrop-blur-sm">
-                                            <div className="flex flex-wrap justify-center gap-4 mb-4">
+                                        <div className="bg-red-950/40 border border-red-500/30 rounded-[2rem] p-6 w-full backdrop-blur-md shadow-2xl">
+                                            <div className="flex flex-wrap justify-center gap-3 mb-2">
                                                 {currentChallenge?.forbidden.map((_, i) => (
-                                                    <div key={i} className="w-32 h-12 bg-red-500/20 rounded-xl border border-red-500/30 animate-pulse"></div>
+                                                    <div key={i} className="w-24 h-8 bg-red-500/30 rounded-lg border border-red-500/40 animate-pulse"></div>
                                                 ))}
                                             </div>
-                                            <p className="text-red-400 font-black text-xl uppercase tracking-[0.3em]">الكلمات الممنوعة مخفية</p>
+                                            <p className="text-red-400 font-black text-sm uppercase tracking-[0.2em] mt-2">الكلمات الممنوعة مخفية</p>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Winner Overlay - ENHANCED FOR OBS */}
+                            {/* Winner Overlay - ENHANCED FOR OBS 1366x768 */}
                             {(phase === 'REVEAL' || phase === 'FINALE') && (
-                                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 rounded-[3rem] animate-in zoom-in duration-300 border border-white/10 overflow-hidden">
+                                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 rounded-[2rem] animate-in zoom-in duration-300 border border-red-500/20 overflow-hidden shadow-2xl">
                                     {/* Celebration Particles */}
                                     <div className="absolute inset-0 pointer-events-none">
-                                        {[...Array(20)].map((_, i) => (
-                                            <div key={i} className="celebration-particle absolute w-8 h-8 rounded-full"
+                                        {[...Array(25)].map((_, i) => (
+                                            <div key={i} className="celebration-particle absolute w-6 h-6 rounded-full"
                                                 style={{
                                                     left: `${Math.random() * 100}%`,
                                                     top: `${60 + Math.random() * 40}%`,
                                                     animationDelay: `${Math.random() * 2}s`,
-                                                    backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 6)],
-                                                    boxShadow: '0 0 20px currentColor'
+                                                    backgroundColor: ['#ef4444', '#b91c1c', '#f87171', '#991b1b', '#f59e0b', '#fbbf24'][Math.floor(Math.random() * 6)],
+                                                    boxShadow: '0 0 15px currentColor'
                                                 }}></div>
                                         ))}
                                     </div>
 
                                     {roundWinner ? (
-                                        <div className="flex flex-col items-center scale-150 relative z-10 p-10">
-                                            <div className="w-80 h-80 rounded-full border-8 border-amber-500 overflow-hidden mb-8 shadow-[0_0_100px_rgba(245,158,11,0.8)] bg-zinc-800 relative group"
+                                        <div className="flex flex-col items-center relative z-10 p-6">
+                                            <div className="w-48 h-48 rounded-[3rem] border-4 border-red-500 overflow-hidden mb-4 shadow-[0_0_80px_rgba(239,68,68,0.6)] bg-zinc-800 relative group"
                                                 style={{ animation: 'pulse-glow 2s infinite' }}>
                                                 {roundWinner.avatar ? <img src={roundWinner.avatar} className="w-full h-full object-cover" /> : <User className="w-full h-full p-8 text-white/20" />}
-                                                <div className="absolute inset-0 border-4 border-amber-300 rounded-full animate-ping opacity-20"></div>
+                                                <div className="absolute inset-0 border-2 border-red-300 rounded-[3rem] animate-ping opacity-20"></div>
                                             </div>
-                                            <h2 className="text-8xl font-black text-white mb-6 drop-shadow-2xl italic tracking-tighter bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">{roundWinner.username}</h2>
-                                            <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-20 py-8 rounded-[3rem] mt-6 shadow-[0_20px_60px_rgba(16,185,129,0.4)] border-4 border-white/20 transform hover:scale-110 transition-transform">
-                                                <span className="text-7xl text-white font-black drop-shadow-md">{currentChallenge?.target}</span>
+                                            <h2 className="text-6xl font-black text-white mb-4 drop-shadow-2xl italic tracking-tighter bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">{roundWinner.username}</h2>
+                                            <div className="bg-gradient-to-r from-red-600 to-red-800 px-12 py-4 rounded-[2rem] mt-2 shadow-[0_10px_40px_rgba(220,38,38,0.4)] border border-red-400/30 transform hover:scale-105 transition-transform">
+                                                <span className="text-5xl text-white font-black drop-shadow-md">{currentChallenge?.target}</span>
                                             </div>
-                                            <div className="mt-12 text-amber-400 font-bold text-4xl animate-bounce drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-                                                🎉 NEW WINNER! 🎉
+                                            <div className="mt-8 text-amber-400 font-bold text-2xl animate-bounce drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)] tracking-widest uppercase">
+                                                🎉 New Winner 🎉
                                             </div>
                                         </div>
                                     ) : (
-                                        <h2 className="text-9xl text-white font-black italic text-center">انتهى الوقت!</h2>
+                                        <h2 className="text-8xl text-white font-black italic text-center drop-shadow-[0_4px_10px_rgba(255,255,255,0.2)]">انتهى الوقت!</h2>
                                     )}
                                 </div>
                             )}
                         </div>
 
-                        {/* RIGHT: Leaderboard OR Participants in PRE_ROUND */}
+                        {/* RIGHT: Leaderboard */}
                         <div className="col-span-3">
-                            <div className="glass-card bg-black/40 border border-white/10 rounded-[2.5rem] p-8 h-full flex flex-col">
-                                <div className="flex items-center gap-4 mb-8 pb-6 border-b border-white/10">
+                            <div className="glass-card bg-black/40 border border-white/10 rounded-[2rem] p-5 h-full flex flex-col backdrop-blur-lg">
+                                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
                                     {(phase === 'PRE_ROUND' || phase === 'SELECT_WORD') ? (
                                         <>
-                                            <Users size={32} className="text-amber-500" />
-                                            <span className="text-3xl font-black text-white">اللاعبين ({participants.length})</span>
+                                            <Users size={24} className="text-red-500" />
+                                            <span className="text-2xl font-black text-white">اللاعبين ({participants.length})</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Trophy className="text-amber-500" size={32} />
-                                            <span className="text-3xl font-black text-white">المتصدرين</span>
+                                            <Trophy className="text-yellow-500" size={24} />
+                                            <span className="text-2xl font-black text-white">المتصدرين</span>
                                         </>
                                     )}
                                 </div>
-                                <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+                                <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
                                     {(phase === 'PRE_ROUND' || phase === 'SELECT_WORD') ? (
-                                        // WAITING LIST (PARTICIPANTS)
                                         participants.map((p, i) => (
-                                            <div key={p.username} className="flex items-center gap-4 bg-white/5 rounded-2xl p-4 border border-white/5">
-                                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 shrink-0">
-                                                    {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <User className="text-white/20 m-auto mt-2 h-8 w-8" />}
+                                            <div key={p.username} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/5 hover:bg-white/10 transition-colors">
+                                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/10">
+                                                    {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <User className="text-white/20 m-auto mt-2 h-6 w-6" />}
                                                 </div>
-                                                <span className="text-xl font-bold text-white truncate">{p.username}</span>
+                                                <span className="text-lg font-bold text-white truncate">{p.username}</span>
                                             </div>
                                         ))
                                     ) : (
-                                        // LEADERBOARD (SCORES)
                                         Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([username, score], i) => (
-                                            <div key={username} className="flex items-center gap-4 group">
-                                                <div className={`w-10 h-10 flex items-center justify-center rounded-xl font-black text-xl ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-gray-300 text-black' : i === 2 ? 'bg-orange-700 text-white' : 'bg-white/10 text-white/50'}`}>
+                                            <div key={username} className="flex items-center gap-3 group">
+                                                <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-black text-lg ${i === 0 ? 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.5)]' : i === 1 ? 'bg-gray-300 text-black' : i === 2 ? 'bg-orange-700 text-white' : 'bg-white/10 text-white/50'}`}>
                                                     {i + 1}
                                                 </div>
-                                                <div className="flex-1 bg-white/5 group-hover:bg-white/10 rounded-2xl p-4 flex justify-between items-center border border-white/5 transition-colors">
-                                                    <span className="text-lg font-bold text-white truncate max-w-[120px]">{username}</span>
-                                                    <span className="text-xl text-amber-500 font-black">{score}</span>
+                                                <div className="flex-1 bg-white/5 group-hover:bg-white/10 rounded-xl p-3 flex justify-between items-center border border-white/5 transition-colors">
+                                                    <span className="text-base font-bold text-white truncate max-w-[100px]">{username}</span>
+                                                    <span className="text-lg text-red-500 font-black">{score}</span>
                                                 </div>
                                             </div>
                                         ))
                                     )}
                                     {(phase === 'PRE_ROUND' || phase === 'SELECT_WORD') && participants.length === 0 && (
-                                        <div className="text-white/20 text-center mt-10">لا يوجد لاعبين</div>
+                                        <div className="text-white/20 text-center mt-10 text-sm">لا يوجد لاعبين</div>
                                     )}
                                 </div>
                             </div>
