@@ -90,6 +90,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     const [currentChallenge, setCurrentChallenge] = useState<ForbiddenChallenge | null>(null);
     const [roundWinner, setRoundWinner] = useState<ChatUser | null>(null);
     const [hasShownWarning, setHasShownWarning] = useState(false);
+    const hasShownWarningRef = useRef(false);
 
     // Inject custom CSS
     const customStyles = `
@@ -196,9 +197,10 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     const prepareNextChallenge = () => {
         const shuffled = [...CHALLENGES].sort(() => Math.random() - 0.5).slice(0, 3);
         setSuggestedChallenges(shuffled);
-        if (!hasShownWarning) {
+        if (!hasShownWarningRef.current) {
             setPhase('PRE_ROUND');
             setHasShownWarning(true);
+            hasShownWarningRef.current = true;
         } else {
             setPhase('SELECT_WORD');
         }
@@ -339,6 +341,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
         setCurrentRound(1);
         setScores({});
         setHasShownWarning(false);
+        hasShownWarningRef.current = false;
         prepareNextChallenge();
     };
     const resetGame = () => {
@@ -347,6 +350,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
         setScores({});
         setCurrentRound(1);
         setHasShownWarning(false);
+        hasShownWarningRef.current = false;
     };
 
     const copyOBSLink = () => {
@@ -467,27 +471,8 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
 
                             {(phase === 'PLAYING' || phase === 'REVEAL') && (
                                 <div className="flex flex-col items-center gap-6 w-full h-full justify-center">
-                                    {currentChallenge?.image && (
-                                        <div className="w-[80%] h-[280px] rounded-[2rem] overflow-hidden border-4 border-red-500/20 relative shadow-[0_10px_40px_rgba(0,0,0,0.6)] bg-black group transition-all duration-500 hover:scale-[1.02]">
-                                            <img src={currentChallenge.image} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-                                                <div className="px-6 py-2 bg-black/70 rounded-full backdrop-blur-md border border-white/10">
-                                                    <span className="text-white font-black text-lg tracking-wider">IMAGE CLUE</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
                                     <div className="text-center w-full">
                                         <h1 className="text-[5rem] font-black text-white italic drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] mb-6 leading-none tracking-tighter">خـــمّـــن!</h1>
-
-                                        <div className="bg-red-950/40 border border-red-500/30 rounded-[2rem] p-6 w-full backdrop-blur-md shadow-2xl">
-                                            <div className="flex flex-wrap justify-center gap-3 mb-2">
-                                                {currentChallenge?.forbidden.map((_, i) => (
-                                                    <div key={i} className="w-24 h-8 bg-red-500/30 rounded-lg border border-red-500/40 animate-pulse"></div>
-                                                ))}
-                                            </div>
-                                            <p className="text-red-400 font-black text-sm uppercase tracking-[0.2em] mt-2">الكلمات الممنوعة مخفية</p>
-                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -601,7 +586,10 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
                             <EyeOff size={64} className="text-white" />
                         </div>
                         <h1 className="text-6xl font-black text-white mb-4 uppercase tracking-tighter">أغـلـق الشـاشـة الآن!</h1>
-                        <p className="text-2xl text-gray-400 font-bold mb-12">الرجاء إخفاء الشاشة لاختيار الكلمة السرية</p>
+                        <p className="text-2xl text-gray-400 font-bold mb-4">الرجاء إخفاء الشاشة لاختيار الكلمة السرية</p>
+                        <p className="text-xl text-red-500 font-black bg-red-500/10 px-6 py-2 rounded-xl border border-red-500/30 mb-8 animate-pulse">
+                            تنبيه: يجب أن يكون عرض OBS: 1366 و الارتفاع: 768
+                        </p>
 
                         <div className="flex gap-4">
                             <div className="glass-card px-8 py-4 bg-zinc-900 border border-white/10 rounded-2xl">
@@ -811,13 +799,6 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
                     </div>
 
                     <div className="flex flex-col items-center gap-10 mt-20">
-                        {currentChallenge.image && (
-                            <div className="w-[400px] h-[300px] rounded-[3rem] overflow-hidden border-8 border-white/5 shadow-2xl relative group">
-                                <img src={currentChallenge.image} className="w-full h-full object-cover" alt="" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                                <div className="absolute bottom-6 inset-x-0 text-center text-white/40 font-black italic tracking-tighter uppercase text-xs">Challenge Image Clue</div>
-                            </div>
-                        )}
                         <div className="text-center">
                             <h2 className="text-8xl font-black text-white italic tracking-tighter mb-4 drop-shadow-[0_0_40px_rgba(255,255,255,0.2)]">خـمّـن الـكـلـمـة!</h2>
                             <div className="flex items-center justify-center gap-3 opacity-30">
