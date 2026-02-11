@@ -89,6 +89,29 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     const [currentRound, setCurrentRound] = useState(1);
     const [currentChallenge, setCurrentChallenge] = useState<ForbiddenChallenge | null>(null);
     const [roundWinner, setRoundWinner] = useState<ChatUser | null>(null);
+    const [hasShownWarning, setHasShownWarning] = useState(false);
+
+    // Inject custom CSS
+    const customStyles = `
+        @keyframes float-up {
+            0% { transform: translateY(0px) scale(0.5); opacity: 0; }
+            20% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+            100% { transform: translateY(-200px) scale(0.8); opacity: 0; }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.8); }
+            50% { box-shadow: 0 0 80px rgba(245, 158, 11, 0.8); border-color: rgba(255, 255, 255, 0.8); }
+        }
+        @keyframes rotate-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .celebration-particle {
+            position: absolute;
+            animation: float-up 3s ease-out forwards;
+            opacity: 0;
+        }
+    `;
 
     // Stats
     const [guessStats, setGuessStats] = useState<GuessStat[]>([]);
@@ -168,7 +191,12 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     const prepareNextChallenge = () => {
         const shuffled = [...CHALLENGES].sort(() => Math.random() - 0.5).slice(0, 3);
         setSuggestedChallenges(shuffled);
-        setPhase('PRE_ROUND'); // Go to warning screen first
+        if (!hasShownWarning) {
+            setPhase('PRE_ROUND');
+            setHasShownWarning(true);
+        } else {
+            setPhase('SELECT_WORD');
+        }
     };
 
     const confirmSafeToSelect = () => {
@@ -265,7 +293,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
                 leaderboardService.recordWin(user.username, user.avatar || '', 250);
             } else {
                 setCurrentRound(r => r + 1);
-                prepareNextChallenge(); // Go to Pre-Round again
+                prepareNextChallenge();
             }
         }, 5000);
     };
@@ -305,6 +333,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     const startRound = () => {
         setCurrentRound(1);
         setScores({});
+        setHasShownWarning(false);
         prepareNextChallenge();
     };
     const resetGame = () => {
@@ -312,6 +341,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
         setParticipants([]);
         setScores({});
         setCurrentRound(1);
+        setHasShownWarning(false);
     };
 
     const copyOBSLink = () => {
@@ -324,6 +354,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     if (isOBS) {
         return (
             <div className="w-[1920px] h-[1080px] flex flex-col p-8 bg-transparent text-right font-display select-none overflow-hidden" dir="rtl">
+                <style>{customStyles}</style>
                 <div className="absolute inset-0 bg-black/80 -z-10"></div>
 
                 {/* Header - Always visible */}
@@ -455,21 +486,40 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
                                 </div>
                             )}
 
-                            {/* Winner Overlay */}
+                            {/* Winner Overlay - ENHANCED FOR OBS */}
                             {(phase === 'REVEAL' || phase === 'FINALE') && (
-                                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 rounded-[3rem] animate-in zoom-in duration-300 border border-white/10">
+                                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 rounded-[3rem] animate-in zoom-in duration-300 border border-white/10 overflow-hidden">
+                                    {/* Celebration Particles */}
+                                    <div className="absolute inset-0 pointer-events-none">
+                                        {[...Array(20)].map((_, i) => (
+                                            <div key={i} className="celebration-particle absolute w-8 h-8 rounded-full"
+                                                style={{
+                                                    left: `${Math.random() * 100}%`,
+                                                    top: `${60 + Math.random() * 40}%`,
+                                                    animationDelay: `${Math.random() * 2}s`,
+                                                    backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 6)],
+                                                    boxShadow: '0 0 20px currentColor'
+                                                }}></div>
+                                        ))}
+                                    </div>
+
                                     {roundWinner ? (
-                                        <div className="flex flex-col items-center scale-125">
-                                            <div className="w-48 h-48 rounded-[3rem] border-8 border-amber-500 overflow-hidden mb-8 shadow-[0_0_80px_rgba(245,158,11,0.6)] bg-zinc-800">
+                                        <div className="flex flex-col items-center scale-150 relative z-10 p-10">
+                                            <div className="w-80 h-80 rounded-full border-8 border-amber-500 overflow-hidden mb-8 shadow-[0_0_100px_rgba(245,158,11,0.8)] bg-zinc-800 relative group"
+                                                style={{ animation: 'pulse-glow 2s infinite' }}>
                                                 {roundWinner.avatar ? <img src={roundWinner.avatar} className="w-full h-full object-cover" /> : <User className="w-full h-full p-8 text-white/20" />}
+                                                <div className="absolute inset-0 border-4 border-amber-300 rounded-full animate-ping opacity-20"></div>
                                             </div>
-                                            <h2 className="text-7xl font-black text-white mb-4 drop-shadow-lg">{roundWinner.username}</h2>
-                                            <div className="bg-green-600 px-12 py-4 rounded-3xl mt-4 shadow-2xl">
-                                                <span className="text-4xl text-white font-black">{currentChallenge?.target}</span>
+                                            <h2 className="text-8xl font-black text-white mb-6 drop-shadow-2xl italic tracking-tighter bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">{roundWinner.username}</h2>
+                                            <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-20 py-8 rounded-[3rem] mt-6 shadow-[0_20px_60px_rgba(16,185,129,0.4)] border-4 border-white/20 transform hover:scale-110 transition-transform">
+                                                <span className="text-7xl text-white font-black drop-shadow-md">{currentChallenge?.target}</span>
+                                            </div>
+                                            <div className="mt-12 text-amber-400 font-bold text-4xl animate-bounce drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+                                                🎉 NEW WINNER! 🎉
                                             </div>
                                         </div>
                                     ) : (
-                                        <h2 className="text-8xl text-white font-black">انتهى الوقت!</h2>
+                                        <h2 className="text-9xl text-white font-black italic text-center">انتهى الوقت!</h2>
                                     )}
                                 </div>
                             )}
