@@ -169,6 +169,12 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
    const [playlist, setPlaylist] = useState<string[]>([]);
    const [playlistIndex, setPlaylistIndex] = useState(0);
 
+   // Zoom & Pan State
+   const [zoom, setZoom] = useState(1);
+   const [pan, setPan] = useState({ x: 0, y: 0 });
+   const [isDragging, setIsDragging] = useState(false);
+   const lastMousePos = useRef({ x: 0, y: 0 });
+
    const audioRef = useRef<HTMLAudioElement | null>(null);
    const phaseRef = useRef(phase);
    const configRef = useRef(config);
@@ -181,8 +187,9 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
    }, [phase, config, participants]);
 
    const getUniqueChairIds = (count: number, survivorsCount: number): string[] => {
-      // Always use MEDIUM logic: shuffled numbers from 1 to 300 (or survivors count if more)
-      const maxRange = Math.max(300, survivorsCount);
+      // Logic: Default 1-100. If more players (e.g. 300), expand just enough to fit them (1-300).
+      // This ensures numbers are as small/readable as possible while remaining unique.
+      const maxRange = Math.max(100, survivorsCount);
       const pool = Array.from({ length: maxRange }, (_, i) => (i + 1).toString());
 
       const result = [...pool];
@@ -241,10 +248,18 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
          }
 
          if (phaseRef.current === 'MUSIC_OFF') {
+            // CRITICAL FIX: Only allow registered participants to sit
+            // prevents "snipers" from taking chairs and then disappearing because they aren't in the participants list
+            const isParticipant = participantsRef.current.some(p =>
+               p.username.toLowerCase() === msg.user.username.toLowerCase()
+            );
+
+            if (!isParticipant) return;
+
             setChairs(prev => {
                const index = prev.findIndex(c => c.id.toLowerCase() === content);
                if (index !== -1 && !prev[index].occupiedBy) {
-                  const alreadySeated = prev.some(c => c.occupiedBy === msg.user.username);
+                  const alreadySeated = prev.some(c => c.occupiedBy?.toLowerCase() === msg.user.username.toLowerCase());
                   if (!alreadySeated) {
                      const newChairs = [...prev];
                      newChairs[index] = { ...newChairs[index], occupiedBy: msg.user.username };
@@ -304,18 +319,49 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
 
       const chairIds = getUniqueChairIds(chairsCount, survivorsCount);
       const luckyIndex = config.luckyChair ? Math.floor(Math.random() * chairsCount) : -1;
-      const newChairs = chairIds.map((id, i) => {
-         // توليد موقع عشوائي داخل حلبة دائرية
-         const angle = Math.random() * 2 * Math.PI;
-         const radius = 40 + Math.random() * 310; // الابتعاد عن المركز قليلاً والتوزع حتى مسافة 350
-         return {
-            id,
+      const newChairs: { id: string, occupiedBy: string | null, isLucky?: boolean, x: number, y: number }[] = [];
+      // Dynamic minimum distance based on player count to ensure packing
+      const minDistance = chairsCount > 200 ? 30 : chairsCount > 100 ? 40 : 55;
+
+      for (let i = 0; i < chairIds.length; i++) {
+         let bestPos = { x: 0, y: 0 };
+         let maxDist = -1;
+
+         // Attempt to find a position that is far from existing chairs
+         // Try 12 times per chair - balances performance and distribution quality
+         for (let attempt = 0; attempt < 12; attempt++) {
+            const angle = Math.random() * 2 * Math.PI;
+            // Expanded radius range: 120px to 520px to fill the larger 1100px map
+            const r = 100 + Math.random() * 420;
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
+
+            let minDist = 10000;
+            if (newChairs.length === 0) {
+               minDist = 999;
+            } else {
+               for (const other of newChairs) {
+                  const d = Math.sqrt((other.x - x) ** 2 + (other.y - y) ** 2);
+                  if (d < minDist) minDist = d;
+               }
+            }
+
+            if (minDist > maxDist) {
+               maxDist = minDist;
+               bestPos = { x, y };
+            }
+            // Optimization: if we found a spot with good enough distance, take it immediately
+            if (minDist > minDistance) break;
+         }
+
+         newChairs.push({
+            id: chairIds[i],
             occupiedBy: null,
             isLucky: i === luckyIndex,
-            x: Math.cos(angle) * radius,
-            y: Math.sin(angle) * radius
-         };
-      });
+            x: bestPos.x,
+            y: bestPos.y
+         });
+      }
 
       setChairs(newChairs);
       setCurrentRound(r => r + 1);
@@ -384,9 +430,13 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
    };
 
    const resolveRound = () => {
-      const winnersNames = chairs.filter(c => c.occupiedBy).map(c => c.occupiedBy!);
-      const losers = participants.filter(p => !winnersNames.includes(p.username));
-      const winners = participants.filter(p => winnersNames.includes(p.username));
+      // Normalize to lowercase for reliable matching
+      const winnersNames = chairs
+         .filter(c => c.occupiedBy)
+         .map(c => c.occupiedBy!.toLowerCase());
+
+      const losers = participants.filter(p => !winnersNames.includes(p.username.toLowerCase()));
+      const winners = participants.filter(p => winnersNames.includes(p.username.toLowerCase()));
 
       setLastEliminated(losers);
       setParticipants(winners);
@@ -405,6 +455,21 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
          setPhase('RESULTS');
          if (config.autoProgress) setTimeout(startMusic, config.fastResults ? 1500 : 4000);
       }
+   };
+
+   const addBots = () => {
+      const botCount = 50;
+      const newBots: ChatUser[] = Array.from({ length: botCount }).map((_, i) => ({
+         id: `bot-${Date.now()}-${i}`,
+         username: `Bot_${Math.floor(Math.random() * 9999)}`,
+         color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+         isBot: true
+      }));
+
+      setParticipants(prev => {
+         const combined = [...prev, ...newBots];
+         return combined.slice(0, config.maxPlayers);
+      });
    };
 
    const resetGame = () => {
@@ -937,6 +1002,10 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                      <span className="text-xl text-red-600 font-black opacity-40">/ {config.maxPlayers} MAX</span>
                   </div>
                   <div className="flex gap-4">
+                     <button onClick={addBots} className="px-6 py-6 rounded-[2.5rem] bg-amber-600/20 text-amber-500 font-black hover:bg-amber-600/40 hover:text-white transition-all text-sm border border-amber-500/20 flex flex-col items-center justify-center leading-none gap-1">
+                        <span>+50</span>
+                        <span>BOTS</span>
+                     </button>
                      <button onClick={resetGame} className="px-10 py-6 rounded-[2.5rem] bg-white/5 text-gray-500 font-black hover:text-white transition-all text-lg border border-white/10">تراجع</button>
                      <button onClick={startMusic} disabled={participants.length < 2} className="px-16 py-6 bg-white text-black font-black text-3xl rounded-[2.5rem] shadow-2xl hover:scale-[1.05] active:scale-95 transition-all disabled:opacity-10 italic flex items-center gap-4">بـدء اللعب <Play fill="currentColor" size={32} /></button>
                   </div>
@@ -944,9 +1013,27 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
             </div>
          )}
 
-         {/* --- PHASE: IN-GAME (CIRCULAR MOVEMENT) --- */}
          {(phase === 'MUSIC_ON' || phase === 'MUSIC_OFF' || phase === 'RESULTS') && (
-            <div className="w-full h-full relative flex flex-col items-center justify-center overflow-hidden bg-black">
+            <div
+               className="w-full h-full relative flex flex-col items-center justify-center overflow-hidden bg-black cursor-grab active:cursor-grabbing"
+               onWheel={(e) => {
+                  setZoom(z => Math.max(0.4, Math.min(4, z - e.deltaY * 0.001)));
+               }}
+               onMouseDown={(e) => {
+                  setIsDragging(true);
+                  lastMousePos.current = { x: e.clientX, y: e.clientY };
+               }}
+               onMouseMove={(e) => {
+                  if (isDragging) {
+                     const dx = e.clientX - lastMousePos.current.x;
+                     const dy = e.clientY - lastMousePos.current.y;
+                     setPan(p => ({ x: p.x + dx / zoom, y: p.y + dy / zoom }));
+                     lastMousePos.current = { x: e.clientX, y: e.clientY };
+                  }
+               }}
+               onMouseUp={() => setIsDragging(false)}
+               onMouseLeave={() => setIsDragging(false)}
+            >
 
                {/* UI Elements - Right Side */}
                <div className="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-50 pointer-events-none scale-75 origin-right">
@@ -977,8 +1064,13 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                </div>
 
 
-               {/* --- THE ARENA --- MUCH BIGGER AND PREMIUM */}
-               <div className="relative w-full h-full flex items-center justify-center">
+               {/* --- THE ARENA --- */}
+               <div
+                  className="relative w-full h-full flex items-center justify-center transition-transform duration-75 ease-out will-change-transform"
+                  style={{
+                     transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`
+                  }}
+               >
 
                   {/* Outer Glow Rings for Premium Effect */}
                   <div className="absolute w-[1000px] h-[1000px] rounded-full opacity-20 animate-pulse-ring"
@@ -1002,9 +1094,9 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                      style={{ borderColor: config.selectedMap.secondaryColor, borderStyle: 'dotted' }}>
                   </div>
 
-                  {/* Main Arena - MUCH BIGGER AND PREMIUM */}
+                  {/* Main Arena - EXPANDED SIZE FOR BETTER SPACING */}
                   <div
-                     className={`absolute w-[750px] h-[750px] border-[15px] transition-all duration-1000 ${getArenaShapeClass(config.selectedMap.shape)} overflow-hidden backdrop-blur-2xl animate-glow`}
+                     className={`absolute w-[1100px] h-[1100px] border-[15px] transition-all duration-1000 ${getArenaShapeClass(config.selectedMap.shape)} overflow-hidden backdrop-blur-2xl animate-glow`}
                      style={{
                         borderColor: config.selectedMap.borderColor,
                         '--glow-color': config.selectedMap.glowColor,
@@ -1091,15 +1183,46 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                                  left: `calc(50% + ${x}px)`,
                               }}
                            >
-                              {/* Chair Icon with massive glow - No "box" border */}
-                              <Armchair
-                                 size={sizes.chairIcon}
-                                 className={isOccupied ? 'text-white drop-shadow-[0_0_20px_rgba(34,197,94,0.8)]' : 'opacity-80'}
-                                 style={{
-                                    color: !isOccupied ? config.selectedMap.accentColor : undefined,
-                                    filter: !isOccupied ? `drop-shadow(0 0 15px ${config.selectedMap.accentColor})` : undefined
-                                 }}
-                              />
+                              {/* Chair Icon OR Avatar */}
+                              {isOccupied ? (
+                                 <div className="relative w-full h-full flex items-center justify-center">
+                                    {/* Find the participant to get their avatar */}
+                                    {(() => {
+                                       const occupant = participants.find(p => p.username === chair.occupiedBy);
+                                       return occupant?.avatar ? (
+                                          <div className={`
+                                             relative rounded-full overflow-hidden border-2 border-white shadow-[0_0_20px_rgba(34,197,94,0.8)] z-50
+                                             ${sizes.chairIcon ? `w-[${sizes.chairIcon}px] h-[${sizes.chairIcon}px]` : 'w-10 h-10'}
+                                          `}
+                                             style={{ width: sizes.chairIcon || 40, height: sizes.chairIcon || 40 }}
+                                          >
+                                             <img
+                                                src={occupant.avatar}
+                                                alt={chair.occupiedBy || ""}
+                                                className="w-full h-full object-cover"
+                                             />
+                                          </div>
+                                       ) : (
+                                          <div className={`
+                                             relative rounded-full overflow-hidden border-2 border-white shadow-[0_0_20px_rgba(34,197,94,0.8)] bg-zinc-800 flex items-center justify-center z-50
+                                          `}
+                                             style={{ width: sizes.chairIcon || 40, height: sizes.chairIcon || 40 }}
+                                          >
+                                             <User size={(sizes.chairIcon || 40) * 0.6} className="text-white" />
+                                          </div>
+                                       );
+                                    })()}
+                                 </div>
+                              ) : (
+                                 <Armchair
+                                    size={sizes.chairIcon}
+                                    className={'opacity-80'}
+                                    style={{
+                                       color: config.selectedMap.accentColor,
+                                       filter: `drop-shadow(0 0 15px ${config.selectedMap.accentColor})`
+                                    }}
+                                 />
+                              )}
 
                               {/* Chair Number - Massive and Clear */}
                               {!config.hideNumbers && phase !== 'MUSIC_ON' && (
@@ -1118,7 +1241,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
 
                               {/* Occupied Player Name */}
                               {isOccupied && (
-                                 <div className="absolute -bottom-16 whitespace-nowrap bg-black/90 text-white px-6 py-2 rounded-full text-lg font-black italic shadow-2xl border-4 border-green-500 animate-in zoom-in duration-300 z-50">
+                                 <div className="absolute -bottom-8 whitespace-nowrap bg-black/90 text-white px-2 py-0.5 rounded-lg text-[8px] font-bold shadow-xl border border-green-500/50 animate-in zoom-in duration-300 z-50">
                                     {chair.occupiedBy}
                                  </div>
                               )}

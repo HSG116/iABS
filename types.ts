@@ -4,6 +4,7 @@ export interface ChatUser {
   username: string;
   color?: string;
   avatar?: string;
+  isBot?: boolean;
 }
 
 export interface ChatMessage {
