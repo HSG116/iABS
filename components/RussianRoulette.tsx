@@ -3,10 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { chatService } from '../services/chatService';
 import { ChatUser } from '../types';
-import { Disc, RotateCcw, Skull, User } from 'lucide-react';
+import { Disc, RotateCcw, Skull, User, Target, Zap, Trophy, Flame } from 'lucide-react';
 
 interface RussianRouletteProps {
    channelConnected: boolean;
+   isOBS?: boolean;
 }
 
 const SidebarPortal = ({ children }: { children?: React.ReactNode }) => {
@@ -17,12 +18,13 @@ const SidebarPortal = ({ children }: { children?: React.ReactNode }) => {
    return createPortal(children, el);
 };
 
-export const RussianRoulette: React.FC<RussianRouletteProps> = ({ channelConnected }) => {
+export const RussianRoulette: React.FC<RussianRouletteProps> = ({ channelConnected, isOBS }) => {
    const [participants, setParticipants] = useState<ChatUser[]>([]);
-   const [gameState, setGameState] = useState<'WAITING' | 'ACTIVE' | 'ELIMINATED' | 'WINNER'>('WAITING');
+   const [gameState, setGameState] = useState<'WAITING' | 'ACTIVE' | 'ELIMINATED' | 'WINNER' | 'CLICK'>('WAITING');
    const [bulletIndex, setBulletIndex] = useState(0);
    const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
    const [cylinderPosition, setCylinderPosition] = useState(0);
+   const [flash, setFlash] = useState(false);
 
    const participantsRef = useRef(participants);
    const gameStateRef = useRef(gameState);
@@ -38,7 +40,7 @@ export const RussianRoulette: React.FC<RussianRouletteProps> = ({ channelConnect
          const content = msg.content.trim().toLowerCase();
 
          // Join
-         if (gameStateRef.current === 'WAITING' && (content === '!join' || content === '!دخول')) {
+         if (gameStateRef.current === 'WAITING' && (content === '!join' || content === '!دخول' || content.includes('🔫'))) {
             if (participantsRef.current.length < 6 && !participantsRef.current.find(p => p.username === msg.user.username)) {
                setParticipants(prev => [...prev, msg.user]);
 
@@ -57,7 +59,7 @@ export const RussianRoulette: React.FC<RussianRouletteProps> = ({ channelConnect
          if (gameStateRef.current === 'ACTIVE') {
             const currentPlayer = participantsRef.current[turnIndexRef.current];
             if (currentPlayer && currentPlayer.username === msg.user.username) {
-               if (content === '!pull' || content === '!أطلق' || content === '!shoot') {
+               if (content === '!pull' || content === '!أطلق' || content === '!shoot' || content === 'shoot' || content.includes('🔫') || content.includes('🔥')) {
                   pullTrigger();
                }
             }
@@ -76,32 +78,40 @@ export const RussianRoulette: React.FC<RussianRouletteProps> = ({ channelConnect
    };
 
    const pullTrigger = () => {
-      const isHit = cylinderPosition === bulletIndex;
+      const isHit = cylinderPosition % 6 === bulletIndex;
 
       if (isHit) {
          setGameState('ELIMINATED');
+         setFlash(true);
+         setTimeout(() => setFlash(false), 200);
+
          setTimeout(() => {
-            // Eliminate
-            const loser = participants[currentTurnIndex];
-            const survivors = participants.filter(p => p.username !== loser.username);
+            const loser = participantsRef.current[turnIndexRef.current];
+            const survivors = participantsRef.current.filter(p => p.username !== loser.username);
             setParticipants(survivors);
 
             if (survivors.length === 1) {
                setGameState('WINNER');
             } else if (survivors.length === 0) {
-               setGameState('WAITING'); // Game Over (Everyone died)
+               setGameState('WAITING');
             } else {
-               // Reset for next round
                setGameState('ACTIVE');
+               // Re-spin bullet for next round? Classic RR keeps current position, but game-wise re-spin is more unpredictable
                setBulletIndex(Math.floor(Math.random() * 6));
                setCylinderPosition(0);
-               setCurrentTurnIndex(currentTurnIndex % survivors.length);
+               setCurrentTurnIndex(prev => prev % survivors.length);
             }
-         }, 2000);
+         }, 2500);
       } else {
-         // Next Turn
-         setCylinderPosition(prev => prev + 1);
-         setCurrentTurnIndex(prev => (prev + 1) % participants.length);
+         setGameState('CLICK');
+         // Temporary "Click" state for tension
+         setTimeout(() => {
+            if (gameStateRef.current === 'CLICK') {
+               setGameState('ACTIVE');
+               setCylinderPosition(prev => prev + 1);
+               setCurrentTurnIndex(prev => (prev + 1) % participantsRef.current.length);
+            }
+         }, 1000);
       }
    };
 
@@ -112,75 +122,171 @@ export const RussianRoulette: React.FC<RussianRouletteProps> = ({ channelConnect
 
    return (
       <>
-         <SidebarPortal>
-            <div className="bg-[#141619] p-4 rounded-xl border border-white/5 space-y-3 animate-in slide-in-from-right-4">
-               <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                  <Disc size={12} /> الروليت
-               </h4>
-               {gameState === 'WAITING' && (
-                  <button
-                     onClick={startGame}
-                     disabled={participants.length < 1}
-                     className="w-full bg-red-600 text-white font-bold py-2 rounded-lg disabled:opacity-50"
-                  >
-                     بدء اللعبة ({participants.length}/6)
+         {!isOBS && (
+            <SidebarPortal>
+               <div className="bg-[#0a0a0c]/90 backdrop-blur-md p-5 rounded-[2rem] border border-white/10 space-y-4 animate-in slide-in-from-right-4 shadow-2xl">
+                  <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                     <Target size={12} className="text-red-500" /> ROULETTE CONTROL
+                  </h4>
+                  {gameState === 'WAITING' && (
+                     <button
+                        onClick={startGame}
+                        disabled={participants.length < 1}
+                        className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-20 shadow-lg shadow-red-900/20"
+                     >
+                        <Zap size={18} /> START GAME ({participants.length}/6)
+                     </button>
+                  )}
+                  <button onClick={resetGame} className="w-full bg-white/5 hover:bg-white/10 py-3 rounded-2xl text-[10px] text-gray-400 font-black uppercase tracking-widest border border-white/5 transition-all">
+                     <RotateCcw size={14} className="inline mr-2" /> WIPE TABLE
                   </button>
-               )}
-               <button onClick={resetGame} className="w-full bg-white/5 py-2 rounded-lg text-xs text-gray-400">
-                  <RotateCcw size={12} className="inline mr-1" /> تصفية
-               </button>
-            </div>
-         </SidebarPortal>
+               </div>
 
-         <div className="w-full h-full flex flex-col items-center justify-center p-6 relative overflow-hidden">
+               <div className="bg-[#0a0a0c]/90 backdrop-blur-md rounded-[2rem] border border-white/10 flex flex-col overflow-hidden h-[400px] mt-4 shadow-2xl">
+                  <div className="p-4 border-b border-white/5 bg-gradient-to-r from-red-600/10 to-transparent">
+                     <span className="text-[10px] font-black text-white flex items-center gap-2 uppercase tracking-widest">
+                        <User size={14} className="text-gray-400" /> Chamber Players
+                     </span>
+                  </div>
+                  <div className="overflow-y-auto flex-1 p-3 space-y-2 custom-scrollbar">
+                     {participants.map((p, i) => (
+                        <div key={p.username} className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${i === currentTurnIndex && gameState === 'ACTIVE' ? 'bg-red-500/20 border-red-500/50 scale-105 shadow-lg' : 'bg-white/5 border-white/5'}`}>
+                           <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl overflow-hidden bg-black border border-white/10">
+                                 {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-white/20">{p.username[0]}</div>}
+                              </div>
+                              <span className="text-sm font-black text-white truncate w-24">{p.username}</span>
+                           </div>
+                           {i === currentTurnIndex && gameState === 'ACTIVE' && <Flame size={16} className="text-red-500 animate-pulse" />}
+                        </div>
+                     ))}
+                     {participants.length === 0 && (
+                        <div className="h-full flex flex-col items-center justify-center opacity-20 grayscale italic text-[10px] font-black uppercase tracking-[0.2em]">
+                           Empty Table
+                        </div>
+                     )}
+                  </div>
+               </div>
+            </SidebarPortal>
+         )}
+
+         <div className={`w-full h-full flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-200 ${flash ? 'bg-red-600' : 'bg-[#050505]'}`}>
+
+            {/* Atmospheric Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black pointer-events-none z-10"></div>
+
             {gameState === 'WAITING' && (
-               <div className="text-center opacity-60">
-                  <Skull size={80} className="mx-auto mb-4 text-gray-400" />
-                  <h2 className="text-4xl font-black text-white">الروليت الروسي</h2>
-                  <div className="mt-8 flex gap-4 justify-center">
+               <div className="z-20 text-center animate-in zoom-in duration-1000 flex flex-col items-center">
+                  <div className="relative mb-10 group">
+                     <div className="absolute -inset-10 bg-red-600/10 blur-[100px] rounded-full group-hover:bg-red-500/20 transition-all duration-1000"></div>
+                     <Skull size={140} className="relative text-gray-400 group-hover:text-red-600 group-hover:scale-110 transition-all duration-1000 drop-shadow-[0_0_50px_rgba(0,0,0,0.8)]" />
+                  </div>
+                  <h2 className="text-7xl font-black text-white uppercase tracking-tighter italic scale-y-110 mb-4">
+                     Russian <span className="text-red-600">Roulette</span>
+                  </h2>
+                  <div className="flex items-center justify-center gap-4 mt-8">
                      {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className={`w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center overflow-hidden ${participants[i] ? 'bg-kick-green shadow-[0_0_15px_rgba(5,255,0,0.3)]' : 'bg-transparent'}`}>
+                        <div key={i} className={`w-16 h-16 rounded-2xl border-4 transition-all duration-500 flex items-center justify-center overflow-hidden rotate-${i * 10} ${participants[i] ? 'bg-red-600 border-red-400 shadow-[0_0_30px_rgba(220,38,38,0.5)] scale-110' : 'bg-transparent border-white/10 opacity-20'}`}>
                            {participants[i] ? (
                               participants[i].avatar ? (
-                                 <img src={participants[i].avatar} className="w-full h-full object-cover" alt="" />
+                                 <img src={participants[i].avatar} className="w-full h-full object-cover" />
                               ) : (
-                                 <User className="w-6 h-6 text-black" />
+                                 <span className="text-white font-black">{participants[i].username[0]}</span>
                               )
                            ) : (
-                              <span className="text-gray-500">?</span>
+                              <Target size={24} className="text-white/20" />
                            )}
                         </div>
                      ))}
                   </div>
-                  <p className="mt-6 text-gray-500">مطلوب لاعب واحد على الأقل. اكتب <span className="text-kick-green">!دخول</span></p>
+                  <div className="mt-16 bg-white/5 backdrop-blur-md px-10 py-4 rounded-full border border-white/10 animate-bounce">
+                     <span className="text-white font-black text-xl">اكتب <span className="text-red-600 underline">!دخول</span> للمقامرة بحياتك</span>
+                  </div>
                </div>
             )}
 
-            {gameState === 'ACTIVE' && participants.length > 0 && (
-               <div className="text-center">
-                  <h3 className="text-2xl text-gray-400 mb-8">دور اللاعب</h3>
-                  <h1 className="text-6xl font-black text-white neon-text mb-10 animate-pulse">
+            {(gameState === 'ACTIVE' || gameState === 'CLICK') && participants.length > 0 && (
+               <div className="z-20 text-center flex flex-col items-center">
+                  <div className="text-xs font-black text-red-500 uppercase tracking-[1em] mb-4 animate-pulse">Current Target</div>
+                  <div className="relative group mb-12">
+                     <div className="absolute -inset-4 bg-red-600/20 blur-2xl rounded-full group-hover:bg-red-500/30 transition-all"></div>
+                     <div className="relative w-40 h-40 rounded-3xl overflow-hidden border-4 border-red-600 shadow-2xl rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                        {participants[currentTurnIndex].avatar ? (
+                           <img src={participants[currentTurnIndex].avatar} className="w-full h-full object-cover" />
+                        ) : (
+                           <div className="w-full h-full bg-neutral-900 flex items-center justify-center text-5xl font-black text-white">{participants[currentTurnIndex].username[0]}</div>
+                        )}
+                     </div>
+                     <div className="absolute -bottom-4 -right-4 bg-red-600 text-white px-4 py-1 rounded-lg font-black text-xs shadow-lg">Target #{(currentTurnIndex + 1)}</div>
+                  </div>
+
+                  <h1 className="text-8xl font-black text-white italic tracking-tighter drop-shadow-2xl mb-12">
                      {participants[currentTurnIndex].username}
                   </h1>
-                  <div className="w-40 h-40 rounded-full border-[20px] border-gray-800 mx-auto relative flex items-center justify-center animate-spin-slow">
-                     <div className="w-4 h-4 bg-red-500 rounded-full absolute top-2"></div>
+
+                  {/* Cylinder Visual */}
+                  <div className="relative w-48 h-48 mb-12">
+                     <div className="absolute inset-0 bg-neutral-900 rounded-full border-[12px] border-neutral-800 shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                           <div
+                              key={i}
+                              className={`absolute w-10 h-10 rounded-full border-2 transition-all duration-500 flex items-center justify-center
+                                   ${i === (cylinderPosition % 6) ? 'bg-red-600 border-white shadow-[0_0_20px_red]' : 'bg-neutral-800 border-white/10'}`}
+                              style={{
+                                 transform: `rotate(${i * 60}deg) translateY(-55px) rotate(-${i * 60}deg)`
+                              }}
+                           >
+                              {i < (cylinderPosition % 6) && <div className="text-[10px] opacity-20">EMPTY</div>}
+                           </div>
+                        ))}
+                        <div className="w-12 h-12 bg-neutral-800 rounded-full border-4 border-neutral-700 flex items-center justify-center shadow-lg">
+                           <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>
+                        </div>
+                     </div>
+                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 text-red-600 animate-bounce">
+                        <Target size={32} />
+                     </div>
                   </div>
-                  <p className="mt-10 text-xl font-bold">اكتب <span className="text-red-500">!أطلق</span> أو <span className="text-red-500">!pull</span></p>
+
+                  {gameState === 'CLICK' ? (
+                     <div className="px-12 py-6 bg-white/10 backdrop-blur-3xl rounded-[2rem] border-2 border-green-500/50 text-green-500 font-black text-4xl animate-in zoom-in italic shadow-[0_0_40px_rgba(34,197,94,0.3)]">
+                        * CLICK *
+                     </div>
+                  ) : (
+                     <div className="flex flex-col items-center gap-6">
+                        <div className="px-12 py-5 bg-red-600 text-white rounded-[2rem] font-black text-3xl shadow-[0_0_50px_rgba(220,38,38,0.4)] animate-pulse border-t border-red-400">
+                           اطلق النار !أطلق
+                        </div>
+                        <div className="text-[10px] text-white/20 font-black uppercase tracking-[0.5em]">The chamber is ready</div>
+                     </div>
+                  )}
                </div>
             )}
 
             {gameState === 'ELIMINATED' && (
-               <div className="text-center animate-in zoom-in duration-200">
-                  <h1 className="text-8xl font-black text-red-600">BANG!</h1>
+               <div className="z-20 text-center animate-in zoom-in duration-75 flex flex-col items-center">
+                  <div className="text-[200px] filter drop-shadow-[0_0_100px_red]">💀</div>
+                  <h1 className="text-9xl font-black text-red-600 italic tracking-tighter skew-x-[-10deg] red-neon-text">
+                     BANG!
+                  </h1>
+                  <p className="mt-8 text-white/40 font-black tracking-[1em] uppercase text-xs">A player has fallen</p>
                </div>
             )}
 
             {gameState === 'WINNER' && participants[0] && (
-               <div className="text-center animate-in zoom-in duration-500">
-                  <h1 className="text-6xl font-black text-yellow-500 mb-4">الناجي الوحيد</h1>
-                  <div className="text-4xl font-black text-white">{participants[0].username}</div>
+               <div className="z-20 text-center animate-in zoom-in duration-500 flex flex-col items-center">
+                  <div className="relative mb-12">
+                     <Trophy size={160} className="text-yellow-500 drop-shadow-[0_0_60px_rgba(234,179,8,0.6)]" />
+                     <div className="absolute inset-x-0 -bottom-4 h-2 bg-yellow-500 blur-xl rounded-full"></div>
+                  </div>
+                  <h2 className="text-xs font-black text-yellow-500 uppercase tracking-[1em] mb-4">The Last Living Being</h2>
+                  <h1 className="text-8xl font-black text-white italic tracking-tighter mb-4">{participants[0].username}</h1>
+                  <p className="mt-4 text-white/20 font-black tracking-[0.5em] uppercase text-xs">Survived the Roulette</p>
                </div>
             )}
+
+            {/* Cinematic Vignette */}
+            <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_300px_black] z-30"></div>
          </div>
       </>
    );

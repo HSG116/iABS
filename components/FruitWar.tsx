@@ -25,6 +25,7 @@ interface Fruit {
     name: string;
     image: string;
     color: string;
+    keywords?: string[]; // English names or alternative Arabic spellings
 }
 
 // Arabic normalization for robust matching
@@ -39,37 +40,37 @@ const normalizeTxt = (str: string) => {
 };
 
 const FRUITS: Fruit[] = [
-    { id: 'kiwi', name: 'كيوي', image: '🥝', color: '#a3e635' },
-    { id: 'coconut', name: 'جوز هند', image: '🥥', color: '#78350f' },
-    { id: 'grapes', name: 'عنب', image: '🍇', color: '#a855f7' },
-    { id: 'melon', name: 'شمام', image: '🍈', color: '#d9f99d' },
-    { id: 'watermelon', name: 'بطيخ', image: '🍉', color: '#22c55e' },
-    { id: 'orange', name: 'برتقال', image: '🍊', color: '#f97316' },
-    { id: 'lemon', name: 'ليمون', image: '🍋', color: '#facc15' },
-    { id: 'banana', name: 'موز', image: '🍌', color: '#eab308' },
-    { id: 'pineapple', name: 'أناناس', image: '🍍', color: '#fbbf24' },
-    { id: 'mango', name: 'مانجو', image: '🥭', color: '#f59e0b' },
-    { id: 'apple_red', name: 'تفاح', image: '🍎', color: '#ef4444' },
-    { id: 'apple_green', name: 'تفاح اخضر', image: '🍏', color: '#84cc16' },
-    { id: 'pear', name: 'كمثرى', image: '🍐', color: '#a3e635' },
-    { id: 'peach', name: 'خوخ', image: '🍑', color: '#fb923c' },
-    { id: 'cherry', name: 'كرز', image: '🍒', color: '#be123c' },
-    { id: 'strawberry', name: 'فراولة', image: '🍓', color: '#dc2626' },
-    { id: 'tomato', name: 'طماطم', image: '🍅', color: '#ef4444' },
-    { id: 'eggplant', name: 'باذنجان', image: '🍆', color: '#7e22ce' },
-    { id: 'corn', name: 'ذرة', image: '🌽', color: '#fde047' },
-    { id: 'pepper', name: 'فلفل', image: '🌶️', color: '#b91c1c' },
-    { id: 'mushroom', name: 'فطر', image: '🍄', color: '#f43f5e' },
-    { id: 'avocado', name: 'أفوكادو', image: '🥑', color: '#65a30d' },
-    { id: 'cucumber', name: 'خيار', image: '🥒', color: '#16a34a' },
-    { id: 'leaf_green', name: 'خس', image: '🥬', color: '#22c55e' },
-    { id: 'broccoli', name: 'بروكلي', image: '🥦', color: '#15803d' },
-    { id: 'potato', name: 'بطاطس', image: '🥔', color: '#a8a29e' },
-    { id: 'garlic', name: 'ثوم', image: '🧄', color: '#f5f5f4' },
-    { id: 'onion', name: 'بصل', image: '🧅', color: '#a855f7' },
-    { id: 'carrot', name: 'جزر', image: '🥕', color: '#ea580c' },
-    { id: 'chestnut', name: 'كستناء', image: '🌰', color: '#78350f' },
-    { id: 'peanut', name: 'فول سوداني', image: '🥜', color: '#f59e0b' },
+    { id: 'kiwi', name: 'كيوي', image: '🥝', color: '#a3e635', keywords: ['kiwi'] },
+    { id: 'coconut', name: 'جوز هند', image: '🥥', color: '#78350f', keywords: ['coconut', 'نارجيل'] },
+    { id: 'grapes', name: 'عنب', image: '🍇', color: '#a855f7', keywords: ['grapes'] },
+    { id: 'melon', name: 'شمام', image: '🍈', color: '#d9f99d', keywords: ['melon'] },
+    { id: 'watermelon', name: 'بطيخ', image: '🍉', color: '#22c55e', keywords: ['watermelon'] },
+    { id: 'orange', name: 'برتقال', image: '🍊', color: '#f97316', keywords: ['orange'] },
+    { id: 'lemon', name: 'ليمون', image: '🍋', color: '#facc15', keywords: ['lemon'] },
+    { id: 'banana', name: 'موز', image: '🍌', color: '#eab308', keywords: ['banana'] },
+    { id: 'pineapple', name: 'أناناس', image: '🍍', color: '#fbbf24', keywords: ['pineapple'] },
+    { id: 'mango', name: 'مانجو', image: '🥭', color: '#f59e0b', keywords: ['mango'] },
+    { id: 'apple_red', name: 'تفاح', image: '🍎', color: '#ef4444', keywords: ['apple'] },
+    { id: 'apple_green', name: 'تفاح اخضر', image: '🍏', color: '#84cc16', keywords: ['green apple'] },
+    { id: 'pear', name: 'كمثرى', image: '🍐', color: '#a3e635', keywords: ['pear'] },
+    { id: 'peach', name: 'خوخ', image: '🍑', color: '#fb923c', keywords: ['peach'] },
+    { id: 'cherry', name: 'كرز', image: '🍒', color: '#be123c', keywords: ['cherry'] },
+    { id: 'strawberry', name: 'فراولة', image: '🍓', color: '#dc2626', keywords: ['strawberry'] },
+    { id: 'tomato', name: 'طماطم', image: '🍅', color: '#ef4444', keywords: ['tomato'] },
+    { id: 'eggplant', name: 'باذنجان', image: '🍆', color: '#7e22ce', keywords: ['eggplant'] },
+    { id: 'corn', name: 'ذرة', image: '🌽', color: '#fde047', keywords: ['corn'] },
+    { id: 'pepper', name: 'فلفل', image: '🌶️', color: '#b91c1c', keywords: ['pepper', 'فلفل حار'] },
+    { id: 'mushroom', name: 'فطر', image: '🍄', color: '#f43f5e', keywords: ['mushroom', 'مشروم'] },
+    { id: 'avocado', name: 'أفوكادو', image: '🥑', color: '#65a30d', keywords: ['avocado'] },
+    { id: 'cucumber', name: 'خيار', image: '🥒', color: '#16a34a', keywords: ['cucumber'] },
+    { id: 'leaf_green', name: 'خس', image: '🥬', color: '#22c55e', keywords: ['lettuce'] },
+    { id: 'broccoli', name: 'بروكلي', image: '🥦', color: '#15803d', keywords: ['broccoli'] },
+    { id: 'potato', name: 'بطاطس', image: '🥔', color: '#a8a29e', keywords: ['potato'] },
+    { id: 'garlic', name: 'ثوم', image: '🧄', color: '#f5f5f4', keywords: ['garlic'] },
+    { id: 'onion', name: 'بصل', image: '🧅', color: '#a855f7', keywords: ['onion'] },
+    { id: 'carrot', name: 'جزر', image: '🥕', color: '#ea580c', keywords: ['carrot'] },
+    { id: 'chestnut', name: 'كستناء', image: '🌰', color: '#78350f', keywords: ['chestnut'] },
+    { id: 'peanut', name: 'فول سوداني', image: '🥜', color: '#f59e0b', keywords: ['peanut'] },
 ];
 
 export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
@@ -85,6 +86,7 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
     const [lastEliminatedFruit, setLastEliminatedFruit] = useState<{ fruit: Fruit, count: number } | null>(null);
     const [winningTeam, setWinningTeam] = useState<{ fruit: Fruit, players: FruitParticipant[] } | null>(null);
     const [round, setRound] = useState(1);
+    const [selectedFruitVoters, setSelectedFruitVoters] = useState<Fruit | null>(null);
 
     const phaseRef = useRef(phase);
     const participantsRef = useRef(participants);
@@ -118,13 +120,34 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
             const username = msg.user.username;
             if (bannedRef.current.has(username)) return; // Ignored banned users
 
+            // Enhanced Emote/Sticker Matching logic
+            const emoteRegex = /\[emote:(\d+):([\w\s\-]+)\]/gi;
+            let emoteNames: string[] = [];
+            let match;
+            while ((match = emoteRegex.exec(msg.content)) !== null) {
+                emoteNames.push(match[2].toLowerCase());
+            }
+
             const normContent = normalizeTxt(msg.content);
 
-            const matchingFruit = FRUITS.find(f =>
-                normContent === normalizeTxt(f.name) ||
-                normContent === normalizeTxt(f.image) ||
-                (normContent.length > 2 && normalizeTxt(f.name).includes(normContent))
-            );
+            const matchingFruit = FRUITS.find(f => {
+                const normName = normalizeTxt(f.name);
+                const normImage = normalizeTxt(f.image);
+
+                // 1. Direct match (Text or Emoji)
+                if (normContent === normName || normContent === normImage) return true;
+
+                // 2. Keyword match (English/Alt)
+                if (f.keywords?.some(k => normalizeTxt(k) === normContent)) return true;
+
+                // 3. Emote name match (Extract from [emote:ID:NAME])
+                if (emoteNames.some(en => en === normName || f.keywords?.some(k => normalizeTxt(k) === en))) return true;
+
+                // 4. Fuzzy inclusion (only for long strings)
+                if (normContent.length > 2 && normName.includes(normContent)) return true;
+
+                return false;
+            });
 
             if (matchingFruit) {
                 setParticipants(prev => {
@@ -363,9 +386,23 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
                                         boxShadow: count > 0 ? `0 10px 30px -5px ${fruit.color}40` : 'none',
                                     }}
                                 >
-                                    {/* Rank Badge */}
+                                    {/* Reveal Voters Button - Top Right of card */}
+                                    {count > 0 && phase === 'ELIMINATION' && !isOBS && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedFruitVoters(fruit);
+                                            }}
+                                            className="absolute top-2 left-2 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-90 transition-all z-30 opacity-0 group-hover:opacity-100"
+                                            title="عرض المصوتين"
+                                        >
+                                            <Users size={14} />
+                                        </button>
+                                    )}
+
+                                    {/* Rank Badge - Top Left */}
                                     {count > 0 && (
-                                        <div className="absolute top-2 left-2 w-8 h-8 bg-white text-black font-black rounded-full flex items-center justify-center text-sm shadow-lg z-20">
+                                        <div className="absolute top-2 left-2 w-8 h-8 bg-white text-black font-black rounded-full flex items-center justify-center text-sm shadow-lg z-20 group-hover:opacity-0 transition-opacity">
                                             #{idx + 1}
                                         </div>
                                     )}
@@ -450,13 +487,50 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
                 </div>
             )}
 
+            {/* Voters Modal */}
+            {selectedFruitVoters && (
+                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-300" onClick={() => setSelectedFruitVoters(null)}>
+                    <div className="glass-card max-w-2xl w-full max-h-[70vh] rounded-[3rem] p-10 border border-white/20 relative overflow-hidden flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                        <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+                            <Users size={120} />
+                        </div>
+
+                        <div className="text-6xl mb-4 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">{selectedFruitVoters.image}</div>
+                        <h3 className="text-4xl font-black text-white mb-2 uppercase tracking-tight">فـريـق {selectedFruitVoters.name}</h3>
+                        <p className="text-gray-400 font-bold mb-8 uppercase tracking-[0.3em] text-xs">TEAM MEMBERS ({participants.filter(p => p.fruitId === selectedFruitVoters.id).length})</p>
+
+                        <div className="w-full flex-1 overflow-y-auto grid grid-cols-4 gap-4 custom-scrollbar p-2">
+                            {participants.filter(p => p.fruitId === selectedFruitVoters.id).map(p => (
+                                <div key={p.username} className="flex flex-col items-center gap-2 group">
+                                    <div className="w-16 h-16 rounded-full border-2 border-white/10 overflow-hidden bg-zinc-900 group-hover:border-blue-500 transition-all shadow-lg">
+                                        {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <User className="w-full h-full p-3 text-white/20" />}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-400 truncate w-full text-center">{p.username}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => setSelectedFruitVoters(null)}
+                            className="mt-8 px-10 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full border border-white/10 transition-all uppercase tracking-widest text-xs"
+                        >
+                            إغـــلاق
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Elimination Overlay Effect */}
             {lastEliminatedFruit && phase === 'ELIMINATION' && (
-                <div key={lastEliminatedFruit.fruit.id} className="absolute top-32 left-1/2 -translate-x-1/2 pointer-events-none z-50 animate-out fade-out slide-out-to-top duration-[2000ms] fill-mode-forwards">
-                    <div className="flex flex-col items-center">
-                        <div className="text-9xl animate-ping opacity-50 absolute text-red-600">❌</div>
-                        <div className="bg-red-600 text-white font-black text-5xl px-12 py-6 rounded-[3rem] border-8 border-white shadow-2xl skew-x-[-10deg] rotate-[-5deg] drop-shadow-[0_20px_50px_rgba(220,38,38,0.5)]">
-                            وداعـــاً {lastEliminatedFruit.fruit.name}!
+                <div key={lastEliminatedFruit.fruit.id} className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-red-600/20 animate-pulse duration-100"></div>
+                    <div className="relative animate-out fade-out slide-out-to-top duration-[2000ms] fill-mode-forwards">
+                        <div className="flex flex-col items-center scale-150">
+                            <div className="text-[12rem] animate-ping opacity-50 absolute text-red-600 top-[-50px]">❌</div>
+                            <div className="bg-red-600 text-white font-black text-6xl px-16 py-8 rounded-[4rem] border-[12px] border-white shadow-[0_30px_100px_rgba(220,38,38,0.8)] skew-x-[-15deg] rotate-[-8deg] flex flex-col items-center gap-2">
+                                <span className="text-3xl opacity-80">تـم اسـتـهـداف</span>
+                                <span className="drop-shadow-lg uppercase tracking-tighter">فـريـق {lastEliminatedFruit.fruit.name}!</span>
+                            </div>
                         </div>
                     </div>
                 </div>
