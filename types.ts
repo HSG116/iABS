@@ -34,14 +34,14 @@ export type ViewState =
   | 'CUP_SHUFFLE'
   | 'TERRITORY_WAR'
   | 'TRUTH_OR_LIE'
-  | 'WORD_ROUND'
   | 'DRAWING_CHALLENGE'
   | 'FRUIT_WAR'
   | 'LOGO_ROUND'
-  | 'FORBIDDEN_WORDS';
+  | 'FORBIDDEN_WORDS'
+  | 'VOTING_GAME';
 
 // Added GameType to fix import error in TournamentManager.tsx
-export type GameType = 'TRIVIA' | 'BLUR' | 'FLAGS' | 'TYPING' | 'CUPS' | 'GRID' | 'WHEEL' | 'PAINT' | 'BATTLE' | 'BOMB' | 'WORD' | 'DRAW' | 'FRUIT' | 'LOGO' | 'FORBIDDEN';
+export type GameType = 'TRIVIA' | 'BLUR' | 'FLAGS' | 'TYPING' | 'CUPS' | 'GRID' | 'WHEEL' | 'PAINT' | 'BATTLE' | 'BOMB' | 'VOTE' | 'DRAW' | 'FRUIT' | 'LOGO' | 'FORBIDDEN';
 
 export interface Question {
   id: number;

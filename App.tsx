@@ -15,11 +15,12 @@ import { GridHunt } from './components/GridHunt';
 import { CupShuffle } from './components/CupShuffle';
 import { TerritoryWar } from './components/TerritoryWar';
 import { TruthOrLie } from './components/TruthOrLie';
-import { WordRound } from './components/WordRound';
+
 import { DrawingChallenge } from './components/DrawingChallenge';
 import { FruitWar } from './components/FruitWar';
 import { LogoRound } from './components/LogoRound';
 import { ForbiddenWords } from './components/ForbiddenWords';
+import { VotingGame } from './components/VotingGame';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GlobalAnnouncement } from './components/GlobalAnnouncement';
 import { ViewState } from './types';
@@ -30,7 +31,7 @@ import {
   PaintBucket, Sparkles, ShieldCheck, Zap, Armchair,
   Maximize2, MonitorOff, CheckCircle2, AlertTriangle,
   Crown, Medal, Loader2, RefreshCw, ChevronRight, Video,
-  BookOpen, Sword, Globe, Brain
+  Sword, Globe, Brain, Vote
 } from 'lucide-react';
 import { chatService } from './services/chatService';
 import { supabase, leaderboardService } from './services/supabase';
@@ -87,15 +88,25 @@ const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, userna
 };
 
 const App: React.FC = () => {
+  // Initialize from URL params to prevent flicker
+  const getInitialParams = () => {
+    if (typeof window === 'undefined') return { obs: false, view: 'HOME' as ViewState };
+    const params = new URLSearchParams(window.location.search);
+    return {
+      obs: params.get('obs') === 'true',
+      view: (params.get('view') as ViewState) || 'HOME'
+    };
+  };
 
-  const [currentView, setCurrentView] = useState<ViewState | 'ADMIN_LOGIN' | 'ADMIN_PANEL'>('HOME');
+  const initialParams = getInitialParams();
+  const [currentView, setCurrentView] = useState<ViewState | 'ADMIN_LOGIN' | 'ADMIN_PANEL'>(initialParams.view);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [isOBSMode, setIsOBSMode] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(!initialParams.obs);
+  const [isOBSMode, setIsOBSMode] = useState(initialParams.obs);
   const [showOBSModal, setShowOBSModal] = useState(false);
 
-  // Authorization State
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  // Authorization State - bypass for OBS
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(initialParams.obs);
 
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
@@ -118,21 +129,6 @@ const App: React.FC = () => {
       console.warn("Audio failed:", e);
     }
   };
-
-  useEffect(() => {
-    // Check for OBS/Streamer Mode params
-    const params = new URLSearchParams(window.location.search);
-    const obsParam = params.get('obs');
-    const viewParam = params.get('view');
-
-    if (obsParam === 'true' && viewParam) {
-      console.log('ENTERING OBS MODE:', viewParam);
-      setIsOBSMode(true);
-      setCurrentView(viewParam as ViewState);
-      setIsAuthorized(true); // Bypass auth for OBS
-      setShowWelcome(false); // Bypass welcome
-    }
-  }, []);
 
   useEffect(() => {
     if (isOBSMode) {
@@ -310,11 +306,12 @@ const App: React.FC = () => {
       case 'CUP_SHUFFLE': return <CupShuffle channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
       case 'TERRITORY_WAR': return <TerritoryWar channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
       case 'TRUTH_OR_LIE': return <TruthOrLie channelConnected={true} onHome={handleGoHome} isOBS={obsMode} />;
-      case 'WORD_ROUND': return <WordRound onHome={handleGoHome} isOBS={obsMode} />;
+
       case 'DRAWING_CHALLENGE': return <DrawingChallenge onHome={handleGoHome} isOBS={obsMode} />;
       case 'FRUIT_WAR': return <FruitWar onHome={handleGoHome} isOBS={obsMode} />;
       case 'LOGO_ROUND': return <LogoRound onHome={handleGoHome} isOBS={obsMode} />;
       case 'FORBIDDEN_WORDS': return <ForbiddenWords onHome={handleGoHome} isOBS={obsMode} />;
+      case 'VOTING_GAME': return <VotingGame onHome={handleGoHome} isOBS={obsMode} />;
 
       case 'LEADERBOARD': return (
         <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto w-full pt-10 px-6 h-full flex flex-col items-center">
@@ -509,11 +506,12 @@ const App: React.FC = () => {
                 <PremiumGameButton title="تحدي الأكواب" icon={Coffee} onClick={() => setCurrentView('CUP_SHUFFLE')} />
                 <PremiumGameButton title="حرب الألوان" icon={PaintBucket} onClick={() => setCurrentView('TERRITORY_WAR')} />
                 <PremiumGameButton title="صادق أم كذاب" icon={AlertTriangle} isComingSoon={false} onClick={() => setCurrentView('TRUTH_OR_LIE')} />
-                <PremiumGameButton title="جولة الكلمات" icon={BookOpen} onClick={() => setCurrentView('WORD_ROUND')} />
+
                 <PremiumGameButton title="تحدي الرسم" icon={PaintBucket} onClick={() => setCurrentView('DRAWING_CHALLENGE')} />
                 <PremiumGameButton title="حرب الفواكه" icon={Sword} onClick={() => setCurrentView('FRUIT_WAR')} />
                 <PremiumGameButton title="جولة الشعارات" icon={Globe} onClick={() => setCurrentView('LOGO_ROUND')} />
                 <PremiumGameButton title="تخمين الكلمات" icon={Brain} onClick={() => setCurrentView('FORBIDDEN_WORDS')} />
+                <PremiumGameButton title="لعبة التصويت" icon={Vote} onClick={() => setCurrentView('VOTING_GAME')} />
               </div>
             </div>
 
