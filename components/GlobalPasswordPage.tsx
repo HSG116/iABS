@@ -266,63 +266,108 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
 
                 {/* --- FINGERPRINT / SCANNING STEP --- */}
                 {(step === 'FINGERPRINT' || step === 'SCANNING') && (
-                    <div className="flex flex-col items-center animate-in fade-in zoom-in duration-1000 w-full relative">
+                    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-black relative overflow-hidden">
 
-                        <div className="mb-20 text-center space-y-4 relative z-20">
-                            <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400 drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                                {userType === 'NEW' ? (title || newTitle) : (title || returningTitle)}
-                            </h2>
-                            <p className="text-white/60 text-lg md:text-xl font-bold tracking-[0.5em] uppercase animate-pulse">
-                                {step === 'SCANNING' ? 'ANALYZING BIOMETRIC DATA...' : 'TOUCH SENSOR TO PROCEED'}
-                            </p>
+                        {/* High-Tech Background Grid */}
+                        <div className="absolute inset-0 pointer-events-none">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/10 via-black to-black"></div>
+                            <div className="w-full h-full opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(220,38,38,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(220,38,38,0.1) 1px, transparent 1px)', backgroundSize: '50px 50px' }}></div>
                         </div>
 
-                        <button
-                            onClick={startScan}
-                            disabled={step === 'SCANNING'}
-                            className="relative group cursor-pointer outline-none tap-highlight-transparent"
-                        >
-                            {/* Outer Rings & Effects */}
-                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-red-500/10 transition-all duration-1000 ${step === 'SCANNING' ? 'scale-100 opacity-100 animate-spin-slow' : 'scale-50 opacity-0'}`}></div>
-                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-red-500/20 border-dashed transition-all duration-1000 ${step === 'SCANNING' ? 'scale-100 opacity-100 animate-reverse-spin' : 'scale-50 opacity-0'}`}></div>
-
-                            {/* Core Glow */}
-                            <div className={`absolute inset-0 bg-red-600/20 blur-[100px] rounded-full transition-all duration-500 ${step === 'SCANNING' ? 'scale-150 opacity-100' : 'scale-75 opacity-30 group-hover:scale-100 group-hover:opacity-50'}`}></div>
-
-                            {/* Fingerprint Icon - Massive & Detailed */}
-                            <div className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center">
-                                <Fingerprint
-                                    size={350}
-                                    className={`relative z-10 transition-all duration-700 ${step === 'SCANNING'
-                                        ? 'text-red-500 drop-shadow-[0_0_50px_rgba(220,38,38,0.8)] scale-110'
-                                        : 'text-white/20 group-hover:text-white/80 group-hover:scale-105 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]'
-                                        }`}
-                                    strokeWidth={0.5}
-                                />
-
-                                {/* Advanced Scanning Beam - Boundless */}
-                                {step === 'SCANNING' && (
-                                    <>
-                                        {/* Main Laser Beam */}
-                                        <div className="absolute top-0 left-[-50%] w-[200%] h-[10px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_50px_#ef4444] z-50 animate-scan-beam blur-sm"></div>
-                                        <div className="absolute top-0 left-[-50%] w-[200%] h-[2px] bg-gradient-to-r from-transparent via-white to-transparent z-50 animate-scan-beam"></div>
-
-                                        {/* Digital Grid Overlay - Moves with beam */}
-                                        <div className="absolute inset-0 z-20 overflow-hidden rounded-full opacity-30">
-                                            <div className="w-full h-full bg-[linear-gradient(transparent_2px,#ff0000_2px)] bg-[size:100%_40px] animate-scan-grid"></div>
-                                        </div>
-
-                                        {/* Random Data Particles */}
-                                        <div className="absolute inset-0 z-30 flex items-center justify-center">
-                                            <div className="w-full text-center text-red-500 font-mono text-xs opacity-60 animate-pulse tracking-widest">
-                                                ID: {Math.random().toString(36).substring(7).toUpperCase()} <br />
-                                                MATCHING... {(Math.random() * 100).toFixed(1)}%
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
+                        {/* Title Section - Moved Up */}
+                        <div className="relative z-20 text-center mb-16 animate-in slide-in-from-top-10 duration-700 fade-in">
+                            <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter text-white drop-shadow-[0_0_25px_rgba(220,38,38,0.6)] mb-4">
+                                {userType === 'NEW' ? (title || newTitle) : (title || returningTitle)}
+                            </h2>
+                            <div className="flex items-center justify-center gap-4">
+                                <div className="h-[1px] w-12 bg-red-600/50"></div>
+                                <p className="text-red-500 font-mono tracking-[0.3em] text-sm uppercase animate-pulse font-bold">
+                                    {step === 'SCANNING' ? 'SYSTEM ANALYSIS IN PROGRESS' : 'BIOMETRIC VERIFICATION'}
+                                </p>
+                                <div className="h-[1px] w-12 bg-red-600/50"></div>
                             </div>
-                        </button>
+                        </div>
+
+                        {/* Main Interaction Area */}
+                        <div className="relative z-30 perspective-1000">
+                            {/* Holographic Base Plate */}
+                            <div className={`absolute bottom-[-100px] left-1/2 -translate-x-1/2 w-[400px] h-[100px] bg-red-600/20 blur-[60px] rounded-[100%] transition-opacity duration-500 ${step === 'SCANNING' ? 'opacity-100' : 'opacity-30'}`}></div>
+
+                            <button
+                                onMouseDown={startScan}
+                                onTouchStart={startScan}
+                                className="relative group cursor-pointer outline-none tap-highlight-transparent p-10"
+                                style={{ WebkitTapHighlightColor: 'transparent', transformStyle: 'preserve-3d' }}
+                            >
+                                {/* ROTATING RINGS - HUD EFFECT */}
+                                <div className={`absolute inset-[-60px] border border-red-500/20 rounded-full transition-all duration-1000 ${step === 'SCANNING' ? 'animate-spin-slow opacity-80 border-dashed border-red-400/30' : 'opacity-20 scale-90'}`}></div>
+                                <div className={`absolute inset-[-30px] border-2 border-red-500/10 rounded-full transition-all duration-1000 ${step === 'SCANNING' ? 'animate-reverse-spin opacity-80 border-dotted border-red-500/50' : 'opacity-20 scale-95'}`}></div>
+
+                                {/* Static Tech Ring */}
+                                <div className="absolute inset-[-10px] border border-red-600/30 rounded-full"></div>
+
+                                {/* Intense Core Glow */}
+                                <div className={`absolute inset-0 bg-red-600/10 blur-xl rounded-full transition-all duration-200 ${step === 'SCANNING' ? 'bg-red-500/30 scale-125' : 'group-hover:bg-red-900/40'}`}></div>
+
+                                {/* FINGERPRINT CONTAINER */}
+                                <div className={`
+                                    relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center 
+                                    rounded-full border-2 border-red-500/20 bg-black/60 backdrop-blur-xl
+                                    shadow-[0_0_50px_rgba(220,38,38,0.1)] overflow-hidden
+                                    transition-all duration-300
+                                    ${step === 'SCANNING' ? 'border-red-500 shadow-[0_0_100px_rgba(220,38,38,0.5)] scale-105' : 'group-hover:border-red-500/60 group-hover:shadow-[0_0_50px_rgba(220,38,38,0.3)]'}
+                                `}>
+                                    {/* Background Grid inside Scanner */}
+                                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,0,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,0,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+
+                                    {/* THE FINGERPRINT */}
+                                    <Fingerprint
+                                        size={240}
+                                        className={`relative z-10 transition-all duration-200 ${step === 'SCANNING'
+                                            ? 'text-red-500 drop-shadow-[0_0_30px_rgba(255,50,50,1)] opacity-100 glitch-effect'
+                                            : 'text-red-900/50 group-hover:text-red-500/80 transition-colors'
+                                            }`}
+                                        strokeWidth={1.2}
+                                    />
+
+                                    {/* ACTIVE SCANNING EFFECTS */}
+                                    {step === 'SCANNING' && (
+                                        <>
+                                            {/* High Intensity Laser */}
+                                            <div className="absolute top-[-10%] w-[120%] h-[5px] bg-white shadow-[0_0_20px_#ff0000,0_0_40px_#ff0000] z-50 animate-scan-line"></div>
+
+                                            {/* Digital Rain / Matrix Effect Overlay */}
+                                            <div className="absolute inset-0 z-40 opacity-30 pointer-events-none mix-blend-screen overflow-hidden">
+                                                <div className="w-full h-[200%] animate-matrix bg-[repeating-linear-gradient(0deg,transparent,transparent_20px,#ff0000_20px,#ff0000_22px)]"></div>
+                                            </div>
+
+                                            {/* Flash Overlay */}
+                                            <div className="absolute inset-0 bg-red-500/20 animate-pulse-fast z-30"></div>
+                                        </>
+                                    )}
+
+                                    {/* Idle Pulse */}
+                                    {step !== 'SCANNING' && (
+                                        <div className="absolute inset-6 rounded-full border border-red-500/20 animate-ping opacity-30"></div>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Instructions - Properly Spaced Below */}
+                        <div className="relative z-20 mt-16 h-12 flex items-center justify-center">
+                            <div className={`
+                                 bg-red-900/20 border border-red-500/20 px-8 py-3 rounded-full 
+                                 transition-all duration-300 flex items-center gap-3
+                                 ${step === 'SCANNING' ? 'scale-95 opacity-50' : 'animate-bounce'}
+                             `}>
+                                <div className={`w-2 h-2 rounded-full bg-red-500 ${step === 'SCANNING' ? 'animate-ping' : ''}`}></div>
+                                <span className="text-red-400 font-bold tracking-[0.2em] text-xs uppercase">
+                                    {step === 'SCANNING' ? 'SCANNING...' : 'اضغط مطولاً للمسح'}
+                                </span>
+                            </div>
+                        </div>
+
                     </div>
                 )}
 
@@ -353,34 +398,63 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
             </div>
 
             <style>{`
-        @keyframes scan-beam {
+        @keyframes scan-line {
           0% { top: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
+          10% { opacity: 1; box-shadow: 0 0 30px #ef4444; }
+          90% { opacity: 1; box-shadow: 0 0 30px #ef4444; }
           100% { top: 100%; opacity: 0; }
         }
-        @keyframes scan-grid {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100%; }
+        @keyframes scan-fill {
+            0% { clip-path: inset(100% 0 0 0); filter: drop-shadow(0 0 2px red); }
+            100% { clip-path: inset(0 0 0 0); filter: drop-shadow(0 0 15px red); }
         }
-        .animate-scan-beam {
-          animation: scan-beam 5s ease-in-out infinite; 
+        .animate-scan-line {
+          animation: scan-line 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
         }
-        .animate-scan-grid {
-            animation: scan-grid 5s linear infinite;
+        .animate-scan-fill {
+            animation: scan-fill 4s linear forwards;
         }
-        .animate-pulse-slow {
-          animation: pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .glass-scan-effect {
+            background: radial-gradient(circle, rgba(220,38,38,0.1) 0%, rgba(0,0,0,0) 70%);
+            box-shadow: inset 0 0 40px rgba(220,38,38,0.2), 0 0 20px rgba(220,38,38,0.1);
+            border: 1px solid rgba(220,38,38,0.3);
+            backdrop-filter: blur(2px);
         }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-10px); }
-          75% { transform: translateX(10px); }
+        .animate-pulse-fast {
+          animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-        .animate-spin-slow { animation: spin 10s linear infinite; }
-        .animate-reverse-spin { animation: spin 15s linear infinite reverse; }
-        @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes hologram-flicker {
+            0% { opacity: 0.8; transform: scaleY(1); }
+            5% { opacity: 0.9; transform: scaleY(1.02); }
+            10% { opacity: 0.8; transform: scaleY(0.98); }
+            100% { opacity: 0.8; transform: scaleY(1); }
+        }
+        .animate-hologram {
+            animation: hologram-flicker 0.1s infinite alternate;
+        }
+        @keyframes matrix-fall {
+            0% { transform: translateY(-100%); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+        .animate-matrix {
+            animation: matrix-fall 2s linear infinite;
+        }
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        .animate-reverse-spin { animation: spin 12s linear infinite reverse; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        .glitch-effect {
+            animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+        }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
       `}</style>
         </div>
     );

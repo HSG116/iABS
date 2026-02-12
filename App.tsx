@@ -105,18 +105,11 @@ const App: React.FC = () => {
   const [isOBSMode, setIsOBSMode] = useState(initialParams.obs);
   const [showOBSModal, setShowOBSModal] = useState(false);
 
-  // Authorization State - bypass for OBS or check persistence
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(() => {
-    if (initialParams.obs) return true;
-    try {
-      const stored = localStorage.getItem('site_access_granted');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return parsed && parsed.valid;
-      }
-    } catch (e) { }
-    return false;
-  });
+  // Authorization State - bypass for OBS
+  // We default to FALSE to ensure the GlobalPasswordPage always mounts.
+  // The GlobalPasswordPage itself will check localStorage and skip the password input if valid,
+  // but it will FORCE the biometric scan for the visual effect.
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(initialParams.obs);
 
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
