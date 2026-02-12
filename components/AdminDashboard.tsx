@@ -121,8 +121,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       setPromoCodes(promos || []);
 
       if (activeTab === 'users' || activeTab === 'overview' || activeTab === 'bans') {
-        const { data } = await adminService.getAllProfiles();
-        setProfiles(data);
+        const { data: allProfiles } = await adminService.getAllProfiles();
+
+        // Fetch leaderboard data to merge stats (Score/Wins)
+        const rankedData = await leaderboardService.getAllRankedPlayers();
+
+        // Create a map for fast lookup
+        const statsMap = new Map();
+        rankedData.forEach((p: any) => {
+          statsMap.set(p.username, { score: p.score, wins: p.wins });
+        });
+
+        // Merge and Sort
+        const merged = allProfiles.map((p: any) => {
+          const stats = statsMap.get(p.username) || { score: 0, wins: 0 };
+          return { ...p, ...stats };
+        });
+
+        // Sort by Score DESC
+        merged.sort((a: any, b: any) => (b.score || 0) - (a.score || 0));
+
+        setProfiles(merged);
         const { data: recentLogs } = await adminService.getAuditLogs(200);
         setLogs(recentLogs);
       }
@@ -337,8 +356,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   <thead>
                     <tr className="bg-white/5 text-[10px] font-black uppercase text-zinc-600 tracking-[0.3em] border-b border-white/5">
                       <th className="p-10">ENTITY (PLAYER)</th>
-                      <th className="p-10">SCORE</th>
-                      <th className="p-10">CREDITS</th>
+                      <th className="p-10">WINS (فوز)</th>
+                      <th className="p-10">SCORE (نقاط)</th>
+                      <th className="p-10">CREDITS (§)</th>
                       <th className="p-10">STATUS</th>
                       <th className="p-10 text-center">CONTROL</th>
                     </tr>
@@ -356,6 +376,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                               <div className="text-[10px] font-mono font-bold text-zinc-600">{p.id.slice(0, 8).toUpperCase()}</div>
                             </div>
                           </div>
+                        </td>
+                        <td className="p-6">
+                          <div className="font-black text-2xl text-blue-500 italic">{p.wins || 0}</div>
                         </td>
                         <td className="p-6 text-2xl font-black italic text-white/80">{p.score || 0}</td>
                         <td className="p-6 text-2xl font-black text-kick-green italic">
