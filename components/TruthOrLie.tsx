@@ -8,7 +8,71 @@ import {
     AlertTriangle, Wand2, MonitorPlay, Video, Copy
 } from 'lucide-react';
 import { pexelsService } from '../services/pexelsService';
-import { SURREAL_CHALLENGES } from '../data/surrealChallenges';
+
+const TRUTH_LIE_ITEMS = [
+    "Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Monkey", "Kangaroo", "Panda", "Koala", "Leopard",
+    "Cheetah", "Wolf", "Fox", "Bear", "Polar Bear", "Rabbit", "Squirrel", "Deer", "Horse", "Donkey",
+    "Camel", "Cow", "Sheep", "Goat", "Pig", "Chicken", "Duck", "Goose", "Turkey", "Eagle",
+    "Hawk", "Falcon", "Owl", "Parrot", "Penguin", "Flamingo", "Peacock", "Swan", "Sparrow", "Pigeon",
+    "Crow", "Seagull", "Whale", "Dolphin", "Shark", "Octopus", "Jellyfish", "Crab", "Lobster", "Shrimp",
+    "Starfish", "Seahorse", "Turtle", "Frog", "Toad", "Snake", "Lizard", "Crocodile", "Alligator", "Chameleon",
+    "Butterfly", "Bee", "Ant", "Spider", "Scorpion", "Mosquito", "Fly", "Beetle", "Ladybug", "Dragonfly",
+    "Grasshopper", "Cricket", "Snail", "Slug", "Worm", "Apple", "Banana", "Orange", "Grape", "Strawberry",
+    "Blueberry", "Raspberry", "Blackberry", "Cherry", "Peach", "Pear", "Plum", "Apricot", "Pineapple", "Mango",
+    "Papaya", "Watermelon", "Melon", "Kiwi", "Lemon", "Lime", "Coconut", "Pomegranate", "Fig", "Date",
+    "Avocado", "Tomato", "Potato", "Carrot", "Onion", "Garlic", "Ginger", "Pepper", "Cucumber", "Zucchini",
+    "Eggplant", "Broccoli", "Cauliflower", "Cabbage", "Lettuce", "Spinach", "Kale", "Corn", "Peas", "Beans",
+    "Mushroom", "Pumpkin", "Radish", "Celery", "Asparagus", "Artichoke", "Okra", "Turnip", "Beet", "Yam",
+    "Sweet Potato", "Rice", "Wheat", "Oats", "Barley", "Quinoa", "Bread", "Pasta", "Noodle", "Pizza",
+    "Burger", "Sandwich", "Soup", "Salad", "Steak", "Chicken", "Fish", "Sushi", "Taco", "Burrito",
+    "Curry", "Rice", "Egg", "Cheese", "Milk", "Yogurt", "Butter", "Cream", "Ice Cream", "Cake",
+    "Cookie", "Pie", "Donut", "Muffin", "Pancake", "Waffle", "Chocolate", "Candy", "Honey", "Jam",
+    "Coffee", "Tea", "Juice", "Water", "Soda", "Wine", "Beer", "Chair", "Table", "Sofa",
+    "Bed", "Lamp", "Desk", "Cabinet", "Shelf", "Mirror", "Clock", "Rug", "Curtain", "Pillow",
+    "Blanket", "Door", "Window", "Wall", "Floor", "Ceiling", "Roof", "Stairs", "Elevator", "House",
+    "Apartment", "Building", "School", "Library", "Hospital", "Bank", "Post Office", "Police Station", "Fire Station", "Park",
+    "Garden", "Zoo", "Museum", "Cinema", "Theater", "Restaurant", "Cafe", "Hotel", "Airport", "Station",
+    "Car", "Bus", "Train", "Bicycle", "Motorcycle", "Truck", "Van", "Taxi", "Boat", "Ship",
+    "Airplane", "Helicopter", "Rocket", "Spaceship", "Traffic Light", "Road", "Bridge", "Tunnel", "Map", "Compass",
+    "Phone", "Computer", "Laptop", "Tablet", "Camera", "Television", "Radio", "Speaker", "Headphones", "Microphone",
+    "Keyboard", "Mouse", "Screen", "Battery", "Charger", "Cable", "Light Bulb", "Fan", "Heater", "Air Conditioner",
+    "Washing Machine", "Dryer", "Fridge", "Oven", "Stove", "Microwave", "Toaster", "Blender", "Mixer", "Iron",
+    "Vacuum", "Broom", "Mop", "Bucket", "Sponge", "Soap", "Shampoo", "Toothbrush", "Toothpaste", "Towel",
+    "Comb", "Brush", "Razor", "Scissors", "Knife", "Fork", "Spoon", "Plate", "Bowl", "Cup",
+    "Glass", "Bottle", "Jar", "Can", "Box", "Bag", "Backpack", "Wallet", "Purse", "Key",
+    "Lock", "Umbrella", "Raincoat", "Hat", "Cap", "Scarf", "Gloves", "Jacket", "Coat", "Shirt",
+    "T-shirt", "Blouse", "Sweater", "Dress", "Skirt", "Pants", "Jeans", "Shorts", "Socks", "Shoes",
+    "Boots", "Sandals", "Slippers", "Watch", "Ring", "Necklace", "Bracelet", "Earrings", "Glasses", "Sunglasses",
+    "Book", "Notebook", "Pen", "Pencil", "Eraser", "Ruler", "Paper", "Envelope", "Stamp", "Card",
+    "Gift", "Toy", "Doll", "Ball", "Bat", "Racket", "Net", "Goal", "Tent", "Sleeping Bag",
+    "Fire", "Water", "Earth", "Air", "Sun", "Moon", "Star", "Cloud", "Rain", "Snow",
+    "Wind", "Storm", "Lightning", "Thunder", "Rainbow", "Mountain", "Hill", "Valley", "River", "Lake",
+    "Ocean", "Sea", "Beach", "Island", "Desert", "Forest", "Jungle", "Tree", "Flower", "Grass",
+    "Leaf", "Root", "Seed", "Fruit", "Vegetable", "Meat", "Bone", "Skin", "Hair", "Eye",
+    "Ear", "Nose", "Mouth", "Tooth", "Tongue", "Lip", "Hand", "Finger", "Thumb", "Palm",
+    "Arm", "Elbow", "Shoulder", "Leg", "Knee", "Foot", "Toe", "Heel", "Ankle", "Body",
+    "Head", "Neck", "Chest", "Back", "Stomach", "Heart", "Brain", "Blood", "Sweat", "Tears",
+    "Smile", "Laugh", "Cry", "Shout", "Whisper", "Sing", "Dance", "Run", "Walk", "Jump",
+    "Sit", "Stand", "Sleep", "Dream", "Wake", "Eat", "Drink", "Cook", "Wash", "Clean",
+    "Read", "Write", "Draw", "Paint", "Listen", "Speak", "Think", "Learn", "Teach", "Work",
+    "Play", "Win", "Lose", "Buy", "Sell", "Give", "Take", "Open", "Close", "Push",
+    "Pull", "Cut", "Paste", "Copy", "Delete", "Save", "Search", "Find", "Help", "Love",
+    "Hate", "Like", "Dislike", "Happy", "Sad", "Angry", "Fear", "Surprise", "Disgust", "Bored",
+    "Tired", "Hungry", "Thirsty", "Sick", "Healthy", "Strong", "Weak", "Fast", "Slow", "Big",
+    "Small", "Tall", "Short", "Fat", "Thin", "Old", "Young", "New", "Good", "Bad",
+    "High", "Low", "Hot", "Cold", "Warm", "Cool", "Dry", "Wet", "Hard", "Soft",
+    "Rough", "Smooth", "Heavy", "Light", "Dark", "Bright", "Clean", "Dirty", "Rich", "Poor",
+    "Cheap", "Expensive", "Free", "Busy", "Lazy", "Smart", "Stupid", "Funny", "Serious", "Kind",
+    "Cruel", "Brave", "Coward", "Calm", "Nervous", "Shy", "Friendly", "Rude", "Polite", "Honest",
+    "Liar", "True", "False", "Right", "Wrong", "Easy", "Difficult", "Simple", "Complex", "Beautiful",
+    "Ugly", "Cute", "Scary", "Funny", "Strange", "Normal", "Loud", "Quiet", "Sweet", "Sour",
+    "Bitter", "Salty", "Spicy", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink",
+    "Brown", "Black", "White", "Gray", "Gold", "Silver", "One", "Two", "Three", "Four",
+    "Five", "Six", "Seven", "Eight", "Nine", "Ten", "First", "Second", "Third", "Last",
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Day", "Night", "Morning",
+    "Afternoon", "Evening", "Week", "Month", "Year", "Time", "Hour", "Minute", "Second", "Now",
+    "Today", "Tomorrow", "Yesterday", "Future", "Past", "History", "Science", "Math", "Art", "Music"
+];
 
 interface TruthOrLieProps {
     onHome: () => void;
@@ -256,15 +320,20 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
     const handleAutoGenerate = async () => {
         setIsLoadingImage(true);
         try {
-            const challengeString = SURREAL_CHALLENGES[Math.floor(Math.random() * SURREAL_CHALLENGES.length)];
-            const parts = challengeString.split(' - ');
-            const arabicDesc = parts[0] || challengeString;
-            const englishKeyword = parts[1] || 'abstract art';
-            const url = await pexelsService.fetchRandomImage(englishKeyword);
-            setAutoQuestion(arabicDesc);
+            const randomEnglish = TRUTH_LIE_ITEMS[Math.floor(Math.random() * TRUTH_LIE_ITEMS.length)];
+
+            // Translate English -> Arabic for the display
+            const arabicRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(randomEnglish)}`);
+            const arabicData = await arabicRes.json();
+            const arabicText = arabicData[0][0][0];
+
+            // Use English for Pexels search (Better results)
+            const url = await pexelsService.fetchRandomImage(randomEnglish);
+
+            setAutoQuestion(arabicText); // Show Arabic word
             setAutoAnswer(null);
             broadcastState({
-                questionText: arabicDesc,
+                questionText: arabicText,
                 imageUrl: url || undefined,
                 correctAnswer: null,
                 phase: 'idle',

@@ -105,6 +105,8 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
 
   const [queue, setQueue] = useState<(ChatUser & { chosenWeapon?: WeaponType })[]>([]);
   const [winner, setWinner] = useState<Player | null>(null);
+  const [isZoneShrinking, setIsZoneShrinking] = useState(false);
+  const isZoneShrinkingRef = useRef(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playersRef = useRef<Player[]>([]);
@@ -277,7 +279,9 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
       };
     });
 
-    zoneRef.current = { radius: 1950, shrinkage: 0 }; // Fixed Huge Map
+    zoneRef.current = { radius: 1100, shrinkage: 0.4 };
+    setIsZoneShrinking(false);
+    isZoneShrinkingRef.current = false;
     suppliesRef.current = [];
     lastSupplySpawnRef.current = Date.now();
     battleStartTimeRef.current = Date.now();
@@ -305,7 +309,13 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
     const players = playersRef.current;
     const zone = zoneRef.current;
 
-    // Zone Shrinking Logic REMOVED - Fixed Map
+    // Zone Shrinking Logic (Accelerating)
+    if (isZoneShrinkingRef.current && zone.radius > 200) {
+      zone.radius -= zone.shrinkage;
+      // Accelerate the shrinking speed over time
+      zone.shrinkage += 0.001;
+    }
+
     if (shakeRef.current > 0) shakeRef.current -= 0.6;
 
     if (settingsRef.current.enableSupplies && Date.now() - lastSupplySpawnRef.current > settingsRef.current.supplyRate * 1000) {
@@ -359,33 +369,38 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
         return true;
       });
 
-      // Rectangular Map Boundaries (Canvas Edges)
+      // Circular Zone Physics (HARD WALL - "The Trap")
+      const distFromCenter = Math.hypot(p.x - CENTER_X, p.y - CENTER_Y);
+      const distLimit = zone.radius - p.radius;
 
-      // Right Wall
-      if (p.x + p.radius > CANVAS_WIDTH) {
-        p.x = CANVAS_WIDTH - p.radius;
-        p.vx *= -0.9;
-        triggerWallDamage(p, zone);
-      }
-      // Left Wall
-      else if (p.x - p.radius < 0) {
-        p.x = p.radius;
-        p.vx *= -0.9;
+      if (distFromCenter > distLimit) {
+        // Hard Clamp: Force position to be exactly on the edge
+        const angleToCenter = Math.atan2(p.y - CENTER_Y, p.x - CENTER_X);
+        p.x = CENTER_X + Math.cos(angleToCenter) * distLimit;
+        p.y = CENTER_Y + Math.sin(angleToCenter) * distLimit;
+
+        // Bounce Velocity Inward
+        const normalX = Math.cos(angleToCenter);
+        const normalY = Math.sin(angleToCenter);
+        const dot = p.vx * normalX + p.vy * normalY;
+
+        p.vx -= 2 * dot * normalX;
+        p.vy -= 2 * dot * normalY;
+
+        // Apply Damping (friction with wall)
+        p.vx *= 0.5;
+        p.vy *= 0.5;
+
+        // Apply Wall Damage (The Crush)
         triggerWallDamage(p, zone);
       }
 
-      // Bottom Wall
-      if (p.y + p.radius > CANVAS_HEIGHT) {
-        p.y = CANVAS_HEIGHT - p.radius;
-        p.vy *= -0.9;
-        triggerWallDamage(p, zone);
-      }
-      // Top Wall
-      else if (p.y - p.radius < 0) {
-        p.y = p.radius;
-        p.vy *= -0.9;
-        triggerWallDamage(p, zone);
-      }
+      // Rectangular Map Boundaries (Canvas Edges) - Final Fail-safe
+      if (p.x + p.radius > CANVAS_WIDTH) { p.x = CANVAS_WIDTH - p.radius; p.vx *= -0.9; }
+      else if (p.x - p.radius < 0) { p.x = p.radius; p.vx *= -0.9; }
+
+      if (p.y + p.radius > CANVAS_HEIGHT) { p.y = CANVAS_HEIGHT - p.radius; p.vy *= -0.9; }
+      else if (p.y - p.radius < 0) { p.y = p.radius; p.vy *= -0.9; }
 
       for (let j = i + 1; j < players.length; j++) {
         const p2 = players[j];
@@ -480,13 +495,11 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
   };
 
   const triggerWallDamage = (p: Player, zone: any) => {
-    // Damage only if zone is actively shrinking (after delay) AND small enough to mean "danger" OR just simply if outside active zone
-    // In this logic, walls ARE the zone, so hitting them always hurts if the battle is intense
-    if (Date.now() - battleStartTimeRef.current > ZONE_DELAY_MS) {
-      p.hp -= 0.8;
-      shakeRef.current = Math.max(shakeRef.current, 4);
-      createParticles(p.x, p.y, MAPS_CONFIG[mapStyle].borderColor, 4);
-    }
+    // Damage if outside zone
+    p.hp -= 2.0; // Higher damage for zone
+    shakeRef.current = Math.max(shakeRef.current, 2);
+    createParticles(p.x, p.y, '#ff0000', 2); // Blood/Damage particles
+
     if (p.hp <= 0) p.isDead = true;
   };
 
@@ -515,7 +528,36 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
     for (let i = 0; i <= CANVAS_HEIGHT; i += gridSpacing) { ctx.moveTo(0, i); ctx.lineTo(CANVAS_WIDTH, i); }
     ctx.stroke();
 
-    // Map Border (Completely Hidden/None)
+    // Map Border (The Zone Wall) - Always Visible
+    if (true) {
+      ctx.save();
+
+      // Darken Outside Area
+      ctx.beginPath();
+      ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.arc(CENTER_X, CENTER_Y, zoneRef.current.radius, 0, Math.PI * 2, true);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fill();
+
+      // The Red Wall
+      ctx.beginPath();
+      ctx.arc(CENTER_X, CENTER_Y, zoneRef.current.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 15;
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = '#ff4444';
+      ctx.stroke();
+
+      // Warning Stripes on Wall
+      ctx.beginPath();
+      ctx.arc(CENTER_X, CENTER_Y, zoneRef.current.radius - 10, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([40, 40]);
+      ctx.stroke();
+
+      ctx.restore();
+    }
     ctx.restore();
 
     // Draw Trails (Neon Ribbons)
@@ -966,6 +1008,23 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
 
           {/* Premium Control Center */}
           <div className="bg-black/40 p-4 rounded-3xl border border-white/5 space-y-5 shadow-inner">
+            {/* Zone Control - Top Priority */}
+            {gameState === 'BATTLE' && (
+              <div className="pb-4 mb-4 border-b border-white/10">
+                <button
+                  onClick={() => {
+                    const newVal = !isZoneShrinking;
+                    setIsZoneShrinking(newVal);
+                    isZoneShrinkingRef.current = newVal;
+                  }}
+                  className={`w-full py-4 rounded-2xl font-extrabold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02] border border-white/20 shadow-lg
+                     ${isZoneShrinking ? 'bg-red-600 text-white animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.6)]' : 'bg-red-600/10 text-red-500 hover:bg-red-600/20'}`}
+                >
+                  <ShieldAlert size={16} /> {isZoneShrinking ? 'إيـقـاف الـزون (PAUSE ZONE)' : 'بـدء حـصـار الـزون (START ZONE)'}
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Package size={14} className="text-yellow-500" /> نزول الإمدادات</span>
               <button
@@ -1034,21 +1093,23 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
             </div>
 
             {gameState === 'BATTLE' && (
-              <button
-                onClick={() => {
-                  playersRef.current.forEach(p => {
-                    if (!p.isDead) {
-                      p.damageMultiplier = 3.0;
-                      p.speedMultiplier = 2.0;
-                      createParticles(p.x, p.y, '#ffd700', 20);
-                    }
-                  });
-                  shakeRef.current = 30;
-                }}
-                className="w-full py-4 bg-orange-600/10 hover:bg-orange-600/20 border border-orange-500/30 rounded-2xl text-orange-500 font-extrabold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 animate-pulse transition-all hover:scale-[1.02]"
-              >
-                <Flame size={16} /> تفعيل وضع الجنون (Chaos Mode)
-              </button>
+              <div className="space-y-2 w-full">
+                <button
+                  onClick={() => {
+                    playersRef.current.forEach(p => {
+                      if (!p.isDead) {
+                        p.damageMultiplier = 3.0;
+                        p.speedMultiplier = 2.0;
+                        createParticles(p.x, p.y, '#ffd700', 20);
+                      }
+                    });
+                    shakeRef.current = 30;
+                  }}
+                  className="w-full py-4 bg-orange-600/10 hover:bg-orange-600/20 border border-orange-500/30 rounded-2xl text-orange-500 font-extrabold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+                >
+                  <Flame size={16} /> تفعيل وضع الجنون (Chaos Mode)
+                </button>
+              </div>
             )}
           </div>
 

@@ -12,6 +12,71 @@ interface BlurGuessProps {
 
 const PEXELS_API_KEY = "uZQAx7uPvBboEvI8i6pN9NsvGFvZi5qDPQNPFHchF0DnuBZdrPm7wt54";
 
+const ENGLISH_WORDS = [
+  "Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Monkey", "Kangaroo", "Panda", "Koala", "Leopard",
+  "Cheetah", "Wolf", "Fox", "Bear", "Polar Bear", "Rabbit", "Squirrel", "Deer", "Horse", "Donkey",
+  "Camel", "Cow", "Sheep", "Goat", "Pig", "Chicken", "Duck", "Goose", "Turkey", "Eagle",
+  "Hawk", "Falcon", "Owl", "Parrot", "Penguin", "Flamingo", "Peacock", "Swan", "Sparrow", "Pigeon",
+  "Crow", "Seagull", "Whale", "Dolphin", "Shark", "Octopus", "Jellyfish", "Crab", "Lobster", "Shrimp",
+  "Starfish", "Seahorse", "Turtle", "Frog", "Toad", "Snake", "Lizard", "Crocodile", "Alligator", "Chameleon",
+  "Butterfly", "Bee", "Ant", "Spider", "Scorpion", "Mosquito", "Fly", "Beetle", "Ladybug", "Dragonfly",
+  "Grasshopper", "Cricket", "Snail", "Slug", "Worm", "Apple", "Banana", "Orange", "Grape", "Strawberry",
+  "Blueberry", "Raspberry", "Blackberry", "Cherry", "Peach", "Pear", "Plum", "Apricot", "Pineapple", "Mango",
+  "Papaya", "Watermelon", "Melon", "Kiwi", "Lemon", "Lime", "Coconut", "Pomegranate", "Fig", "Date",
+  "Avocado", "Tomato", "Potato", "Carrot", "Onion", "Garlic", "Ginger", "Pepper", "Cucumber", "Zucchini",
+  "Eggplant", "Broccoli", "Cauliflower", "Cabbage", "Lettuce", "Spinach", "Kale", "Corn", "Peas", "Beans",
+  "Mushroom", "Pumpkin", "Radish", "Celery", "Asparagus", "Artichoke", "Okra", "Turnip", "Beet", "Yam",
+  "Sweet Potato", "Rice", "Wheat", "Oats", "Barley", "Quinoa", "Bread", "Pasta", "Noodle", "Pizza",
+  "Burger", "Sandwich", "Soup", "Salad", "Steak", "Chicken", "Fish", "Sushi", "Taco", "Burrito",
+  "Curry", "Rice", "Egg", "Cheese", "Milk", "Yogurt", "Butter", "Cream", "Ice Cream", "Cake",
+  "Cookie", "Pie", "Donut", "Muffin", "Pancake", "Waffle", "Chocolate", "Candy", "Honey", "Jam",
+  "Tea", "Coffee", "Juice", "Water", "Soda", "Wine", "Beer", "Chair", "Table", "Sofa",
+  "Bed", "Lamp", "Desk", "Cabinet", "Shelf", "Mirror", "Clock", "Rug", "Curtain", "Pillow",
+  "Blanket", "Door", "Window", "Wall", "Floor", "Ceiling", "Roof", "Stairs", "Elevator", "House",
+  "Apartment", "Building", "School", "Library", "Hospital", "Bank", "Post Office", "Police Station", "Fire Station", "Park",
+  "Garden", "Zoo", "Museum", "Cinema", "Theater", "Restaurant", "Cafe", "Hotel", "Airport", "Station",
+  "Car", "Bus", "Train", "Bicycle", "Motorcycle", "Truck", "Van", "Taxi", "Boat", "Ship",
+  "Airplane", "Helicopter", "Rocket", "Spaceship", "Traffic Light", "Road", "Bridge", "Tunnel", "Map", "Compass",
+  "Phone", "Computer", "Laptop", "Tablet", "Camera", "Television", "Radio", "Speaker", "Headphones", "Microphone",
+  "Keyboard", "Mouse", "Screen", "Battery", "Charger", "Cable", "Light Bulb", "Fan", "Heater", "Air Conditioner",
+  "Washing Machine", "Dryer", "Fridge", "Oven", "Stove", "Microwave", "Toaster", "Blender", "Mixer", "Iron",
+  "Vacuum", "Broom", "Mop", "Bucket", "Sponge", "Soap", "Shampoo", "Toothbrush", "Toothpaste", "Towel",
+  "Comb", "Brush", "Razor", "Scissors", "Knife", "Fork", "Spoon", "Plate", "Bowl", "Cup",
+  "Glass", "Bottle", "Jar", "Can", "Box", "Bag", "Backpack", "Wallet", "Purse", "Key",
+  "Lock", "Umbrella", "Raincoat", "Hat", "Cap", "Scarf", "Gloves", "Jacket", "Coat", "Shirt",
+  "T-shirt", "Blouse", "Sweater", "Dress", "Skirt", "Pants", "Jeans", "Shorts", "Socks", "Shoes",
+  "Boots", "Sandals", "Slippers", "Watch", "Ring", "Necklace", "Bracelet", "Earrings", "Glasses", "Sunglasses",
+  "Book", "Notebook", "Pen", "Pencil", "Eraser", "Ruler", "Paper", "Envelope", "Stamp", "Card",
+  "Gift", "Toy", "Doll", "Ball", "Bat", "Racket", "Net", "Goal", "Tent", "Sleeping Bag",
+  "Fire", "Water", "Earth", "Air", "Sun", "Moon", "Star", "Cloud", "Rain", "Snow",
+  "Wind", "Storm", "Lightning", "Thunder", "Rainbow", "Mountain", "Hill", "Valley", "River", "Lake",
+  "Ocean", "Sea", "Beach", "Island", "Desert", "Forest", "Jungle", "Tree", "Flower", "Grass",
+  "Leaf", "Root", "Seed", "Fruit", "Vegetable", "Meat", "Bone", "Skin", "Hair", "Eye",
+  "Ear", "Nose", "Mouth", "Tooth", "Tongue", "Lip", "Hand", "Finger", "Thumb", "Palm",
+  "Arm", "Elbow", "Shoulder", "Leg", "Knee", "Foot", "Toe", "Heel", "Ankle", "Body",
+  "Head", "Neck", "Chest", "Back", "Stomach", "Heart", "Brain", "Blood", "Sweat", "Tears",
+  "Smile", "Laugh", "Cry", "Shout", "Whisper", "Sing", "Dance", "Run", "Walk", "Jump",
+  "Sit", "Stand", "Sleep", "Dream", "Wake", "Eat", "Drink", "Cook", "Wash", "Clean",
+  "Read", "Write", "Draw", "Paint", "Listen", "Speak", "Think", "Learn", "Teach", "Work",
+  "Play", "Win", "Lose", "Buy", "Sell", "Give", "Take", "Open", "Close", "Push",
+  "Pull", "Cut", "Paste", "Copy", "Delete", "Save", "Search", "Find", "Help", "Love",
+  "Hate", "Like", "Dislike", "Happy", "Sad", "Angry", "Fear", "Surprise", "Disgust", "Bored",
+  "Tired", "Hungry", "Thirsty", "Sick", "Healthy", "Strong", "Weak", "Fast", "Slow", "Big",
+  "Small", "Tall", "Short", "Fat", "Thin", "Old", "Young", "New", "Good", "Bad",
+  "High", "Low", "Hot", "Cold", "Warm", "Cool", "Dry", "Wet", "Hard", "Soft",
+  "Rough", "Smooth", "Heavy", "Light", "Dark", "Bright", "Clean", "Dirty", "Rich", "Poor",
+  "Cheap", "Expensive", "Free", "Busy", "Lazy", "Smart", "Stupid", "Funny", "Serious", "Kind",
+  "Cruel", "Brave", "Coward", "Calm", "Nervous", "Shy", "Friendly", "Rude", "Polite", "Honest",
+  "Liar", "True", "False", "Right", "Wrong", "Easy", "Difficult", "Simple", "Complex", "Beautiful",
+  "Ugly", "Cute", "Scary", "Funny", "Strange", "Normal", "Loud", "Quiet", "Sweet", "Sour",
+  "Bitter", "Salty", "Spicy", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink",
+  "Brown", "Black", "White", "Gray", "Gold", "Silver", "One", "Two", "Three", "Four",
+  "Five", "Six", "Seven", "Eight", "Nine", "Ten", "First", "Second", "Third", "Last",
+  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Day", "Night", "Morning",
+  "Afternoon", "Evening", "Week", "Month", "Year", "Time", "Hour", "Minute", "Second", "Now",
+  "Today", "Tomorrow", "Yesterday", "Future", "Past", "History", "Science", "Math", "Art", "Music"
+];
+
 const SidebarPortal = ({ children }: { children?: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
@@ -40,9 +105,24 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { arabicWordRef.current = arabicWord; }, [arabicWord]);
 
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
   useEffect(() => {
     if (photos.length > 0 && photos[photoIndex]) {
-      setImageUrl(photos[photoIndex].src.large2x);
+      setIsImageLoading(true);
+      // Use 'large' instead of 'large2x' for faster loading (approx 50% smaller file size but good quality)
+      const src = photos[photoIndex].src.large;
+
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        setImageUrl(src);
+        setIsImageLoading(false);
+      };
+      img.onerror = () => {
+        // Fallback if large fails, though unlikely
+        setIsImageLoading(false);
+      }
     }
   }, [photos, photoIndex]);
 
@@ -129,6 +209,39 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
     }
   };
 
+  const handleRandomWord = async () => {
+    setIsTranslating(true);
+    setIsSearching(true);
+    setPhotos([]);
+    setImageUrl(null);
+    setPhotoIndex(0);
+
+    const randomEnglish = ENGLISH_WORDS[Math.floor(Math.random() * ENGLISH_WORDS.length)];
+
+    // Translate English -> Arabic for the "Answer"
+    const arabicRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(randomEnglish)}`);
+    const arabicData = await arabicRes.json();
+    const arabicTranslation = arabicData[0][0][0];
+
+    setArabicWord(arabicTranslation);
+    setSearchQuery(randomEnglish); // Use English for Pexels search (Better results)
+
+    // Fetch Images using English word
+    try {
+      const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(randomEnglish)}&per_page=30`, {
+        headers: { Authorization: PEXELS_API_KEY }
+      });
+      const data = await res.json();
+      if (data.photos?.length > 0) {
+        setPhotos(data.photos);
+        setPhotoIndex(0);
+      }
+    } catch (e) { } finally {
+      setIsSearching(false);
+      setIsTranslating(false);
+    }
+  };
+
   const resetGame = () => { setGameState('SETUP'); setWinner(null); setBlurLevel(100); setTimer(0); setPhotos([]); setImageUrl(null); setArabicWord(''); setSearchQuery(''); };
 
   return (
@@ -165,18 +278,33 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
                 <p className="text-[9px] text-gray-600 font-bold italic pr-2">سيتم الترجمة والبحث عن الصور تلقائياً "خلف الستار"</p>
               </div>
 
+              <button
+                onClick={handleRandomWord}
+                disabled={isTranslating || isSearching}
+                className="w-full bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all border border-blue-500/20 text-[10px]"
+              >
+                <Wand2 size={16} className={isTranslating ? "animate-spin" : ""} /> {isTranslating ? 'جاري السحر...' : 'كلمة عشوائية (Random)'}
+              </button>
+
               {/* Preview Image Only in Sidebar for Privacy */}
-              {imageUrl && (
-                <div className="relative h-44 rounded-[2rem] overflow-hidden border-4 border-white/5 group shadow-2xl animate-in zoom-in">
-                  <img src={imageUrl} className="w-full h-full object-cover" alt="preview" />
-                  <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-sm p-4 flex items-center justify-between">
-                    <button onClick={() => setPhotoIndex(p => (p - 1 + photos.length) % photos.length)} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><ChevronRight size={24} /></button>
-                    <span className="text-[10px] font-black text-white italic">صورة {photoIndex + 1} / {photos.length}</span>
-                    <button onClick={() => setPhotoIndex(p => (p + 1) % photos.length)} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><ChevronLeft size={24} /></button>
+              <div className="relative h-44 rounded-[2rem] overflow-hidden border-4 border-white/5 group shadow-2xl animate-in zoom-in bg-black/50">
+                {isImageLoading && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="w-8 h-8 border-4 border-red-600/30 border-t-red-600 rounded-full animate-spin" />
                   </div>
-                  <div className="absolute top-4 right-4 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg italic">مـعاينة الإدارة</div>
-                </div>
-              )}
+                )}
+                {imageUrl && (
+                  <>
+                    <img src={imageUrl} className={`w-full h-full object-cover transition-opacity duration-300 ${isImageLoading ? 'opacity-50' : 'opacity-100'}`} alt="preview" />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-sm p-4 flex items-center justify-between">
+                      <button onClick={() => setPhotoIndex(p => (p - 1 + photos.length) % photos.length)} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><ChevronRight size={24} /></button>
+                      <span className="text-[10px] font-black text-white italic">صورة {photoIndex + 1} / {photos.length}</span>
+                      <button onClick={() => setPhotoIndex(p => (p + 1) % photos.length)} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><ChevronLeft size={24} /></button>
+                    </div>
+                    <div className="absolute top-4 right-4 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg italic">مـعاينة الإدارة</div>
+                  </>
+                )}
+              </div>
 
               <button
                 onClick={() => setGameState('PLAYING')}
@@ -238,9 +366,15 @@ export const BlurGuess: React.FC<BlurGuessProps> = ({ channelConnected, onHome }
         {gameState === 'PLAYING' && imageUrl && (
           <div className="relative w-full h-[90vh] flex flex-col items-center justify-center gap-10 animate-in fade-in slide-in-from-top-10 duration-700">
             <div className="relative group w-full max-w-6xl aspect-video rounded-[4rem] overflow-hidden border-[15px] border-[#16161a] shadow-[0_0_100px_rgba(0,0,0,0.8)] bg-zinc-900">
+              {isImageLoading && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                  <div className="w-16 h-16 border-4 border-red-600/30 border-t-red-600 rounded-full animate-spin mb-4" />
+                  <span className="text-white font-black tracking-widest animate-pulse">جاري تحميل الصورة...</span>
+                </div>
+              )}
               <img
                 src={imageUrl}
-                className="w-full h-full object-cover transition-all duration-1000"
+                className={`w-full h-full object-cover transition-all duration-1000 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
                 style={{ filter: `blur(${blurLevel}px)` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
