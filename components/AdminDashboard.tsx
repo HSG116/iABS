@@ -51,7 +51,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         try {
           const parsed = JSON.parse(raw);
           token = parsed?.token || null;
-        } catch {}
+        } catch { }
       }
       const { data } = await supabase
         .from('app_config')
@@ -73,42 +73,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     };
   }, []);
 
+  // Effect 1: Connection Management
   useEffect(() => {
-    let unbindMsg: (() => void) | null = null;
-    let unbindStatus: (() => void) | null = null;
-    if (activeTab === 'promo') {
-      const channel = localStorage.getItem('kick_channel_name') || 'iabs';
-      chatService.connect(channel);
-      setChatMonitorActive(true);
-      unbindStatus = chatService.onStatusChange((connected, error, details) => {
-        setChatStatus({ connected, error, details });
-      });
-      unbindMsg = chatService.onMessage(async (msg) => {
-        const raw = msg.content.trim().toUpperCase();
-        const matched = promoCodes.find(p => p.is_active && (raw === p.code.toUpperCase() || raw === `!${p.code.toUpperCase()}`));
-        if (matched) {
-          const res = await leaderboardService.claimPromoCode(msg.user.username, matched.code);
-          if ((res as any).success) {
-            showStatus(`تم منح §${matched.reward_amount} لـ ${msg.user.username} باستخدام الكود ${matched.code}`);
-            fetchData();
-          } else {
-            showStatus('فشل منح الكود أو انتهت صلاحياته', true);
-          }
-        }
-      });
-    }
+    const channel = localStorage.getItem('kick_channel_name') || 'iabs';
+    chatService.connect(channel);
+    setChatMonitorActive(true);
+
+    const unbindStatus = chatService.onStatusChange((connected, error, details) => {
+      setChatStatus({ connected, error, details });
+    });
+
     return () => {
-      if (unbindMsg) unbindMsg();
-      if (unbindStatus) unbindStatus();
-      if (chatMonitorActive) {
-        chatService.disconnect();
-        setChatMonitorActive(false);
-      }
+      unbindStatus();
+      chatService.disconnect();
+      setChatMonitorActive(false);
     };
-  }, [activeTab, promoCodes]);
+  }, []);
+
+  // Effect 2: Message Listener (Promo Codes)
+  useEffect(() => {
+    const unbindMsg = chatService.onMessage(async (msg) => {
+      const raw = msg.content.trim().toUpperCase();
+      // Only process if we have active codes
+      const matched = promoCodes.find(p => p.is_active && (raw === p.code.toUpperCase() || raw === `!${p.code.toUpperCase()}`));
+
+      if (matched) {
+        const res = await leaderboardService.claimPromoCode(msg.user.username, matched.code);
+        if ((res as any).success) {
+          showStatus(`✅ تم تفعيل الكود ${matched.code} للمستخدم ${msg.user.username}`);
+          // Refresh data to update usage counts
+          fetchData();
+        } else {
+          // Optional: Log failure or silent fail
+          console.log(`Promo fail for ${msg.user.username}:`, res);
+        }
+      }
+    });
+
+    return () => unbindMsg();
+  }, [promoCodes]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
+      // ALWAYS load promo codes so the global listener works
+      const { data: promos } = await adminService.getPromoCodes();
+      setPromoCodes(promos || []);
+
       if (activeTab === 'users' || activeTab === 'overview' || activeTab === 'bans') {
         const { data } = await adminService.getAllProfiles();
         setProfiles(data);
@@ -118,10 +129,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       if (activeTab === 'announcements') {
         const { data } = await adminService.getAnnouncements();
         setAnnouncements(data);
-      }
-      if (activeTab === 'promo') {
-        const { data } = await adminService.getPromoCodes();
-        setPromoCodes(data);
       }
       if (activeTab === 'logs') {
         const { data } = await adminService.getAuditLogs();
@@ -283,7 +290,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       <div key={p.id} className="bg-black/40 p-5 rounded-2xl flex items-center justify-between border border-white/[0.03]">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-zinc-900 overflow-hidden">
-                            {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover" /> : <Users2 size={20} className="w-full h-full p-2 text-white/10" />}
+                            {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <Users2 size={20} className="w-full h-full p-2 text-white/10" />}
                           </div>
                           <span className="font-black italic">{p.username}</span>
                         </div>
@@ -342,7 +349,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                         <td className="p-6">
                           <div className="flex items-center gap-6">
                             <div className="w-16 h-16 rounded-[1.5rem] bg-zinc-950 border border-white/10 overflow-hidden shrink-0 group-hover:scale-110 transition-transform">
-                              {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover" /> : <Users2 className="w-full h-full p-4 text-white/5" />}
+                              {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <Users2 className="w-full h-full p-4 text-white/5" />}
                             </div>
                             <div>
                               <div className={`text-xl font-black italic ${p.is_banned ? 'text-zinc-700 line-through' : 'text-white'}`}>{p.username}</div>
@@ -466,7 +473,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   <div key={p.id} className="glass-card p-8 rounded-3xl border border-red-900/40 bg-red-950/5 flex items-center justify-between group hover:border-red-500/40 transition-all">
                     <div className="flex items-center gap-8">
                       <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-red-600/20 flex items-center justify-center relative overflow-hidden">
-                        {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover opacity-30 blur-[2px]" /> : <Ban size={32} className="text-red-900" />}
+                        {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover opacity-30 blur-[2px]" referrerPolicy="no-referrer" /> : <Ban size={32} className="text-red-900" />}
                         <Ban size={24} className="absolute text-red-600 drop-shadow-xl" />
                       </div>
                       <div>

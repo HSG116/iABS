@@ -116,7 +116,7 @@ export const leaderboardService = {
       credits: item.profiles?.credits
     }));
   },
- 
+
   async getPlayersWithPoints() {
     const { data, error } = await supabase
       .from('leaderboard')
@@ -131,7 +131,7 @@ export const leaderboardService = {
       credits: item.profiles?.credits
     }));
   },
- 
+
   async getAllRankedPlayers() {
     const { data: lb } = await supabase
       .from('leaderboard')
@@ -153,7 +153,17 @@ export const leaderboardService = {
       };
     });
     (profs || []).forEach(p => {
-      if (!byUser[p.username]) {
+      if (byUser[p.username]) {
+        // User exists in leaderboard, ensure profile data is up-to-date
+        byUser[p.username] = {
+          ...byUser[p.username],
+          // Prefer profile data over joined data if available
+          credits: p.credits,
+          avatar_url: p.avatar_url || byUser[p.username].avatar_url,
+          is_banned: p.is_banned
+        };
+      } else {
+        // User not in leaderboard, add them
         byUser[p.username] = {
           id: p.id,
           username: p.username,
@@ -184,13 +194,21 @@ export const leaderboardService = {
     if (promo.current_uses >= promo.max_uses) return { error: 'انتهت صلاحية الكود' };
 
     const { data: profile } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle();
-    if (!profile) {
-      const insertRes = await supabase.from('profiles').insert([{ username }]).select('*').maybeSingle();
-      if (insertRes.error) return { error: 'فشل إنشاء ملف المستخدم' };
-    }
 
-    const { error: updateError } = await supabase.from('profiles').update({ credits: (profile.credits || 0) + promo.reward_amount }).eq('username', username);
-    if (updateError) return { error: 'فشل التحديث' };
+    if (!profile) {
+      // New user: Insert with initial credits
+      const { error: insertError } = await supabase.from('profiles').insert([{
+        username,
+        credits: promo.reward_amount
+      }]);
+      if (insertError) return { error: 'فشل إنشاء ملف المستخدم' };
+    } else {
+      // Existing user: Update credits
+      const { error: updateError } = await supabase.from('profiles').update({
+        credits: (profile.credits || 0) + promo.reward_amount
+      }).eq('username', username);
+      if (updateError) return { error: 'فشل التحديث' };
+    }
 
     await supabase.from('promo_codes').update({ current_uses: promo.current_uses + 1 }).eq('id', promo.id);
     await adminService.logAction('SYSTEM_AUTO', 'PROMO_REDEEM', { username, code, amount: promo.reward_amount });

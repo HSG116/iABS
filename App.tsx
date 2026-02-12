@@ -72,6 +72,7 @@ const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, userna
           className="w-full h-full object-cover"
           onError={handleFix}
           alt={username}
+          referrerPolicy="no-referrer"
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center opacity-20 bg-black/40">
@@ -376,9 +377,9 @@ const App: React.FC = () => {
                     </div>
                     <div className="text-4xl font-black text-white italic mb-3 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">{leaderboardData[0].username}</div>
                     <div className="flex gap-6 relative z-10 bg-black/40 px-6 py-2 rounded-full border border-yellow-500/20">
-                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].score || 0} PTS</span>
+                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].score || 0} نقطة</span>
                       <span className="text-white/20">|</span>
-                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].wins || 0} WINS</span>
+                      <span className="text-yellow-500 font-black text-xl">{leaderboardData[0].wins || 0} فوز</span>
                     </div>
                   </div>
                 )}
