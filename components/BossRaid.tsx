@@ -107,7 +107,8 @@ export const BossRaid: React.FC<BossRaidProps> = ({ channelConnected, isOBS }) =
 
    const toggleShield = () => setIsShielded(!isShielded);
 
-   const sortedMvps = Object.entries(mvpList)
+
+   const sortedMvps = (Object.entries(mvpList) as [string, { dmg: number, avatar?: string }][])
       .sort((a, b) => b[1].dmg - a[1].dmg)
       .slice(0, 5);
 
