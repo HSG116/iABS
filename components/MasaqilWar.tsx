@@ -899,6 +899,32 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
     setQueue(prev => [...prev, { ...fakeUser, chosenWeapon }]);
   };
 
+  const addBots = () => {
+    const botCount = 50;
+    const weaponPool: WeaponType[] = ['SAW', 'HAMMER', 'BAT', 'AXE', 'SWORD', 'SPEAR'];
+    const fakeNames = ["Lion", "Tiger", "Eagle", "Falcon", "Wolf", "Bear", "Shark", "Panther", "Ghost", "Viper"];
+
+    const newBots: (ChatUser & { chosenWeapon?: WeaponType })[] = Array.from({ length: botCount }).map(() => {
+      const randomName = "Bot-" + fakeNames[Math.floor(Math.random() * fakeNames.length)] + "-" + Math.floor(Math.random() * 9999);
+      const chosenWeapon = weaponPool[Math.floor(Math.random() * weaponPool.length)];
+
+      return {
+        id: "bot-" + Math.random().toString(36).substr(2, 9),
+        username: randomName,
+        avatar: "", // No avatar for bots to save bandwidth/complexity
+        color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+        is_mod: false,
+        is_sub: false,
+        chosenWeapon
+      };
+    });
+
+    setQueue(prev => {
+      const combined = [...prev, ...newBots];
+      return combined.slice(0, maxPlayers);
+    });
+  };
+
   const kickPlayer = (username: string) => {
     playersRef.current = playersRef.current.map(p => {
       if (p.username === username && !p.isDead) {
@@ -1164,9 +1190,13 @@ export const MasaqilWar: React.FC<MasaqilWarProps> = ({ channelConnected, onHome
               )}
             </div>
 
-            <div className="flex gap-8 justify-center">
-              <button onClick={reset} className="px-16 py-6 bg-white/5 text-gray-500 font-black text-2xl rounded-[2.5rem] hover:bg-white/10 border border-white/10 transition-all italic">تراجع</button>
-              <button onClick={initBattle} disabled={queue.length < 2} className="px-28 py-7 bg-red-600 text-white font-black text-4xl md:text-5xl rounded-[3rem] shadow-[0_25px_60px_rgba(220,38,38,0.5)] hover:scale-105 active:scale-95 disabled:opacity-10 transition-all italic border-t-2 border-white/20 flex items-center gap-6"><PlayCircle size={48} /> بـدء الـمـعـركة</button>
+            <div className="flex gap-4 justify-center">
+              <button onClick={addBots} className="px-8 py-6 rounded-[2.5rem] bg-blue-600/20 text-blue-500 font-black hover:bg-blue-600/40 hover:text-white transition-all text-xl border border-blue-500/20 flex flex-col items-center justify-center leading-none gap-2">
+                <span>+50</span>
+                <span className="text-sm">BOTS</span>
+              </button>
+              <button onClick={reset} className="px-12 py-6 bg-white/5 text-gray-500 font-black text-2xl rounded-[2.5rem] hover:bg-white/10 border border-white/10 transition-all italic">تراجع</button>
+              <button onClick={initBattle} disabled={queue.length < 2} className="px-20 py-7 bg-red-600 text-white font-black text-4xl md:text-5xl rounded-[3rem] shadow-[0_25px_60px_rgba(220,38,38,0.5)] hover:scale-105 active:scale-95 disabled:opacity-10 transition-all italic border-t-2 border-white/20 flex items-center gap-6"><PlayCircle size={48} /> بـدء الـمـعـركة</button>
             </div>
           </div>
         )}

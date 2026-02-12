@@ -1174,75 +1174,89 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                         return (
                            <div
                               key={chair.id}
-                              className={`absolute ${sizes.chair} transition-all duration-500 flex items-center justify-center -translate-x-1/2 -translate-y-1/2 ${isOccupied
-                                 ? 'bg-gradient-to-br from-green-600/20 to-green-700/10 rounded-full scale-125 z-40 animate-pulse'
+                              className={`absolute ${sizes.chair} transition-all duration-500 flex items-center justify-center -translate-x-1/2 -translate-y-1/2 pointer-events-auto ${isOccupied
+                                 ? 'rounded-full scale-110 z-40'
                                  : 'bg-transparent z-30 hover:scale-110'
                                  }`}
+                              // Note: Removed 'animate-pulse' and gradient background from wrapper to keep it clean, let Avatar shine.
                               style={{
                                  top: `calc(50% + ${y}px)`,
                                  left: `calc(50% + ${x}px)`,
                               }}
                            >
-                              {/* Chair Icon OR Avatar */}
-                              {isOccupied ? (
-                                 <div className="relative w-full h-full flex items-center justify-center">
-                                    {/* Find the participant to get their avatar */}
-                                    {(() => {
-                                       const occupant = participants.find(p => p.username === chair.occupiedBy);
-                                       return occupant?.avatar ? (
-                                          <div className={`
-                                             relative rounded-full overflow-hidden border-2 border-white shadow-[0_0_20px_rgba(34,197,94,0.8)] z-50
-                                             ${sizes.chairIcon ? `w-[${sizes.chairIcon}px] h-[${sizes.chairIcon}px]` : 'w-10 h-10'}
-                                          `}
-                                             style={{ width: sizes.chairIcon || 40, height: sizes.chairIcon || 40 }}
-                                          >
-                                             <img
-                                                src={occupant.avatar}
-                                                alt={chair.occupiedBy || ""}
-                                                className="w-full h-full object-cover"
-                                             />
-                                          </div>
-                                       ) : (
-                                          <div className={`
-                                             relative rounded-full overflow-hidden border-2 border-white shadow-[0_0_20px_rgba(34,197,94,0.8)] bg-zinc-800 flex items-center justify-center z-50
-                                          `}
-                                             style={{ width: sizes.chairIcon || 40, height: sizes.chairIcon || 40 }}
-                                          >
-                                             <User size={(sizes.chairIcon || 40) * 0.6} className="text-white" />
-                                          </div>
-                                       );
-                                    })()}
-                                 </div>
-                              ) : (
+                              {/* Layer 1: Empty Chair Visual (Base) */}
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                  <Armchair
                                     size={sizes.chairIcon}
-                                    className={'opacity-80'}
+                                    className={'transition-all duration-300'}
                                     style={{
                                        color: config.selectedMap.accentColor,
-                                       filter: `drop-shadow(0 0 15px ${config.selectedMap.accentColor})`
+                                       filter: `drop-shadow(0 0 15px ${config.selectedMap.accentColor})`,
+                                       transform: isOccupied ? 'scale(0.8)' : 'scale(1)',
+                                       opacity: isOccupied ? 0.3 : 0.8
                                     }}
                                  />
+                              </div>
+
+                              {/* Layer 2: Occupied Avatar + Number (The Circle) */}
+                              <div className={`
+                                 absolute inset-0 rounded-full overflow-hidden border-2 border-white shadow-[0_0_20px_rgba(34,197,94,0.8)] z-50
+                                 flex flex-col items-center justify-center transition-opacity duration-300 delay-500
+                              `}
+                                 style={{
+                                    opacity: isOccupied && chair.occupiedBy ? 1 : 0,
+                                    pointerEvents: 'none',
+                                    backgroundColor: '#27272a' // Default bg behind image
+                                 }}
+                              >
+                                 {chair.occupiedBy && (() => {
+                                    const occupant = participants.find(p => p.username === chair.occupiedBy);
+                                    return (
+                                       <>
+                                          <div className="absolute inset-0 bg-cover bg-center" style={{
+                                             backgroundImage: occupant?.avatar ? `url(${occupant.avatar})` : 'none'
+                                          }} />
+                                          <div className="absolute inset-0 bg-black/40"></div>
+
+                                          {/* Big Number centered on Avatar */}
+                                          {!config.hideNumbers && (
+                                             <span className="relative z-10 text-white font-black drop-shadow-md text-xl">
+                                                {chair.id}
+                                             </span>
+                                          )}
+                                       </>
+                                    );
+                                 })()}
+                              </div>
+
+                              {/* Layer 3: Player Name (Below the Chair) */}
+                              {isOccupied && chair.occupiedBy && (
+                                 <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap z-50 transition-opacity duration-300 delay-500"
+                                    style={{
+                                       opacity: isOccupied ? 1 : 0
+                                    }}
+                                 >
+                                    <div className="flex flex-col items-center">
+                                       {/* Small arrow pointing up? No, cleaner without. */}
+                                       <span className="text-[10px] font-bold text-white bg-black/70 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm shadow-lg">
+                                          {chair.occupiedBy}
+                                       </span>
+                                    </div>
+                                 </div>
                               )}
 
-                              {/* Chair Number - Massive and Clear */}
+                              {/* Floating Number (Fades out when occupied) */}
                               {!config.hideNumbers && phase !== 'MUSIC_ON' && (
                                  <div
-                                    className={`absolute -top-8 px-2 py-0.5 rounded-xl ${sizes.text} font-black italic shadow-2xl z-50 transition-all ${isOccupied ? 'bg-green-500 border-2 border-white text-white scale-125' : 'bg-black/80 border border-white/20 text-white'
-                                       }`}
+                                    className={`absolute -top-8 px-2 py-0.5 rounded-xl ${sizes.text} font-black italic shadow-2xl z-50 transition-opacity duration-300 delay-500 bg-black/80 border border-white/20 text-white`}
                                     style={{
-                                       borderColor: isOccupied ? '#fff' : config.selectedMap.borderColor,
-                                       color: isOccupied ? '#fff' : config.selectedMap.accentColor,
-                                       textShadow: '0 5px 15px rgba(0,0,0,0.5)'
+                                       borderColor: config.selectedMap.borderColor,
+                                       color: config.selectedMap.accentColor,
+                                       textShadow: '0 5px 15px rgba(0,0,0,0.5)',
+                                       opacity: isOccupied ? 0 : 1
                                     }}
                                  >
                                     {chair.id}
-                                 </div>
-                              )}
-
-                              {/* Occupied Player Name */}
-                              {isOccupied && (
-                                 <div className="absolute -bottom-8 whitespace-nowrap bg-black/90 text-white px-2 py-0.5 rounded-lg text-[8px] font-bold shadow-xl border border-green-500/50 animate-in zoom-in duration-300 z-50">
-                                    {chair.occupiedBy}
                                  </div>
                               )}
 
@@ -1261,9 +1275,10 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                   <div className="absolute inset-0 z-20">
                      {participants.map((p, i) => {
                         const sizes = getDynamicSize(participants.length);
-                        const isSeated = chairs.some(c => c.occupiedBy === p.username);
+                        const seatedChair = chairs.find(c => c.occupiedBy === p.username);
+                        const isSeated = !!seatedChair;
 
-                        // Walking animation: adjusted radius for 1100px arena (much bigger!)
+                        // Walking animation: adjusted radius for 1100px arena
                         const radius = chairs.length <= 50 ? 600 : chairs.length <= 150 ? 630 : chairs.length <= 300 ? 660 : 680;
                         const orbit = getPlayerOrbitPos(i, participants.length, radius);
 
@@ -1271,19 +1286,24 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                         const bob = phase === 'MUSIC_ON' ? Math.sin(walkingOffset * 20 + i) * 18 : 0;
                         const tilt = phase === 'MUSIC_ON' ? Math.cos(walkingOffset * 15 + i) * 12 : 0;
 
-                        // Don't render survivors who are seated during the "Music Off" countdown
-                        if (phase === 'MUSIC_OFF' && isSeated) return null;
+                        // Target Coordinates: Either Seat or Orbit
+                        const targetX = isSeated && seatedChair ? seatedChair.x : orbit.x;
+                        const targetY = isSeated && seatedChair ? seatedChair.y : orbit.y;
+
+                        // When seated, we hide the name and eventually the avatar (to reveal the chair's avatar)
+                        // Transition logic: Only animate when NOT running (during selection phase)
 
                         return (
                            <div
                               key={p.id}
                               className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 group ${phase === 'MUSIC_ON' ? 'z-30' : 'z-50 scale-125'}`}
                               style={{
-                                 top: `calc(50% + ${orbit.y}px + ${bob}px)`,
-                                 left: `calc(50% + ${orbit.x}px)`,
-                                 transition: phase === 'MUSIC_ON' ? 'none' : 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                                 transform: `translate(-50%, -50%) rotate(${tilt}deg)`,
-                                 filter: phase === 'MUSIC_ON' ? `drop-shadow(0 0 8px ${config.selectedMap.glowColor})` : 'none'
+                                 top: `calc(50% + ${targetY}px + ${!isSeated ? bob : 0}px)`,
+                                 left: `calc(50% + ${targetX}px)`,
+                                 transition: phase !== 'MUSIC_ON' ? 'top 0.5s cubic-bezier(0.4, 0, 0.2, 1), left 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in 0.5s, transform 0.3s' : 'none',
+                                 transform: `translate(-50%, -50%) rotate(${!isSeated ? tilt : 0}deg) ${isSeated ? 'scale(0.8)' : 'scale(1)'}`,
+                                 filter: phase === 'MUSIC_ON' ? `drop-shadow(0 0 8px ${config.selectedMap.glowColor})` : 'none',
+                                 opacity: isSeated ? 0 : 1
                               }}
                            >
                               <div className={`
@@ -1306,9 +1326,12 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                                  )}
                               </div>
                               <span className={`
-                             ${sizes.text} font-black drop-shadow-lg transition-all
+                             ${sizes.text} font-black drop-shadow-lg transition-all duration-300
                           `}
-                                 style={{ color: p.color || '#fff' }}
+                                 style={{
+                                    color: p.color || '#fff',
+                                    opacity: isSeated ? 0 : 1, // Name disappears immediately/during transition
+                                 }}
                               >
                                  {p.username}
                               </span>
@@ -1321,651 +1344,657 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
 
 
                {/* RESULTS OVERLAY - PREMIUM REDESIGN */}
-               {phase === 'RESULTS' && (
-                  <div className="absolute inset-0 z-[100] flex items-center justify-center animate-in zoom-in duration-700 p-8 overflow-hidden">
-                     {/* Animated Background */}
-                     <div className="absolute inset-0 bg-gradient-to-br from-red-950 via-black to-gray-950" />
+               {
+                  phase === 'RESULTS' && (
+                     <div className="absolute inset-0 z-[100] flex items-center justify-center animate-in zoom-in duration-700 p-8 overflow-hidden">
+                        {/* Animated Background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-950 via-black to-gray-950" />
 
-                     {/* Animated Particles */}
-                     {Array.from({ length: 30 }).map((_, i) => (
-                        <div
-                           key={`elim-particle-${i}`}
-                           className="absolute rounded-full animate-particle"
+                        {/* Animated Particles */}
+                        {Array.from({ length: 30 }).map((_, i) => (
+                           <div
+                              key={`elim-particle-${i}`}
+                              className="absolute rounded-full animate-particle"
+                              style={{
+                                 width: `${3 + Math.random() * 6}px`,
+                                 height: `${3 + Math.random() * 6}px`,
+                                 backgroundColor: i % 3 === 0 ? '#dc2626' : i % 3 === 1 ? '#991b1b' : '#450a0a',
+                                 left: `${Math.random() * 100}%`,
+                                 top: `${Math.random() * 100}%`,
+                                 opacity: 0.3,
+                                 animationDelay: `${Math.random() * 4}s`,
+                                 animationDuration: `${5 + Math.random() * 8}s`,
+                                 filter: 'blur(2px)',
+                                 boxShadow: '0 0 10px currentColor'
+                              }}
+                           />
+                        ))}
+
+                        {/* Red Energy Rings */}
+                        <div className="absolute w-[500px] h-[500px] rounded-full opacity-10 animate-pulse-ring"
                            style={{
-                              width: `${3 + Math.random() * 6}px`,
-                              height: `${3 + Math.random() * 6}px`,
-                              backgroundColor: i % 3 === 0 ? '#dc2626' : i % 3 === 1 ? '#991b1b' : '#450a0a',
-                              left: `${Math.random() * 100}%`,
-                              top: `${Math.random() * 100}%`,
-                              opacity: 0.3,
-                              animationDelay: `${Math.random() * 4}s`,
-                              animationDuration: `${5 + Math.random() * 8}s`,
-                              filter: 'blur(2px)',
-                              boxShadow: '0 0 10px currentColor'
+                              background: 'radial-gradient(circle, transparent 60%, #dc262640 70%, transparent 80%)',
                            }}
                         />
-                     ))}
+                        <div className="absolute w-[400px] h-[400px] rounded-full opacity-20 animate-pulse-ring"
+                           style={{
+                              background: 'radial-gradient(circle, transparent 65%, #ef444450 75%, transparent 85%)',
+                              animationDelay: '1s'
+                           }}
+                        />
 
-                     {/* Red Energy Rings */}
-                     <div className="absolute w-[500px] h-[500px] rounded-full opacity-10 animate-pulse-ring"
-                        style={{
-                           background: 'radial-gradient(circle, transparent 60%, #dc262640 70%, transparent 80%)',
-                        }}
-                     />
-                     <div className="absolute w-[400px] h-[400px] rounded-full opacity-20 animate-pulse-ring"
-                        style={{
-                           background: 'radial-gradient(circle, transparent 65%, #ef444450 75%, transparent 85%)',
-                           animationDelay: '1s'
-                        }}
-                     />
-
-                     {/* Main Content */}
-                     <div className="relative z-10 text-center max-w-7xl w-full flex flex-col items-center">
-                        <div className="relative mb-6 group scale-75">
-                           <div className="absolute inset-0 bg-red-600/30 blur-[100px] scale-150 animate-pulse" />
-                           <div className="relative p-6 bg-gradient-to-br from-red-950/80 via-red-900/60 to-red-950/80 rounded-[2.5rem] border-4 shadow-2xl animate-in zoom-in duration-700"
-                              style={{
-                                 borderImage: 'linear-gradient(135deg, #dc2626, #991b1b, #dc2626) 1',
-                                 boxShadow: '0 0 80px rgba(220, 38, 38, 0.6), 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(220, 38, 38, 0.2)'
-                              }}
-                           >
-                              <Skull size={80} className="text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse" strokeWidth={1.5} />
+                        {/* Main Content */}
+                        <div className="relative z-10 text-center max-w-7xl w-full flex flex-col items-center">
+                           <div className="relative mb-6 group scale-75">
+                              <div className="absolute inset-0 bg-red-600/30 blur-[100px] scale-150 animate-pulse" />
+                              <div className="relative p-6 bg-gradient-to-br from-red-950/80 via-red-900/60 to-red-950/80 rounded-[2.5rem] border-4 shadow-2xl animate-in zoom-in duration-700"
+                                 style={{
+                                    borderImage: 'linear-gradient(135deg, #dc2626, #991b1b, #dc2626) 1',
+                                    boxShadow: '0 0 80px rgba(220, 38, 38, 0.6), 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(220, 38, 38, 0.2)'
+                                 }}
+                              >
+                                 <Skull size={80} className="text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse" strokeWidth={1.5} />
+                              </div>
                            </div>
-                        </div>
 
-                        {/* Title with Glitch Effect */}
-                        <div className="relative mb-8">
-                           <h2 className="text-[70px] font-black text-transparent bg-clip-text bg-gradient-to-b from-red-400 via-red-500 to-red-600 italic uppercase tracking-tighter mb-2 leading-none drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] animate-in slide-in-from-top duration-700"
-                              style={{
-                                 WebkitTextStroke: '1px rgba(220, 38, 38, 0.3)',
-                                 textShadow: '0 0 80px rgba(239,68,68,0.8), 0 10px 40px rgba(0,0,0,0.9)'
-                              }}
-                           >
-                              تم الإقصاء!
-                           </h2>
-                           <div className="text-red-500/60 font-black text-base uppercase tracking-[0.5em] animate-in fade-in duration-1000 delay-300">
-                              ELIMINATED PLAYERS
+                           {/* Title with Glitch Effect */}
+                           <div className="relative mb-8">
+                              <h2 className="text-[70px] font-black text-transparent bg-clip-text bg-gradient-to-b from-red-400 via-red-500 to-red-600 italic uppercase tracking-tighter mb-2 leading-none drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] animate-in slide-in-from-top duration-700"
+                                 style={{
+                                    WebkitTextStroke: '1px rgba(220, 38, 38, 0.3)',
+                                    textShadow: '0 0 80px rgba(239,68,68,0.8), 0 10px 40px rgba(0,0,0,0.9)'
+                                 }}
+                              >
+                                 تم الإقصاء!
+                              </h2>
+                              <div className="text-red-500/60 font-black text-base uppercase tracking-[0.5em] animate-in fade-in duration-1000 delay-300">
+                                 ELIMINATED PLAYERS
+                              </div>
                            </div>
-                        </div>
 
-                        {/* Eliminated Players Grid - Premium Cards */}
-                        <div className="w-full mb-12 relative">
-                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-950/20 to-transparent blur-xl" />
-                           <div className="relative bg-black/60 backdrop-blur-2xl border-2 rounded-[4rem] p-12 shadow-2xl overflow-hidden"
-                              style={{
-                                 borderImage: 'linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(153, 27, 27, 0.5), rgba(220, 38, 38, 0.3)) 1',
-                                 boxShadow: '0 0 60px rgba(220, 38, 38, 0.2), inset 0 0 80px rgba(0, 0, 0, 0.5)'
-                              }}
-                           >
-                              {/* Decorative Corner Elements */}
-                              <div className="absolute top-4 right-4 w-20 h-20 border-t-4 border-r-4 border-red-600/30 rounded-tr-3xl" />
-                              <div className="absolute bottom-4 left-4 w-20 h-20 border-b-4 border-l-4 border-red-600/30 rounded-bl-3xl" />
+                           {/* Eliminated Players Grid - Premium Cards */}
+                           <div className="w-full mb-12 relative">
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-950/20 to-transparent blur-xl" />
+                              <div className="relative bg-black/60 backdrop-blur-2xl border-2 rounded-[4rem] p-12 shadow-2xl overflow-hidden"
+                                 style={{
+                                    borderImage: 'linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(153, 27, 27, 0.5), rgba(220, 38, 38, 0.3)) 1',
+                                    boxShadow: '0 0 60px rgba(220, 38, 38, 0.2), inset 0 0 80px rgba(0, 0, 0, 0.5)'
+                                 }}
+                              >
+                                 {/* Decorative Corner Elements */}
+                                 <div className="absolute top-4 right-4 w-20 h-20 border-t-4 border-r-4 border-red-600/30 rounded-tr-3xl" />
+                                 <div className="absolute bottom-4 left-4 w-20 h-20 border-b-4 border-l-4 border-red-600/30 rounded-bl-3xl" />
 
-                              <div className="max-h-[40vh] overflow-y-auto custom-scrollbar px-4">
-                                 {lastEliminated.length > 0 ? (
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                       {lastEliminated.map((p, idx) => (
-                                          <div
-                                             key={p.id}
-                                             className="group animate-in slide-in-from-bottom duration-700"
-                                             style={{ animationDelay: `${idx * 100}ms` }}
-                                          >
-                                             <div className="relative bg-gradient-to-br from-red-950/40 via-gray-900/60 to-black/80 rounded-[2.5rem] p-6 border-2 border-red-900/40 backdrop-blur-xl hover:scale-105 hover:border-red-600/60 transition-all duration-500 cursor-pointer shadow-xl"
-                                                style={{
-                                                   boxShadow: '0 10px 40px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(220, 38, 38, 0.1)'
-                                                }}
+                                 <div className="max-h-[40vh] overflow-y-auto custom-scrollbar px-4">
+                                    {lastEliminated.length > 0 ? (
+                                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                          {lastEliminated.map((p, idx) => (
+                                             <div
+                                                key={p.id}
+                                                className="group animate-in slide-in-from-bottom duration-700"
+                                                style={{ animationDelay: `${idx * 100}ms` }}
                                              >
-                                                {/* Glow effect on hover */}
-                                                <div className="absolute inset-0 bg-gradient-to-br from-red-600/0 to-red-600/0 group-hover:from-red-600/20 group-hover:to-transparent rounded-[2.5rem] transition-all duration-500" />
+                                                <div className="relative bg-gradient-to-br from-red-950/40 via-gray-900/60 to-black/80 rounded-[2.5rem] p-6 border-2 border-red-900/40 backdrop-blur-xl hover:scale-105 hover:border-red-600/60 transition-all duration-500 cursor-pointer shadow-xl"
+                                                   style={{
+                                                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(220, 38, 38, 0.1)'
+                                                   }}
+                                                >
+                                                   {/* Glow effect on hover */}
+                                                   <div className="absolute inset-0 bg-gradient-to-br from-red-600/0 to-red-600/0 group-hover:from-red-600/20 group-hover:to-transparent rounded-[2.5rem] transition-all duration-500" />
 
-                                                {/* Skull overlay */}
-                                                <div className="absolute top-3 right-3 opacity-30 group-hover:opacity-60 transition-opacity">
-                                                   <Skull size={24} className="text-red-600" />
-                                                </div>
+                                                   {/* Skull overlay */}
+                                                   <div className="absolute top-3 right-3 opacity-30 group-hover:opacity-60 transition-opacity">
+                                                      <Skull size={24} className="text-red-600" />
+                                                   </div>
 
-                                                {/* Avatar Container */}
-                                                <div className="relative mb-4">
-                                                   <div className="w-28 h-28 mx-auto rounded-[2rem] border-4 border-red-800/50 overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-black relative group-hover:border-red-600/70 transition-all duration-500"
-                                                      style={{
-                                                         boxShadow: '0 0 40px rgba(220, 38, 38, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.8)'
-                                                      }}
-                                                   >
-                                                      {/* Red overlay */}
-                                                      <div className="absolute inset-0 bg-gradient-to-br from-red-600/40 via-red-900/30 to-black/50 z-10 mix-blend-multiply" />
+                                                   {/* Avatar Container */}
+                                                   <div className="relative mb-4">
+                                                      <div className="w-28 h-28 mx-auto rounded-[2rem] border-4 border-red-800/50 overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-black relative group-hover:border-red-600/70 transition-all duration-500"
+                                                         style={{
+                                                            boxShadow: '0 0 40px rgba(220, 38, 38, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.8)'
+                                                         }}
+                                                      >
+                                                         {/* Red overlay */}
+                                                         <div className="absolute inset-0 bg-gradient-to-br from-red-600/40 via-red-900/30 to-black/50 z-10 mix-blend-multiply" />
 
-                                                      {p.avatar ? (
-                                                         <img
-                                                            src={p.avatar}
-                                                            className="w-full h-full object-cover grayscale brightness-75 contrast-125 group-hover:grayscale-0 group-hover:brightness-90 transition-all duration-500 relative z-0"
-                                                            alt={p.username}
-                                                         />
-                                                      ) : (
-                                                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
-                                                            <User size={48} className="text-red-800/40" />
-                                                         </div>
-                                                      )}
+                                                         {p.avatar ? (
+                                                            <img
+                                                               src={p.avatar}
+                                                               className="w-full h-full object-cover grayscale brightness-75 contrast-125 group-hover:grayscale-0 group-hover:brightness-90 transition-all duration-500 relative z-0"
+                                                               alt={p.username}
+                                                            />
+                                                         ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+                                                               <User size={48} className="text-red-800/40" />
+                                                            </div>
+                                                         )}
 
-                                                      {/* X mark overlay */}
-                                                      <div className="absolute inset-0 flex items-center justify-center z-20">
-                                                         <div className="w-16 h-16 rounded-full bg-red-600/90 border-4 border-white/90 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                                                            <span className="text-white text-4xl font-black leading-none">✕</span>
+                                                         {/* X mark overlay */}
+                                                         <div className="absolute inset-0 flex items-center justify-center z-20">
+                                                            <div className="w-16 h-16 rounded-full bg-red-600/90 border-4 border-white/90 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                                                               <span className="text-white text-4xl font-black leading-none">✕</span>
+                                                            </div>
                                                          </div>
                                                       </div>
                                                    </div>
-                                                </div>
 
-                                                {/* Username */}
-                                                <div className="relative text-center space-y-1">
-                                                   <div className="text-sm font-black text-red-400 uppercase tracking-wider group-hover:text-red-300 transition-colors">
-                                                      {p.username}
+                                                   {/* Username */}
+                                                   <div className="relative text-center space-y-1">
+                                                      <div className="text-sm font-black text-red-400 uppercase tracking-wider group-hover:text-red-300 transition-colors">
+                                                         {p.username}
+                                                      </div>
+                                                      <div className="text-[10px] font-bold text-red-800/60 uppercase tracking-[0.2em]">
+                                                         ELIMINATED
+                                                      </div>
                                                    </div>
-                                                   <div className="text-[10px] font-bold text-red-800/60 uppercase tracking-[0.2em]">
-                                                      ELIMINATED
-                                                   </div>
-                                                </div>
 
-                                                {/* Bottom accent line */}
-                                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-1 bg-gradient-to-r from-transparent via-red-600/50 to-transparent rounded-full" />
+                                                   {/* Bottom accent line */}
+                                                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-1 bg-gradient-to-r from-transparent via-red-600/50 to-transparent rounded-full" />
+                                                </div>
                                              </div>
-                                          </div>
-                                       ))}
-                                    </div>
-                                 ) : (
-                                    <div className="py-20 text-center">
-                                       <Ghost size={80} className="text-red-900/20 mx-auto mb-6" />
-                                       <span className="text-red-900/40 font-black text-3xl italic">لم يتم استبعاد أحد!</span>
-                                    </div>
-                                 )}
+                                          ))}
+                                       </div>
+                                    ) : (
+                                       <div className="py-20 text-center">
+                                          <Ghost size={80} className="text-red-900/20 mx-auto mb-6" />
+                                          <span className="text-red-900/40 font-black text-3xl italic">لم يتم استبعاد أحد!</span>
+                                       </div>
+                                    )}
+                                 </div>
                               </div>
                            </div>
-                        </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-6 justify-center animate-in slide-in-from-bottom duration-700 delay-500">
-                           <button
-                              onClick={startMusic}
-                              className="group relative px-20 py-7 bg-gradient-to-r from-green-600 via-green-500 to-green-600 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-green-400/30"
-                              style={{
-                                 boxShadow: '0 0 60px rgba(34, 197, 94, 0.5), 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3)'
-                              }}
-                           >
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                              <span className="relative flex items-center gap-3">
-                                 <FastForward size={32} className="animate-pulse" />
-                                 إعادة الجولة
-                              </span>
-                           </button>
-                           <button
-                              onClick={resetGame}
-                              className="group relative px-20 py-7 bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-red-400/30"
-                              style={{
-                                 boxShadow: '0 0 60px rgba(239, 68, 68, 0.5), 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3)'
-                              }}
-                           >
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                              <span className="relative flex items-center gap-3">
-                                 <Settings size={32} className="animate-spin-slow" />
-                                 الإعدادات
-                              </span>
-                           </button>
+                           {/* Action Buttons */}
+                           <div className="flex gap-6 justify-center animate-in slide-in-from-bottom duration-700 delay-500">
+                              <button
+                                 onClick={startMusic}
+                                 className="group relative px-20 py-7 bg-gradient-to-r from-green-600 via-green-500 to-green-600 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-green-400/30"
+                                 style={{
+                                    boxShadow: '0 0 60px rgba(34, 197, 94, 0.5), 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3)'
+                                 }}
+                              >
+                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                                 <span className="relative flex items-center gap-3">
+                                    <FastForward size={32} className="animate-pulse" />
+                                    إعادة الجولة
+                                 </span>
+                              </button>
+                              <button
+                                 onClick={resetGame}
+                                 className="group relative px-20 py-7 bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-red-400/30"
+                                 style={{
+                                    boxShadow: '0 0 60px rgba(239, 68, 68, 0.5), 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3)'
+                                 }}
+                              >
+                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                                 <span className="relative flex items-center gap-3">
+                                    <Settings size={32} className="animate-spin-slow" />
+                                    الإعدادات
+                                 </span>
+                              </button>
+                           </div>
                         </div>
                      </div>
-                  </div>
-               )}
-            </div>
+                  )
+               }
+            </div >
          )}
 
          {/* --- PHASE: FINALE - PREMIUM REDESIGN --- */}
-         {phase === 'FINALE' && winner && (
-            <div className="w-full h-full flex flex-col items-center justify-center p-10 animate-in zoom-in duration-1000 relative overflow-hidden">
-               {/* Premium Gradient Background */}
-               <div className="absolute inset-0 bg-gradient-to-br from-amber-950 via-black to-yellow-950" />
+         {
+            phase === 'FINALE' && winner && (
+               <div className="w-full h-full flex flex-col items-center justify-center p-10 animate-in zoom-in duration-1000 relative overflow-hidden">
+                  {/* Premium Gradient Background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-950 via-black to-yellow-950" />
 
-               {/* Radial Glow */}
-               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-yellow-600/30 via-amber-900/20 to-transparent opacity-80" />
+                  {/* Radial Glow */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-yellow-600/30 via-amber-900/20 to-transparent opacity-80" />
 
-               {/* Gold Particles */}
-               {Array.from({ length: 50 }).map((_, i) => (
-                  <div
-                     key={`gold-particle-${i}`}
-                     className="absolute rounded-full animate-particle"
+                  {/* Gold Particles */}
+                  {Array.from({ length: 50 }).map((_, i) => (
+                     <div
+                        key={`gold-particle-${i}`}
+                        className="absolute rounded-full animate-particle"
+                        style={{
+                           width: `${2 + Math.random() * 8}px`,
+                           height: `${2 + Math.random() * 8}px`,
+                           backgroundColor: i % 4 === 0 ? '#fbbf24' : i % 4 === 1 ? '#f59e0b' : i % 4 === 2 ? '#fcd34d' : '#fef3c7',
+                           left: `${Math.random() * 100}%`,
+                           top: `${Math.random() * 100}%`,
+                           opacity: 0.4 + Math.random() * 0.4,
+                           animationDelay: `${Math.random() * 4}s`,
+                           animationDuration: `${4 + Math.random() * 6}s`,
+                           filter: 'blur(1px)',
+                           boxShadow: '0 0 15px currentColor'
+                        }}
+                     />
+                  ))}
+
+                  {/* Golden Energy Rings */}
+                  <div className="absolute w-[600px] h-[600px] rounded-full opacity-10 animate-pulse-ring"
                      style={{
-                        width: `${2 + Math.random() * 8}px`,
-                        height: `${2 + Math.random() * 8}px`,
-                        backgroundColor: i % 4 === 0 ? '#fbbf24' : i % 4 === 1 ? '#f59e0b' : i % 4 === 2 ? '#fcd34d' : '#fef3c7',
-                        left: `${Math.random() * 100}%`,
-                        top: `${Math.random() * 100}%`,
-                        opacity: 0.4 + Math.random() * 0.4,
-                        animationDelay: `${Math.random() * 4}s`,
-                        animationDuration: `${4 + Math.random() * 6}s`,
-                        filter: 'blur(1px)',
-                        boxShadow: '0 0 15px currentColor'
+                        background: 'radial-gradient(circle, transparent 60%, #fbbf2440 70%, transparent 80%)',
                      }}
                   />
-               ))}
-
-               {/* Golden Energy Rings */}
-               <div className="absolute w-[600px] h-[600px] rounded-full opacity-10 animate-pulse-ring"
-                  style={{
-                     background: 'radial-gradient(circle, transparent 60%, #fbbf2440 70%, transparent 80%)',
-                  }}
-               />
-               <div className="absolute w-[450px] h-[450px] rounded-full opacity-15 animate-pulse-ring"
-                  style={{
-                     background: 'radial-gradient(circle, transparent 65%, #f59e0b50 75%, transparent 85%)',
-                     animationDelay: '1s'
-                  }}
-               />
-
-               {/* Main Content */}
-               <div className="relative z-10 text-center w-full max-w-6xl flex flex-col items-center">
-                  {/* Trophy Icon with Premium Effects */}
-                  <div className="relative mb-8 group animate-in zoom-in duration-1000">
-                     <div className="absolute inset-0 bg-yellow-500/40 blur-[120px] scale-[2] animate-pulse" />
-                     <div className="relative">
-                        <Trophy
-                           size={100}
-                           className="text-yellow-400 drop-shadow-[0_0_60px_rgba(251,191,36,1)] animate-bounce"
-                           strokeWidth={1.5}
-                           fill="url(#goldGradient)"
-                        />
-                        <svg width="0" height="0">
-                           <defs>
-                              <linearGradient id="goldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                 <stop offset="0%" style={{ stopColor: '#fef3c7', stopOpacity: 1 }} />
-                                 <stop offset="50%" style={{ stopColor: '#fbbf24', stopOpacity: 1 }} />
-                                 <stop offset="100%" style={{ stopColor: '#d97706', stopOpacity: 1 }} />
-                              </linearGradient>
-                           </defs>
-                        </svg>
-                     </div>
-
-                     {/* Sparkles around trophy */}
-                     {Array.from({ length: 8 }).map((_, i) => (
-                        <Sparkles
-                           key={`sparkle-${i}`}
-                           size={24}
-                           className="absolute text-yellow-300 animate-pulse"
-                           fill="currentColor"
-                           style={{
-                              top: `${50 + 40 * Math.cos(i * Math.PI / 4)}%`,
-                              left: `${50 + 40 * Math.sin(i * Math.PI / 4)}%`,
-                              animationDelay: `${i * 0.2}s`,
-                              filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 1))'
-                           }}
-                        />
-                     ))}
-                  </div>
-
-                  {/* Winner Title */}
-                  <div className="relative mb-12 animate-in slide-in-from-top duration-1000">
-                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent blur-2xl" />
-                     <div className="relative space-y-4">
-                        <div className="text-yellow-500 font-black text-3xl uppercase tracking-[0.8em] italic animate-pulse drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]">
-                           WINNER SURVIVOR
-                        </div>
-                        <div className="flex items-center justify-center gap-4">
-                           <div className="h-1 w-32 bg-gradient-to-r from-transparent via-yellow-500 to-yellow-500 rounded-full" />
-                           <Sparkles size={28} className="text-yellow-400 animate-spin-slow" fill="currentColor" />
-                           <div className="h-1 w-32 bg-gradient-to-l from-transparent via-yellow-500 to-yellow-500 rounded-full" />
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* Winner Avatar - Premium Card */}
-                  <div className="relative mb-16 group animate-in zoom-in duration-1000 delay-300">
-                     {/* Glow effects */}
-                     <div className="absolute inset-0 bg-yellow-500/30 blur-[150px] scale-[2.5] animate-pulse" />
-                     <div className="absolute inset-0 bg-white/20 blur-[100px] scale-[2] rounded-full" />
-
-                     {/* Main Card */}
-                     <div className="relative">
-                        {/* Rotating rings */}
-                        <div className="absolute -inset-8 border-4 border-dashed border-yellow-500/30 rounded-full animate-rotate-slow" />
-                        <div className="absolute -inset-12 border-4 border-dotted border-amber-500/20 rounded-full animate-rotate-reverse" />
-
-                        {/* Avatar Container */}
-                        <div className="relative w-56 h-56 rounded-[4rem] border-[12px] overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 via-black to-gray-900 transform group-hover:rotate-3 group-hover:scale-105 transition-all duration-700"
-                           style={{
-                              borderImage: 'linear-gradient(135deg, #fef3c7, #fbbf24, #f59e0b, #fbbf24, #fef3c7) 1',
-                              boxShadow: '0 0 100px rgba(251, 191, 36, 0.8), 0 40px 80px rgba(0, 0, 0, 0.8), inset 0 0 60px rgba(251, 191, 36, 0.2)'
-                           }}
-                        >
-                           {/* Shimmer effect */}
-                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-20" />
-
-                           {/* Avatar */}
-                           {winner.avatar ? (
-                              <img
-                                 src={winner.avatar}
-                                 className="w-full h-full object-cover relative z-10 group-hover:scale-110 transition-transform duration-700"
-                                 alt={winner.username}
-                              />
-                           ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
-                                 <User size={140} className="text-yellow-600/40" />
-                              </div>
-                           )}
-
-                           {/* Champion Badge */}
-                           <div className="absolute bottom-0 w-full bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-white font-black py-3 text-lg tracking-[0.5em] italic z-30 border-t-4 border-yellow-300/50 relative overflow-hidden">
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                              <span className="relative flex items-center justify-center gap-3">
-                                 <Trophy size={24} className="animate-bounce" />
-                                 C H A M P I O N
-                                 <Trophy size={24} className="animate-bounce" style={{ animationDelay: '0.2s' }} />
-                              </span>
-                           </div>
-
-                           {/* Corner decorations */}
-                           <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-yellow-400/60 rounded-tr-3xl" />
-                           <div className="absolute bottom-20 left-4 w-16 h-16 border-b-4 border-l-4 border-yellow-400/60 rounded-bl-3xl" />
-                        </div>
-
-                        {/* Floating crowns */}
-                        <div className="absolute -top-6 -right-6 text-6xl animate-bounce">👑</div>
-                        <div className="absolute -top-6 -left-6 text-6xl animate-bounce" style={{ animationDelay: '0.3s' }}>👑</div>
-                     </div>
-                  </div>
-
-                  {/* Winner Username */}
-                  <div className="relative mb-16 animate-in slide-in-from-bottom duration-1000 delay-500">
-                     <div className="absolute inset-0 bg-yellow-500/20 blur-[100px]" />
-                     <h1 className="relative text-[80px] font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 italic tracking-tighter uppercase leading-none"
-                        style={{
-                           WebkitTextStroke: '3px rgba(251, 191, 36, 0.3)',
-                           textShadow: '0 0 100px rgba(251,191,36,0.9), 0 20px 60px rgba(0,0,0,1), 0 0 40px rgba(251,191,36,0.6)'
-                        }}
-                     >
-                        {winner.username}
-                     </h1>
-                     <div className="text-yellow-600/60 font-black text-2xl uppercase tracking-[0.5em] mt-4">
-                        LEGENDARY WINNER
-                     </div>
-                  </div>
-
-                  {/* Stats Cards */}
-                  <div className="grid grid-cols-3 gap-6 mb-12 w-full max-w-4xl animate-in fade-in duration-1000 delay-700">
-                     <div className="bg-gradient-to-br from-yellow-950/60 via-black/60 to-amber-950/60 backdrop-blur-xl p-6 rounded-3xl border-2 border-yellow-600/30 shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform">
-                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:from-yellow-600/10 group-hover:to-transparent transition-all" />
-                        <Trophy size={40} className="text-yellow-500 mx-auto mb-3 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]" />
-                        <div className="text-5xl font-black text-yellow-400 mb-2">500</div>
-                        <div className="text-xs font-bold text-yellow-600/60 uppercase tracking-wider">نقاط</div>
-                     </div>
-                     <div className="bg-gradient-to-br from-yellow-950/60 via-black/60 to-amber-950/60 backdrop-blur-xl p-6 rounded-3xl border-2 border-yellow-600/30 shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform">
-                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:from-yellow-600/10 group-hover:to-transparent transition-all" />
-                        <Target size={40} className="text-yellow-500 mx-auto mb-3 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]" />
-                        <div className="text-5xl font-black text-yellow-400 mb-2">#1</div>
-                        <div className="text-xs font-bold text-yellow-600/60 uppercase tracking-wider">مركز</div>
-                     </div>
-                     <div className="bg-gradient-to-br from-yellow-950/60 via-black/60 to-amber-950/60 backdrop-blur-xl p-6 rounded-3xl border-2 border-yellow-600/30 shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform">
-                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:from-yellow-600/10 group-hover:to-transparent transition-all" />
-                        <Sparkles size={40} className="text-yellow-500 mx-auto mb-3 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]" fill="currentColor" />
-                        <div className="text-5xl font-black text-yellow-400 mb-2">{currentRound}</div>
-                        <div className="text-xs font-bold text-yellow-600/60 uppercase tracking-wider">جولات</div>
-                     </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-8 justify-center animate-in slide-in-from-bottom duration-1000 delay-1000">
-                     <button
-                        onClick={resetGame}
-                        className="group relative px-20 py-7 bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-black font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-yellow-300/50 shadow-2xl"
-                        style={{
-                           boxShadow: '0 0 80px rgba(251, 191, 36, 0.6), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.4)'
-                        }}
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        <span className="relative flex items-center gap-3">
-                           <Play size={32} fill="currentColor" />
-                           إعادة اللعبة
-                        </span>
-                     </button>
-                     <button
-                        onClick={onHome}
-                        className="group relative px-20 py-7 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-gray-600/50 backdrop-blur-xl"
-                        style={{
-                           boxShadow: '0 0 40px rgba(75, 85, 99, 0.5), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.1)'
-                        }}
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        <span className="relative flex items-center gap-3">
-                           <Home size={32} />
-                           الرئيسية
-                        </span>
-                     </button>
-                  </div>
-
-                  {/* Confetti effect (text based) */}
-                  <div className="absolute inset-0 pointer-events-none">
-                     {Array.from({ length: 20 }).map((_, i) => (
-                        <div
-                           key={`confetti-${i}`}
-                           className="absolute text-4xl animate-particle"
-                           style={{
-                              left: `${Math.random() * 100}%`,
-                              top: `-10%`,
-                              animationDelay: `${Math.random() * 2}s`,
-                              animationDuration: `${3 + Math.random() * 3}s`,
-                              opacity: 0.6
-                           }}
-                        >
-                           {['🎉', '🎊', '✨', '⭐', '💫'][i % 5]}
-                        </div>
-                     ))}
-                  </div>
-               </div>
-            </div>
-         )}
-
-         {/* --- PHASE: DRAW (EVERYONE ELIMINATED) - PREMIUM DESIGN --- */}
-         {phase === 'DRAW' && (
-            <div className="w-full h-full flex flex-col items-center justify-center p-10 animate-in zoom-in duration-1000 relative overflow-hidden">
-               {/* Premium Gradient Background */}
-               <div className="absolute inset-0 bg-gradient-to-br from-orange-950 via-black to-gray-950" />
-
-               {/* Radial Glow */}
-               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-600/30 via-gray-900/20 to-transparent opacity-80" />
-
-               {/* Particles */}
-               {Array.from({ length: 40 }).map((_, i) => (
-                  <div
-                     key={`draw-particle-${i}`}
-                     className="absolute rounded-full animate-particle"
+                  <div className="absolute w-[450px] h-[450px] rounded-full opacity-15 animate-pulse-ring"
                      style={{
-                        width: `${2 + Math.random() * 6}px`,
-                        height: `${2 + Math.random() * 6}px`,
-                        backgroundColor: i % 3 === 0 ? '#f97316' : i % 3 === 1 ? '#ea580c' : '#9a3412',
-                        left: `${Math.random() * 100}%`,
-                        top: `${Math.random() * 100}%`,
-                        opacity: 0.3,
-                        animationDelay: `${Math.random() * 4}s`,
-                        animationDuration: `${5 + Math.random() * 8}s`,
-                        filter: 'blur(2px)',
-                        boxShadow: '0 0 10px currentColor'
+                        background: 'radial-gradient(circle, transparent 65%, #f59e0b50 75%, transparent 85%)',
+                        animationDelay: '1s'
                      }}
                   />
-               ))}
 
-               {/* Energy Rings */}
-               <div className="absolute w-[900px] h-[900px] rounded-full opacity-10 animate-pulse-ring"
-                  style={{
-                     background: 'radial-gradient(circle, transparent 60%, #f9731640 70%, transparent 80%)',
-                  }}
-               />
-               <div className="absolute w-[700px] h-[700px] rounded-full opacity-15 animate-pulse-ring"
-                  style={{
-                     background: 'radial-gradient(circle, transparent 65%, #ea580c50 75%, transparent 85%)',
-                     animationDelay: '1.2s'
-                  }}
-               />
-
-               {/* Main Content */}
-               <div className="relative z-10 text-center w-full max-w-5xl flex flex-col items-center">
-                  {/* Icon Container */}
-                  <div className="relative mb-10 group animate-in zoom-in duration-1000">
-                     <div className="absolute inset-0 bg-orange-500/30 blur-[100px] scale-[2] animate-pulse" />
-                     <div className="relative flex items-center justify-center gap-8">
-                        {/* Left Trophy */}
+                  {/* Main Content */}
+                  <div className="relative z-10 text-center w-full max-w-6xl flex flex-col items-center">
+                     {/* Trophy Icon with Premium Effects */}
+                     <div className="relative mb-8 group animate-in zoom-in duration-1000">
+                        <div className="absolute inset-0 bg-yellow-500/40 blur-[120px] scale-[2] animate-pulse" />
                         <div className="relative">
                            <Trophy
-                              size={120}
-                              className="text-orange-400 drop-shadow-[0_0_50px_rgba(249,115,22,1)] animate-pulse"
+                              size={100}
+                              className="text-yellow-400 drop-shadow-[0_0_60px_rgba(251,191,36,1)] animate-bounce"
                               strokeWidth={1.5}
+                              fill="url(#goldGradient)"
                            />
-                           <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-orange-600/90 border-4 border-white/90 flex items-center justify-center shadow-2xl">
-                              <span className="text-white text-2xl font-black leading-none">=</span>
-                           </div>
+                           <svg width="0" height="0">
+                              <defs>
+                                 <linearGradient id="goldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style={{ stopColor: '#fef3c7', stopOpacity: 1 }} />
+                                    <stop offset="50%" style={{ stopColor: '#fbbf24', stopOpacity: 1 }} />
+                                    <stop offset="100%" style={{ stopColor: '#d97706', stopOpacity: 1 }} />
+                                 </linearGradient>
+                              </defs>
+                           </svg>
                         </div>
 
-                        {/* VS Symbol */}
-                        <div className="relative">
-                           <div className="w-28 h-28 rounded-full bg-gradient-to-br from-orange-600 via-orange-500 to-orange-600 border-4 border-white/30 flex items-center justify-center shadow-2xl animate-pulse"
+                        {/* Sparkles around trophy */}
+                        {Array.from({ length: 8 }).map((_, i) => (
+                           <Sparkles
+                              key={`sparkle-${i}`}
+                              size={24}
+                              className="absolute text-yellow-300 animate-pulse"
+                              fill="currentColor"
                               style={{
-                                 boxShadow: '0 0 80px rgba(249, 115, 22, 0.6), 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(249, 115, 22, 0.2)'
+                                 top: `${50 + 40 * Math.cos(i * Math.PI / 4)}%`,
+                                 left: `${50 + 40 * Math.sin(i * Math.PI / 4)}%`,
+                                 animationDelay: `${i * 0.2}s`,
+                                 filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 1))'
+                              }}
+                           />
+                        ))}
+                     </div>
+
+                     {/* Winner Title */}
+                     <div className="relative mb-12 animate-in slide-in-from-top duration-1000">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent blur-2xl" />
+                        <div className="relative space-y-4">
+                           <div className="text-yellow-500 font-black text-3xl uppercase tracking-[0.8em] italic animate-pulse drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]">
+                              WINNER SURVIVOR
+                           </div>
+                           <div className="flex items-center justify-center gap-4">
+                              <div className="h-1 w-32 bg-gradient-to-r from-transparent via-yellow-500 to-yellow-500 rounded-full" />
+                              <Sparkles size={28} className="text-yellow-400 animate-spin-slow" fill="currentColor" />
+                              <div className="h-1 w-32 bg-gradient-to-l from-transparent via-yellow-500 to-yellow-500 rounded-full" />
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Winner Avatar - Premium Card */}
+                     <div className="relative mb-16 group animate-in zoom-in duration-1000 delay-300">
+                        {/* Glow effects */}
+                        <div className="absolute inset-0 bg-yellow-500/30 blur-[150px] scale-[2.5] animate-pulse" />
+                        <div className="absolute inset-0 bg-white/20 blur-[100px] scale-[2] rounded-full" />
+
+                        {/* Main Card */}
+                        <div className="relative">
+                           {/* Rotating rings */}
+                           <div className="absolute -inset-8 border-4 border-dashed border-yellow-500/30 rounded-full animate-rotate-slow" />
+                           <div className="absolute -inset-12 border-4 border-dotted border-amber-500/20 rounded-full animate-rotate-reverse" />
+
+                           {/* Avatar Container */}
+                           <div className="relative w-56 h-56 rounded-[4rem] border-[12px] overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 via-black to-gray-900 transform group-hover:rotate-3 group-hover:scale-105 transition-all duration-700"
+                              style={{
+                                 borderImage: 'linear-gradient(135deg, #fef3c7, #fbbf24, #f59e0b, #fbbf24, #fef3c7) 1',
+                                 boxShadow: '0 0 100px rgba(251, 191, 36, 0.8), 0 40px 80px rgba(0, 0, 0, 0.8), inset 0 0 60px rgba(251, 191, 36, 0.2)'
                               }}
                            >
-                              <span className="text-white text-5xl font-black italic">VS</span>
-                           </div>
-                           {/* Sparkles around VS */}
-                           {Array.from({ length: 6 }).map((_, i) => (
-                              <Zap
-                                 key={`vs-spark-${i}`}
-                                 size={20}
-                                 className="absolute text-orange-300 animate-pulse"
-                                 fill="currentColor"
-                                 style={{
-                                    top: `${50 + 45 * Math.cos(i * Math.PI / 3)}%`,
-                                    left: `${50 + 45 * Math.sin(i * Math.PI / 3)}%`,
-                                    animationDelay: `${i * 0.15}s`,
-                                    filter: 'drop-shadow(0 0 8px rgba(249, 115, 22, 1))'
-                                 }}
-                              />
-                           ))}
-                        </div>
+                              {/* Shimmer effect */}
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-20" />
 
-                        {/* Right Trophy */}
-                        <div className="relative">
-                           <Trophy
-                              size={120}
-                              className="text-orange-400 drop-shadow-[0_0_50px_rgba(249,115,22,1)] animate-pulse"
-                              strokeWidth={1.5}
-                              style={{ animationDelay: '0.3s' }}
-                           />
-                           <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-orange-600/90 border-4 border-white/90 flex items-center justify-center shadow-2xl">
-                              <span className="text-white text-2xl font-black leading-none">=</span>
+                              {/* Avatar */}
+                              {winner.avatar ? (
+                                 <img
+                                    src={winner.avatar}
+                                    className="w-full h-full object-cover relative z-10 group-hover:scale-110 transition-transform duration-700"
+                                    alt={winner.username}
+                                 />
+                              ) : (
+                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+                                    <User size={140} className="text-yellow-600/40" />
+                                 </div>
+                              )}
+
+                              {/* Champion Badge */}
+                              <div className="absolute bottom-0 w-full bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-white font-black py-3 text-lg tracking-[0.5em] italic z-30 border-t-4 border-yellow-300/50 relative overflow-hidden">
+                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                                 <span className="relative flex items-center justify-center gap-3">
+                                    <Trophy size={24} className="animate-bounce" />
+                                    C H A M P I O N
+                                    <Trophy size={24} className="animate-bounce" style={{ animationDelay: '0.2s' }} />
+                                 </span>
+                              </div>
+
+                              {/* Corner decorations */}
+                              <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-yellow-400/60 rounded-tr-3xl" />
+                              <div className="absolute bottom-20 left-4 w-16 h-16 border-b-4 border-l-4 border-yellow-400/60 rounded-bl-3xl" />
                            </div>
+
+                           {/* Floating crowns */}
+                           <div className="absolute -top-6 -right-6 text-6xl animate-bounce">👑</div>
+                           <div className="absolute -top-6 -left-6 text-6xl animate-bounce" style={{ animationDelay: '0.3s' }}>👑</div>
                         </div>
                      </div>
-                  </div>
 
-                  {/* Title */}
-                  <div className="relative mb-10 animate-in slide-in-from-top duration-1000">
-                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/20 to-transparent blur-2xl" />
-                     <div className="relative space-y-4">
-                        <h1 className="text-[80px] font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-300 via-orange-500 to-orange-700 italic uppercase tracking-tighter leading-none"
+                     {/* Winner Username */}
+                     <div className="relative mb-16 animate-in slide-in-from-bottom duration-1000 delay-500">
+                        <div className="absolute inset-0 bg-yellow-500/20 blur-[100px]" />
+                        <h1 className="relative text-[80px] font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 italic tracking-tighter uppercase leading-none"
                            style={{
-                              WebkitTextStroke: '3px rgba(249, 115, 22, 0.3)',
-                              textShadow: '0 0 100px rgba(249,115,22,0.9), 0 20px 60px rgba(0,0,0,1), 0 0 40px rgba(249,115,22,0.6)'
+                              WebkitTextStroke: '3px rgba(251, 191, 36, 0.3)',
+                              textShadow: '0 0 100px rgba(251,191,36,0.9), 0 20px 60px rgba(0,0,0,1), 0 0 40px rgba(251,191,36,0.6)'
                            }}
                         >
-                           تعادل!
+                           {winner.username}
                         </h1>
-                        <div className="text-orange-500/70 font-black text-2xl uppercase tracking-[0.5em] animate-pulse">
-                           NO ONE SURVIVED
-                        </div>
-                        <div className="flex items-center justify-center gap-4 mt-6">
-                           <div className="h-1 w-32 bg-gradient-to-r from-transparent via-orange-500 to-orange-500 rounded-full" />
-                           <Ghost size={32} className="text-orange-400 animate-bounce" />
-                           <div className="h-1 w-32 bg-gradient-to-l from-transparent via-orange-500 to-orange-500 rounded-full" />
+                        <div className="text-yellow-600/60 font-black text-2xl uppercase tracking-[0.5em] mt-4">
+                           LEGENDARY WINNER
                         </div>
                      </div>
-                  </div>
 
-                  {/* Message Box */}
-                  <div className="relative mb-8 w-full max-w-xl animate-in fade-in duration-1000 delay-300 scale-90">
-                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-950/30 to-transparent blur-xl" />
-                     <div className="relative bg-black/60 backdrop-blur-2xl border-2 rounded-[3rem] p-8 shadow-2xl overflow-hidden"
-                        style={{
-                           borderImage: 'linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(234, 88, 12, 0.5), rgba(249, 115, 22, 0.3)) 1',
-                           boxShadow: '0 0 60px rgba(249, 115, 22, 0.3), inset 0 0 80px rgba(0, 0, 0, 0.5)'
-                        }}
-                     >
-                        {/* Decorative Corner Elements */}
-                        <div className="absolute top-4 right-4 w-20 h-20 border-t-4 border-r-4 border-orange-600/30 rounded-tr-3xl" />
-                        <div className="absolute bottom-4 left-4 w-20 h-20 border-b-4 border-l-4 border-orange-600/30 rounded-bl-3xl" />
-
-                        <div className="space-y-4 text-center">
-                           <div className="flex items-center justify-center gap-4 mb-6">
-                              <Skull size={40} className="text-orange-500" />
-                              <div className="text-6xl">💀</div>
-                              <Skull size={40} className="text-orange-500" />
-                           </div>
-                           <p className="text-2xl font-black text-orange-400 leading-relaxed">
-                              لم يتمكن أي لاعب من الجلوس على الكراسي!
-                           </p>
-                           <p className="text-xl font-bold text-orange-600/60 leading-relaxed">
-                              تم إقصاء جميع المتسابقين في نفس الوقت
-                           </p>
-                           <div className="flex items-center justify-center gap-3 pt-4">
-                              <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
-                              <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" style={{ animationDelay: '0.2s' }} />
-                              <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" style={{ animationDelay: '0.4s' }} />
-                           </div>
+                     {/* Stats Cards */}
+                     <div className="grid grid-cols-3 gap-6 mb-12 w-full max-w-4xl animate-in fade-in duration-1000 delay-700">
+                        <div className="bg-gradient-to-br from-yellow-950/60 via-black/60 to-amber-950/60 backdrop-blur-xl p-6 rounded-3xl border-2 border-yellow-600/30 shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform">
+                           <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:from-yellow-600/10 group-hover:to-transparent transition-all" />
+                           <Trophy size={40} className="text-yellow-500 mx-auto mb-3 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]" />
+                           <div className="text-5xl font-black text-yellow-400 mb-2">500</div>
+                           <div className="text-xs font-bold text-yellow-600/60 uppercase tracking-wider">نقاط</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-yellow-950/60 via-black/60 to-amber-950/60 backdrop-blur-xl p-6 rounded-3xl border-2 border-yellow-600/30 shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform">
+                           <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:from-yellow-600/10 group-hover:to-transparent transition-all" />
+                           <Target size={40} className="text-yellow-500 mx-auto mb-3 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]" />
+                           <div className="text-5xl font-black text-yellow-400 mb-2">#1</div>
+                           <div className="text-xs font-bold text-yellow-600/60 uppercase tracking-wider">مركز</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-yellow-950/60 via-black/60 to-amber-950/60 backdrop-blur-xl p-6 rounded-3xl border-2 border-yellow-600/30 shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform">
+                           <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:from-yellow-600/10 group-hover:to-transparent transition-all" />
+                           <Sparkles size={40} className="text-yellow-500 mx-auto mb-3 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]" fill="currentColor" />
+                           <div className="text-5xl font-black text-yellow-400 mb-2">{currentRound}</div>
+                           <div className="text-xs font-bold text-yellow-600/60 uppercase tracking-wider">جولات</div>
                         </div>
                      </div>
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-8 justify-center animate-in slide-in-from-bottom duration-1000 delay-500">
-                     <button
-                        onClick={resetGame}
-                        className="group relative px-20 py-7 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-orange-300/50 shadow-2xl"
-                        style={{
-                           boxShadow: '0 0 80px rgba(249, 115, 22, 0.6), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.4)'
-                        }}
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        <span className="relative flex items-center gap-3">
-                           <Play size={32} fill="currentColor" />
-                           إعادة المباراة
-                        </span>
-                     </button>
-                     <button
-                        onClick={() => setPhase('SETUP')}
-                        className="group relative px-20 py-7 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-gray-600/50 backdrop-blur-xl"
-                        style={{
-                           boxShadow: '0 0 40px rgba(75, 85, 99, 0.5), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.1)'
-                        }}
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        <span className="relative flex items-center gap-3">
-                           <Settings size={32} />
-                           الإعدادات
-                        </span>
-                     </button>
-                  </div>
-
-                  {/* Floating Emojis */}
-                  <div className="absolute inset-0 pointer-events-none">
-                     {Array.from({ length: 15 }).map((_, i) => (
-                        <div
-                           key={`emoji-${i}`}
-                           className="absolute text-5xl animate-particle opacity-40"
+                     {/* Action Buttons */}
+                     <div className="flex gap-8 justify-center animate-in slide-in-from-bottom duration-1000 delay-1000">
+                        <button
+                           onClick={resetGame}
+                           className="group relative px-20 py-7 bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-black font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-yellow-300/50 shadow-2xl"
                            style={{
-                              left: `${Math.random() * 100}%`,
-                              top: `${Math.random() * 100}%`,
-                              animationDelay: `${Math.random() * 3}s`,
-                              animationDuration: `${6 + Math.random() * 4}s`,
+                              boxShadow: '0 0 80px rgba(251, 191, 36, 0.6), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.4)'
                            }}
                         >
-                           {['💀', '👻', '⚡', '💥', '🔥'][i % 5]}
-                        </div>
-                     ))}
+                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                           <span className="relative flex items-center gap-3">
+                              <Play size={32} fill="currentColor" />
+                              إعادة اللعبة
+                           </span>
+                        </button>
+                        <button
+                           onClick={onHome}
+                           className="group relative px-20 py-7 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-gray-600/50 backdrop-blur-xl"
+                           style={{
+                              boxShadow: '0 0 40px rgba(75, 85, 99, 0.5), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.1)'
+                           }}
+                        >
+                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                           <span className="relative flex items-center gap-3">
+                              <Home size={32} />
+                              الرئيسية
+                           </span>
+                        </button>
+                     </div>
+
+                     {/* Confetti effect (text based) */}
+                     <div className="absolute inset-0 pointer-events-none">
+                        {Array.from({ length: 20 }).map((_, i) => (
+                           <div
+                              key={`confetti-${i}`}
+                              className="absolute text-4xl animate-particle"
+                              style={{
+                                 left: `${Math.random() * 100}%`,
+                                 top: `-10%`,
+                                 animationDelay: `${Math.random() * 2}s`,
+                                 animationDuration: `${3 + Math.random() * 3}s`,
+                                 opacity: 0.6
+                              }}
+                           >
+                              {['🎉', '🎊', '✨', '⭐', '💫'][i % 5]}
+                           </div>
+                        ))}
+                     </div>
                   </div>
                </div>
-            </div>
-         )}
-      </div>
+            )
+         }
+
+         {/* --- PHASE: DRAW (EVERYONE ELIMINATED) - PREMIUM DESIGN --- */}
+         {
+            phase === 'DRAW' && (
+               <div className="w-full h-full flex flex-col items-center justify-center p-10 animate-in zoom-in duration-1000 relative overflow-hidden">
+                  {/* Premium Gradient Background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-950 via-black to-gray-950" />
+
+                  {/* Radial Glow */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-600/30 via-gray-900/20 to-transparent opacity-80" />
+
+                  {/* Particles */}
+                  {Array.from({ length: 40 }).map((_, i) => (
+                     <div
+                        key={`draw-particle-${i}`}
+                        className="absolute rounded-full animate-particle"
+                        style={{
+                           width: `${2 + Math.random() * 6}px`,
+                           height: `${2 + Math.random() * 6}px`,
+                           backgroundColor: i % 3 === 0 ? '#f97316' : i % 3 === 1 ? '#ea580c' : '#9a3412',
+                           left: `${Math.random() * 100}%`,
+                           top: `${Math.random() * 100}%`,
+                           opacity: 0.3,
+                           animationDelay: `${Math.random() * 4}s`,
+                           animationDuration: `${5 + Math.random() * 8}s`,
+                           filter: 'blur(2px)',
+                           boxShadow: '0 0 10px currentColor'
+                        }}
+                     />
+                  ))}
+
+                  {/* Energy Rings */}
+                  <div className="absolute w-[900px] h-[900px] rounded-full opacity-10 animate-pulse-ring"
+                     style={{
+                        background: 'radial-gradient(circle, transparent 60%, #f9731640 70%, transparent 80%)',
+                     }}
+                  />
+                  <div className="absolute w-[700px] h-[700px] rounded-full opacity-15 animate-pulse-ring"
+                     style={{
+                        background: 'radial-gradient(circle, transparent 65%, #ea580c50 75%, transparent 85%)',
+                        animationDelay: '1.2s'
+                     }}
+                  />
+
+                  {/* Main Content */}
+                  <div className="relative z-10 text-center w-full max-w-5xl flex flex-col items-center">
+                     {/* Icon Container */}
+                     <div className="relative mb-10 group animate-in zoom-in duration-1000">
+                        <div className="absolute inset-0 bg-orange-500/30 blur-[100px] scale-[2] animate-pulse" />
+                        <div className="relative flex items-center justify-center gap-8">
+                           {/* Left Trophy */}
+                           <div className="relative">
+                              <Trophy
+                                 size={120}
+                                 className="text-orange-400 drop-shadow-[0_0_50px_rgba(249,115,22,1)] animate-pulse"
+                                 strokeWidth={1.5}
+                              />
+                              <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-orange-600/90 border-4 border-white/90 flex items-center justify-center shadow-2xl">
+                                 <span className="text-white text-2xl font-black leading-none">=</span>
+                              </div>
+                           </div>
+
+                           {/* VS Symbol */}
+                           <div className="relative">
+                              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-orange-600 via-orange-500 to-orange-600 border-4 border-white/30 flex items-center justify-center shadow-2xl animate-pulse"
+                                 style={{
+                                    boxShadow: '0 0 80px rgba(249, 115, 22, 0.6), 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(249, 115, 22, 0.2)'
+                                 }}
+                              >
+                                 <span className="text-white text-5xl font-black italic">VS</span>
+                              </div>
+                              {/* Sparkles around VS */}
+                              {Array.from({ length: 6 }).map((_, i) => (
+                                 <Zap
+                                    key={`vs-spark-${i}`}
+                                    size={20}
+                                    className="absolute text-orange-300 animate-pulse"
+                                    fill="currentColor"
+                                    style={{
+                                       top: `${50 + 45 * Math.cos(i * Math.PI / 3)}%`,
+                                       left: `${50 + 45 * Math.sin(i * Math.PI / 3)}%`,
+                                       animationDelay: `${i * 0.15}s`,
+                                       filter: 'drop-shadow(0 0 8px rgba(249, 115, 22, 1))'
+                                    }}
+                                 />
+                              ))}
+                           </div>
+
+                           {/* Right Trophy */}
+                           <div className="relative">
+                              <Trophy
+                                 size={120}
+                                 className="text-orange-400 drop-shadow-[0_0_50px_rgba(249,115,22,1)] animate-pulse"
+                                 strokeWidth={1.5}
+                                 style={{ animationDelay: '0.3s' }}
+                              />
+                              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-orange-600/90 border-4 border-white/90 flex items-center justify-center shadow-2xl">
+                                 <span className="text-white text-2xl font-black leading-none">=</span>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Title */}
+                     <div className="relative mb-10 animate-in slide-in-from-top duration-1000">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/20 to-transparent blur-2xl" />
+                        <div className="relative space-y-4">
+                           <h1 className="text-[80px] font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-300 via-orange-500 to-orange-700 italic uppercase tracking-tighter leading-none"
+                              style={{
+                                 WebkitTextStroke: '3px rgba(249, 115, 22, 0.3)',
+                                 textShadow: '0 0 100px rgba(249,115,22,0.9), 0 20px 60px rgba(0,0,0,1), 0 0 40px rgba(249,115,22,0.6)'
+                              }}
+                           >
+                              تعادل!
+                           </h1>
+                           <div className="text-orange-500/70 font-black text-2xl uppercase tracking-[0.5em] animate-pulse">
+                              NO ONE SURVIVED
+                           </div>
+                           <div className="flex items-center justify-center gap-4 mt-6">
+                              <div className="h-1 w-32 bg-gradient-to-r from-transparent via-orange-500 to-orange-500 rounded-full" />
+                              <Ghost size={32} className="text-orange-400 animate-bounce" />
+                              <div className="h-1 w-32 bg-gradient-to-l from-transparent via-orange-500 to-orange-500 rounded-full" />
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Message Box */}
+                     <div className="relative mb-8 w-full max-w-xl animate-in fade-in duration-1000 delay-300 scale-90">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-950/30 to-transparent blur-xl" />
+                        <div className="relative bg-black/60 backdrop-blur-2xl border-2 rounded-[3rem] p-8 shadow-2xl overflow-hidden"
+                           style={{
+                              borderImage: 'linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(234, 88, 12, 0.5), rgba(249, 115, 22, 0.3)) 1',
+                              boxShadow: '0 0 60px rgba(249, 115, 22, 0.3), inset 0 0 80px rgba(0, 0, 0, 0.5)'
+                           }}
+                        >
+                           {/* Decorative Corner Elements */}
+                           <div className="absolute top-4 right-4 w-20 h-20 border-t-4 border-r-4 border-orange-600/30 rounded-tr-3xl" />
+                           <div className="absolute bottom-4 left-4 w-20 h-20 border-b-4 border-l-4 border-orange-600/30 rounded-bl-3xl" />
+
+                           <div className="space-y-4 text-center">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                                 <Skull size={40} className="text-orange-500" />
+                                 <div className="text-6xl">💀</div>
+                                 <Skull size={40} className="text-orange-500" />
+                              </div>
+                              <p className="text-2xl font-black text-orange-400 leading-relaxed">
+                                 لم يتمكن أي لاعب من الجلوس على الكراسي!
+                              </p>
+                              <p className="text-xl font-bold text-orange-600/60 leading-relaxed">
+                                 تم إقصاء جميع المتسابقين في نفس الوقت
+                              </p>
+                              <div className="flex items-center justify-center gap-3 pt-4">
+                                 <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
+                                 <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                                 <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" style={{ animationDelay: '0.4s' }} />
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Action Buttons */}
+                     <div className="flex gap-8 justify-center animate-in slide-in-from-bottom duration-1000 delay-500">
+                        <button
+                           onClick={resetGame}
+                           className="group relative px-20 py-7 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-orange-300/50 shadow-2xl"
+                           style={{
+                              boxShadow: '0 0 80px rgba(249, 115, 22, 0.6), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.4)'
+                           }}
+                        >
+                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                           <span className="relative flex items-center gap-3">
+                              <Play size={32} fill="currentColor" />
+                              إعادة المباراة
+                           </span>
+                        </button>
+                        <button
+                           onClick={() => setPhase('SETUP')}
+                           className="group relative px-20 py-7 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 text-white font-black text-3xl rounded-[2.5rem] hover:scale-110 active:scale-95 transition-all duration-300 italic overflow-hidden border-2 border-gray-600/50 backdrop-blur-xl"
+                           style={{
+                              boxShadow: '0 0 40px rgba(75, 85, 99, 0.5), 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.1)'
+                           }}
+                        >
+                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                           <span className="relative flex items-center gap-3">
+                              <Settings size={32} />
+                              الإعدادات
+                           </span>
+                        </button>
+                     </div>
+
+                     {/* Floating Emojis */}
+                     <div className="absolute inset-0 pointer-events-none">
+                        {Array.from({ length: 15 }).map((_, i) => (
+                           <div
+                              key={`emoji-${i}`}
+                              className="absolute text-5xl animate-particle opacity-40"
+                              style={{
+                                 left: `${Math.random() * 100}%`,
+                                 top: `${Math.random() * 100}%`,
+                                 animationDelay: `${Math.random() * 3}s`,
+                                 animationDuration: `${6 + Math.random() * 4}s`,
+                              }}
+                           >
+                              {['💀', '👻', '⚡', '💥', '🔥'][i % 5]}
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+            )
+         }
+      </div >
    );
 };
