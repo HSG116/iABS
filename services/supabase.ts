@@ -193,21 +193,35 @@ export const leaderboardService = {
     if (promoError || !promo) return { error: 'كود غير صالح' };
     if (promo.current_uses >= promo.max_uses) return { error: 'انتهت صلاحية الكود' };
 
+    // 1. Update Profile (Wallet/Credits)
     const { data: profile } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle();
 
     if (!profile) {
-      // New user: Insert with initial credits
       const { error: insertError } = await supabase.from('profiles').insert([{
         username,
         credits: promo.reward_amount
       }]);
       if (insertError) return { error: 'فشل إنشاء ملف المستخدم' };
     } else {
-      // Existing user: Update credits
       const { error: updateError } = await supabase.from('profiles').update({
         credits: (profile.credits || 0) + promo.reward_amount
       }).eq('username', username);
       if (updateError) return { error: 'فشل التحديث' };
+    }
+
+    // 2. Update Leaderboard (Score/Points) because user expects to see it in "Legends Arena"
+    const { data: lbEntry } = await supabase.from('leaderboard').select('*').eq('username', username).maybeSingle();
+
+    if (lbEntry) {
+      await supabase.from('leaderboard').update({
+        score: (lbEntry.score || 0) + promo.reward_amount
+      }).eq('id', lbEntry.id);
+    } else {
+      await supabase.from('leaderboard').insert([{
+        username,
+        score: promo.reward_amount,
+        wins: 0
+      }]);
     }
 
     await supabase.from('promo_codes').update({ current_uses: promo.current_uses + 1 }).eq('id', promo.id);
