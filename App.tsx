@@ -105,8 +105,18 @@ const App: React.FC = () => {
   const [isOBSMode, setIsOBSMode] = useState(initialParams.obs);
   const [showOBSModal, setShowOBSModal] = useState(false);
 
-  // Authorization State - bypass for OBS
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(initialParams.obs);
+  // Authorization State - bypass for OBS or check persistence
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(() => {
+    if (initialParams.obs) return true;
+    try {
+      const stored = localStorage.getItem('site_access_granted');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed && parsed.valid;
+      }
+    } catch (e) { }
+    return false;
+  });
 
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
@@ -179,6 +189,19 @@ const App: React.FC = () => {
         loadLeaderboard();
       }, 5000);
       return () => clearInterval(t);
+    }
+
+    // Security Check for Admin Panel
+    if (currentView === 'ADMIN_PANEL') {
+      try {
+        const stored = localStorage.getItem('admin_access_granted');
+        const parsed = stored ? JSON.parse(stored) : null;
+        if (!parsed || !parsed.valid) {
+          setCurrentView('ADMIN_LOGIN');
+        }
+      } catch (e) {
+        setCurrentView('ADMIN_LOGIN');
+      }
     }
   }, [currentView]);
 
