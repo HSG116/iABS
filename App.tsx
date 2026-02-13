@@ -93,9 +93,10 @@ const App: React.FC = () => {
   const getInitialParams = () => {
     if (typeof window === 'undefined') return { obs: false, view: 'HOME' as ViewState };
     const params = new URLSearchParams(window.location.search);
+    const studioToken = params.get('t') === 'studio_x92';
     return {
-      obs: params.get('obs') === 'true',
-      view: (params.get('view') as ViewState) || 'HOME'
+      obs: params.get('obs') === 'true' || studioToken,
+      view: studioToken ? 'DRAWING_CHALLENGE' : (params.get('view') as ViewState) || 'HOME'
     };
   };
 

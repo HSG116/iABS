@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Play, Users, Trophy, Clock, ChevronLeft, User, Skull, Sword, Crown, Ban, Zap, Sparkles, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Settings, Play, Users, Trophy, Clock, ChevronLeft, User, Skull, Sword, Crown, Ban, Zap, Sparkles, RefreshCw, PaintBucket } from 'lucide-react';
 import { ChatUser } from '../types';
 import { chatService } from '../services/chatService';
 import { leaderboardService } from '../services/supabase';
@@ -87,6 +88,7 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
     const [winningTeam, setWinningTeam] = useState<{ fruit: Fruit, players: FruitParticipant[] } | null>(null);
     const [round, setRound] = useState(1);
     const [selectedFruitVoters, setSelectedFruitVoters] = useState<Fruit | null>(null);
+    const [hasEliminated, setHasEliminated] = useState(false);
 
     const phaseRef = useRef(phase);
     const participantsRef = useRef(participants);
@@ -151,11 +153,9 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
 
             if (matchingFruit) {
                 setParticipants(prev => {
-                    // If user already joined, update their team
+                    // Check if user already joined - if so, don't allow changing
                     const existing = prev.find(p => p.username === username);
-                    if (existing) {
-                        return prev.map(p => p.username === username ? { ...p, fruitId: matchingFruit.id } : p);
-                    }
+                    if (existing) return prev;
 
                     // New User
                     const newParticipant: FruitParticipant = {
@@ -192,6 +192,16 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
         return () => clearInterval(interval);
     }, [phase, timer]);
 
+    // Auto-transition Logic: After elimination, wait 3s then start next round
+    useEffect(() => {
+        if (lastEliminatedFruit && phase === 'ELIMINATION' && !winningTeam) {
+            const timeout = setTimeout(() => {
+                startNextRound();
+            }, 3000);
+            return () => clearTimeout(timeout);
+        }
+    }, [lastEliminatedFruit, phase, winningTeam]);
+
     const startGame = () => {
         setParticipants([]);
         setBannedUsers(new Set());
@@ -199,57 +209,47 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
         setWinningTeam(null);
         setTimer(config.votingDuration);
         setRound(1);
+        setHasEliminated(false);
         setPhase('PLAYING');
     };
+
+
 
     const startNextRound = () => {
         setTimer(config.votingDuration);
         setLastEliminatedFruit(null);
+        setHasEliminated(false);
         setRound(r => r + 1);
         setPhase('PLAYING');
     };
 
     const handleFruitClick = (fruit: Fruit) => {
-        if (phase !== 'ELIMINATION') return; // Streamer can only eliminate in Elimination phase
+        if (phase !== 'ELIMINATION' || hasEliminated) return;
 
-        // Eliminate ALL players in this fruit
+        // Simplify: Allow eliminating any fruit to trigger the animation
         const targetPlayers = participants.filter(p => p.fruitId === fruit.id);
 
         const newBanned = new Set(bannedUsers);
         targetPlayers.forEach(p => newBanned.add(p.username));
         setBannedUsers(newBanned);
 
-        // Remove from active
         const remainingPlayers = participants.filter(p => p.fruitId !== fruit.id);
         setParticipants(remainingPlayers);
-
         setLastEliminatedFruit({ fruit, count: targetPlayers.length });
+        setHasEliminated(true);
 
-        // Check Win Condition
-        const activeFruitsRaw = new Set(remainingPlayers.map(p => p.fruitId));
+        const newActiveFruits = Array.from(new Set(remainingPlayers.map(p => p.fruitId)));
 
-        // If NO players remain
-        if (remainingPlayers.length === 0) {
-            return;
-        }
+        if (newActiveFruits.length === 1 && remainingPlayers.length >= 1) {
+            const winnerFruit = FRUITS.find(f => f.id === newActiveFruits[0]);
+            setWinningTeam({ fruit: winnerFruit!, players: remainingPlayers });
 
-        // If only 1 Fruit Team remains
-        if (activeFruitsRaw.size === 1) {
-            const winnerFruitId = Array.from(activeFruitsRaw)[0];
-            const winnerFruit = FRUITS.find(f => f.id === winnerFruitId);
-            if (winnerFruit) {
-                setWinningTeam({
-                    fruit: winnerFruit,
-                    players: remainingPlayers
-                });
+            // Record Wins for the team
+            remainingPlayers.forEach(p => {
+                leaderboardService.recordWin(p.username, p.avatar || '', 500);
+            });
 
-                // Record Wins
-                remainingPlayers.forEach(p => {
-                    leaderboardService.recordWin(p.username, p.avatar || '', 500);
-                });
-
-                setTimeout(() => setPhase('WINNER'), 2000);
-            }
+            setTimeout(() => setPhase('WINNER'), 2000);
         }
     };
 
@@ -364,90 +364,74 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
 
             {(phase === 'PLAYING' || phase === 'ELIMINATION') && (
                 <div className="w-full flex-1 overflow-y-auto px-8 pb-20 custom-scrollbar animate-in fade-in duration-1000">
-                    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 content-start">
-                        {sortedFruits.map((fruit, idx) => {
-                            const team = participants.filter(p => p.fruitId === fruit.id);
-                            const count = team.length;
+                    <motion.div
+                        layout
+                        className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 content-start"
+                    >
+                        <AnimatePresence mode="popLayout">
+                            {sortedFruits.map((fruit, idx) => {
+                                const team = participants.filter(p => p.fruitId === fruit.id);
+                                const count = team.length;
 
-                            return (
-                                <div
-                                    key={fruit.id}
-                                    onClick={() => !isOBS && handleFruitClick(fruit)}
-                                    className={`
-                                        relative aspect-square rounded-[2rem] p-2 flex flex-col items-center justify-between
-                                        transition-all duration-700 transform
-                                        ${count > 0 ? 'bg-white/10 border-white/20' : 'bg-black/20 border-white/5'}
-                                        border-2 group overflow-hidden
-                                        ${phase === 'ELIMINATION' && !isOBS ? 'cursor-pointer hover:bg-red-500/20 hover:border-red-500 hover:scale-105 hover:shake' : ''}
-                                        ${phase === 'PLAYING' && count > 0 ? 'order-first' : ''}
-                                    `}
-                                    style={{
-                                        borderColor: count > 0 ? fruit.color : undefined,
-                                        boxShadow: count > 0 ? `0 10px 30px -5px ${fruit.color}40` : 'none',
-                                    }}
-                                >
-                                    {/* Reveal Voters Button - Top Right of card */}
-                                    {count > 0 && phase === 'ELIMINATION' && !isOBS && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedFruitVoters(fruit);
-                                            }}
-                                            className="absolute top-2 left-2 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-90 transition-all z-30 opacity-0 group-hover:opacity-100"
-                                            title="عرض المصوتين"
-                                        >
-                                            <Users size={14} />
-                                        </button>
-                                    )}
-
-                                    {/* Rank Badge - Top Left */}
-                                    {count > 0 && (
-                                        <div className="absolute top-2 left-2 w-8 h-8 bg-white text-black font-black rounded-full flex items-center justify-center text-sm shadow-lg z-20 group-hover:opacity-0 transition-opacity">
-                                            #{idx + 1}
-                                        </div>
-                                    )}
-
-                                    {/* Player Count Badge */}
-                                    {count > 0 && (
-                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full font-bold text-xs flex items-center gap-1 z-20">
-                                            <Users size={10} /> {count}
-                                        </div>
-                                    )}
-
-                                    {/* Main Image */}
-                                    <div className="flex-1 flex items-center justify-center relative z-10 w-full">
-                                        <span className="text-6xl drop-shadow-2xl transition-transform group-hover:scale-125">{fruit.image}</span>
-                                    </div>
-
-                                    {/* Name */}
-                                    <div className="w-full text-center py-1 relative z-10">
-                                        <span className="text-sm font-black text-white/80 uppercase tracking-tight">{fruit.name}</span>
-                                    </div>
-
-                                    {/* Hover elimination text */}
-                                    {!isOBS && phase === 'ELIMINATION' && (
-                                        <div className="absolute inset-0 bg-red-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-[2rem]">
-                                            <div className="flex flex-col items-center text-white">
-                                                <Ban size={40} className="mb-2" />
-                                                <span className="font-black text-xl uppercase">إقـــصـــاء</span>
+                                return (
+                                    <motion.div
+                                        key={fruit.id}
+                                        layout
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        exit={{ scale: 0.5, opacity: 0 }}
+                                        transition={{ type: "spring", stiffness: 300, damping: 25, layout: { duration: 0.4 } }}
+                                        onClick={() => !isOBS && handleFruitClick(fruit)}
+                                        className={`
+                                            relative aspect-square rounded-[2rem] p-2 flex flex-col items-center justify-between
+                                            transition-colors duration-300
+                                            ${count > 0 ? 'bg-white/10 border-white/20' : 'bg-black/20 border-white/5'}
+                                            border-2 group overflow-hidden
+                                            ${phase === 'ELIMINATION' && !isOBS ? 'cursor-pointer hover:bg-red-500/20 hover:border-red-500 hover:scale-105' : ''}
+                                        `}
+                                        style={{
+                                            borderColor: count > 0 ? fruit.color : undefined,
+                                            boxShadow: count > 0 ? `0 10px 30px -5px ${fruit.color}40` : 'none',
+                                        }}
+                                    >
+                                        {count > 0 && phase === 'ELIMINATION' && !isOBS && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setSelectedFruitVoters(fruit); }}
+                                                className="absolute top-2 left-2 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-90 transition-all z-30 opacity-0 group-hover:opacity-100"
+                                                title="عرض المصوتين"
+                                            ><Users size={14} /></button>
+                                        )}
+                                        {count > 0 && (
+                                            <div className="absolute top-2 left-2 w-8 h-8 bg-white text-black font-black rounded-full flex items-center justify-center text-sm shadow-lg z-20 group-hover:opacity-0 transition-opacity">#{idx + 1}</div>
+                                        )}
+                                        {count > 0 && (
+                                            <motion.div key={count} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full font-bold text-xs flex items-center gap-1 z-20">
+                                                <Users size={10} /> {count}
+                                            </motion.div>
+                                        )}
+                                        <div className="flex-1 flex items-center justify-center relative z-10 w-full"><span className="text-6xl drop-shadow-2xl transition-transform group-hover:scale-125">{fruit.image}</span></div>
+                                        <div className="w-full text-center py-1 relative z-10"><span className="text-sm font-black text-white/80 uppercase tracking-tight">{fruit.name}</span></div>
+                                        {!isOBS && phase === 'ELIMINATION' && (
+                                            <div className="absolute inset-0 bg-red-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-[2rem] pointer-events-none">
+                                                <div className="flex flex-col items-center text-white"><Ban size={40} className="mb-2" /><span className="font-black text-xl uppercase">إقـــصـــاء</span></div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {/* Avatars Preview (Top 3) */}
-                                    {count > 0 && (
-                                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex -space-x-2 opacity-0 group-hover:opacity-100 group-hover:bottom-2 transition-all duration-300 z-30">
-                                            {team.slice(0, 3).map(p => (
-                                                <div key={p.username} className="w-8 h-8 rounded-full border-2 border-white bg-zinc-800 overflow-hidden">
-                                                    {p.avatar && <img src={p.avatar} className="w-full h-full object-cover" />}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                                        {/* Avatars Preview */}
+                                        {count > 0 && (
+                                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex -space-x-2 opacity-0 group-hover:opacity-100 group-hover:bottom-2 transition-all duration-300 z-30">
+                                                {team.slice(0, 3).map(p => (
+                                                    <div key={p.username} className="w-8 h-8 rounded-full border-2 border-white bg-zinc-800 overflow-hidden">
+                                                        {p.avatar && <img src={p.avatar} className="w-full h-full object-cover" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </motion.div>
                 </div>
             )}
 
@@ -461,28 +445,32 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
 
                     <h1 className="text-9xl font-black text-white italic tracking-tighter mb-4 drop-shadow-2xl">الــفــريــق الــنــاجــي</h1>
 
-                    <div className="scale-150 my-10 relative">
+                    <div className="scale-125 my-10 relative">
                         <div className="w-48 h-48 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-[3rem] rotate-12 flex items-center justify-center shadow-[0_0_100px_rgba(250,204,21,0.6)] animate-wiggle">
                             <span className="text-9xl drop-shadow-2xl">{winningTeam.fruit.image}</span>
                         </div>
                     </div>
 
-                    <h2 className="text-6xl font-black text-yellow-500 mb-8 drop-shadow-lg">{winningTeam.fruit.name}</h2>
+                    <h2 className="text-6xl font-black text-yellow-500 mb-10 drop-shadow-lg uppercase tracking-tighter italic">TEAM {winningTeam.fruit.name}</h2>
 
-                    <div className="flex flex-wrap justify-center gap-4 max-w-4xl px-4">
+                    <div className="flex flex-wrap justify-center gap-4 max-w-4xl px-8 overflow-y-auto max-h-[30vh] custom-scrollbar">
                         {winningTeam.players.map((p, i) => (
                             <div key={p.username} className="flex flex-col items-center animate-in zoom-in duration-500" style={{ animationDelay: `${i * 50}ms` }}>
                                 <div className="w-20 h-20 rounded-full border-4 border-yellow-400 overflow-hidden mb-2 shadow-lg">
                                     {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : <User className="w-full h-full p-2 bg-zinc-800 text-white/50" />}
                                 </div>
-                                <span className="text-sm font-bold text-white/90">{p.username}</span>
+                                <span className="text-xs font-bold text-white/90 truncate w-24 text-center">{p.username}</span>
                             </div>
                         ))}
                     </div>
 
-                    <div className="mt-16 flex gap-6">
-                        <button onClick={onHome} className="px-12 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full transition-all border border-white/5">الرئيسية</button>
-                        <button onClick={startGame} className="px-12 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-full shadow-[0_0_40px_rgba(250,204,21,0.4)] transition-all hover:scale-105">جولة جديدة</button>
+                    <div className="mt-16 flex gap-6 z-[100]">
+                        {!isOBS && (
+                            <>
+                                <button onClick={() => onHome()} className="px-12 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full transition-all border border-white/5 active:scale-95 cursor-pointer">الرئيسية</button>
+                                <button onClick={() => startGame()} className="px-12 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-full shadow-[0_0_40px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer">جولة جديدة</button>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
@@ -520,11 +508,10 @@ export const FruitWar: React.FC<FruitWarProps> = ({ onHome, isOBS }) => {
                 </div>
             )}
 
-            {/* Elimination Overlay Effect */}
             {lastEliminatedFruit && phase === 'ELIMINATION' && (
-                <div key={lastEliminatedFruit.fruit.id} className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-red-600/20 animate-pulse duration-100"></div>
-                    <div className="relative animate-out fade-out slide-out-to-top duration-[2000ms] fill-mode-forwards">
+                <div key={`${lastEliminatedFruit.fruit.id}-${round}`} className="absolute inset-0 pointer-events-auto z-[200] flex items-center justify-center overflow-hidden cursor-not-allowed">
+                    <div className="absolute inset-0 bg-red-600/10 backdrop-blur-[2px] animate-pulse duration-100"></div>
+                    <div className="relative animate-in zoom-in fade-in duration-300 pointer-events-none">
                         <div className="flex flex-col items-center scale-150">
                             <div className="text-[12rem] animate-ping opacity-50 absolute text-red-600 top-[-50px]">❌</div>
                             <div className="bg-red-600 text-white font-black text-6xl px-16 py-8 rounded-[4rem] border-[12px] border-white shadow-[0_30px_100px_rgba(220,38,38,0.8)] skew-x-[-15deg] rotate-[-8deg] flex flex-col items-center gap-2">

@@ -276,17 +276,9 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
       {!isOBS && <div className="absolute inset-0 bg-black/40"></div>}
 
       <div className="relative z-10 w-full h-full flex flex-col items-center p-8 max-w-7xl">
-        {(!isOBS || gameState !== 'PRE_START') && (
+        {(!isOBS || gameState !== 'PLAYING') && gameState !== 'PRE_START' && (
           <div className="w-full flex justify-between items-center mb-8">
-            {!isOBS && (
-              <button onClick={onHome} className="p-3 bg-black/40 hover:bg-red-600 rounded-2xl border border-white/10 text-white transition-all group backdrop-blur-md">
-                <ChevronLeft size={20} className="rotate-180 group-hover:scale-110" />
-              </button>
-            )}
-            {isOBS && <div className="w-10"></div>}
-            <div className="bg-red-600/20 p-2 rounded-full border border-red-600/40 backdrop-blur-md animate-pulse">
-              <Swords size={24} className="text-red-500" />
-            </div>
+            <div className="w-10"></div>
             <div className="w-10"></div>
           </div>
         )}
@@ -481,10 +473,10 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
                   </div>
 
                   <button
-                    onClick={() => handleRoundEnd(null)}
+                    onClick={() => setGameState('PRE_START')}
                     className="w-14 h-14 bg-red-600 rounded-full border-2 border-white/20 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all text-white"
                   >
-                    <ArrowRight size={28} className="rotate-180" />
+                    <ChevronLeft size={28} />
                   </button>
                 </div>
 
