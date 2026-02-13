@@ -1198,62 +1198,61 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                                  />
                               </div>
 
-                              {/* Layer 2: Occupied Avatar + Number (The Circle) */}
+                              {/* --- Layer 2: Occupant Avatar (The Circle) --- */}
                               <div className={`
-                                 absolute inset-0 rounded-full overflow-hidden border-2 border-white shadow-[0_0_20px_rgba(34,197,94,0.8)] z-50
-                                 flex flex-col items-center justify-center transition-opacity duration-300 delay-500
-                              `}
+                                  absolute inset-0 rounded-full border-2 border-white shadow-[0_0_20px_rgba(34,197,94,0.6)] z-50
+                                  flex items-center justify-center transition-all duration-300
+                               `}
                                  style={{
-                                    opacity: isOccupied && chair.occupiedBy ? 1 : 0,
+                                    opacity: isOccupied ? 1 : 0,
+                                    scale: isOccupied ? '1' : '0.5',
                                     pointerEvents: 'none',
-                                    backgroundColor: '#27272a' // Default bg behind image
+                                    backgroundColor: '#18181b'
                                  }}
                               >
-                                 {chair.occupiedBy && (() => {
+                                 {isOccupied && chair.occupiedBy && (() => {
                                     const occupant = participants.find(p => p.username === chair.occupiedBy);
                                     return (
-                                       <>
-                                          <div className="absolute inset-0 bg-cover bg-center" style={{
-                                             backgroundImage: occupant?.avatar ? `url(${occupant.avatar})` : 'none'
-                                          }} />
-                                          <div className="absolute inset-0 bg-black/40"></div>
-
-                                          {/* Big Number centered on Avatar */}
-                                          {!config.hideNumbers && (
-                                             <span className="relative z-10 text-white font-black drop-shadow-md text-xl">
-                                                {chair.id}
-                                             </span>
+                                       <div className="relative w-full h-full rounded-full overflow-hidden">
+                                          {occupant?.avatar ? (
+                                             <img src={occupant.avatar} className="w-full h-full object-cover" alt="" />
+                                          ) : (
+                                             <div className="w-full h-full flex items-center justify-center text-white/20 bg-zinc-900">
+                                                <User size={sizes.icon / 1.5} />
+                                             </div>
                                           )}
-                                       </>
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+                                          {/* Chair Badge (Small top-right) */}
+                                          {!config.hideNumbers && (
+                                             <div className="absolute top-0 right-0 bg-black/80 text-white font-black text-[9px] px-1.5 py-0.5 rounded-bl-lg border-b border-l border-white/20 min-w-[18px] text-center">
+                                                {chair.id}
+                                             </div>
+                                          )}
+                                       </div>
                                     );
                                  })()}
                               </div>
 
-                              {/* Layer 3: Player Name (Below the Chair) */}
+                              {/* --- Layer 3: Player Name Bubble --- */}
                               {isOccupied && chair.occupiedBy && (
-                                 <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap z-50 transition-opacity duration-300 delay-500"
-                                    style={{
-                                       opacity: isOccupied ? 1 : 0
-                                    }}
-                                 >
-                                    <div className="flex flex-col items-center">
-                                       {/* Small arrow pointing up? No, cleaner without. */}
-                                       <span className="text-[10px] font-bold text-white bg-black/70 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm shadow-lg">
+                                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+                                    <div className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 shadow-lg whitespace-nowrap">
+                                       <span className="text-[9px] font-black text-white italic tracking-tighter">
                                           {chair.occupiedBy}
                                        </span>
                                     </div>
                                  </div>
                               )}
 
-                              {/* Floating Number (Fades out when occupied) */}
-                              {!config.hideNumbers && phase !== 'MUSIC_ON' && (
+                              {/* --- Floating Number (When Empty) --- */}
+                              {!config.hideNumbers && phase !== 'MUSIC_ON' && !isOccupied && (
                                  <div
-                                    className={`absolute -top-8 px-2 py-0.5 rounded-xl ${sizes.text} font-black italic shadow-2xl z-50 transition-opacity duration-300 delay-500 bg-black/80 border border-white/20 text-white`}
+                                    className={`absolute -top-8 px-2 py-0.5 rounded-xl ${sizes.text} font-black italic shadow-2xl z-40 transition-all duration-300 bg-black/80 border border-white/20 text-white animate-in zoom-in`}
                                     style={{
                                        borderColor: config.selectedMap.borderColor,
                                        color: config.selectedMap.accentColor,
                                        textShadow: '0 5px 15px rgba(0,0,0,0.5)',
-                                       opacity: isOccupied ? 0 : 1
                                     }}
                                  >
                                     {chair.id}
@@ -1300,8 +1299,8 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                               style={{
                                  top: `calc(50% + ${targetY}px + ${!isSeated ? bob : 0}px)`,
                                  left: `calc(50% + ${targetX}px)`,
-                                 transition: phase !== 'MUSIC_ON' ? 'top 0.5s cubic-bezier(0.4, 0, 0.2, 1), left 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in 0.5s, transform 0.3s' : 'none',
-                                 transform: `translate(-50%, -50%) rotate(${!isSeated ? tilt : 0}deg) ${isSeated ? 'scale(0.8)' : 'scale(1)'}`,
+                                 transition: phase !== 'MUSIC_ON' ? 'top 0.4s cubic-bezier(0.4, 0, 0.2, 1), left 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in' : 'none',
+                                 transform: `translate(-50%, -50%) rotate(${!isSeated ? tilt : 0}deg) ${isSeated ? 'scale(0.5)' : 'scale(1)'}`,
                                  filter: phase === 'MUSIC_ON' ? `drop-shadow(0 0 8px ${config.selectedMap.glowColor})` : 'none',
                                  opacity: isSeated ? 0 : 1
                               }}
