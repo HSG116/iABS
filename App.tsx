@@ -220,7 +220,7 @@ const App: React.FC = () => {
 
   const handleGoHome = () => setCurrentView('HOME');
 
-  const PremiumGameButton = ({ title, icon: Icon, onClick, isPrimary = false, isComingSoon = false }: any) => (
+  const PremiumGameButton = ({ title, icon: Icon, onClick, isPrimary = false, isComingSoon = false, hasOBS = false }: any) => (
     <button
       onClick={isComingSoon ? undefined : onClick}
       disabled={isComingSoon}
@@ -233,6 +233,13 @@ const App: React.FC = () => {
     >
       <div className="absolute inset-0 bg-white/30 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000 skew-x-[-35deg] pointer-events-none z-20"></div>
       <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/30 to-transparent pointer-events-none z-10"></div>
+
+      {hasOBS && (
+        <div className="absolute top-0 left-0 z-50 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2 py-1 rounded-br-2xl border-b border-r border-white/20 shadow-lg group-hover:bg-red-600/80 transition-colors">
+          <Video size={10} className="text-white drop-shadow-sm" />
+          <span className="text-[9px] font-black text-white uppercase tracking-tighter">OBS</span>
+        </div>
+      )}
 
       <div className={`relative z-30 flex-shrink-0 transition-transform duration-500 transform group-hover:scale-115 group-hover:rotate-6 flex items-center justify-center ${isPrimary ? 'w-12 h-12' : 'w-10 h-10'} ${isComingSoon ? 'opacity-30' : ''}`}>
         <Icon size={isPrimary ? 40 : 28} color="#FFFFFF" strokeWidth={2.5} className="drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
@@ -523,13 +530,13 @@ const App: React.FC = () => {
                 <PremiumGameButton title="صائد الكنز" icon={Gem} onClick={() => setCurrentView('GRID_HUNT')} />
                 <PremiumGameButton title="تحدي الأكواب" icon={Coffee} onClick={() => setCurrentView('CUP_SHUFFLE')} />
                 <PremiumGameButton title="حرب الألوان" icon={PaintBucket} onClick={() => setCurrentView('TERRITORY_WAR')} />
-                <PremiumGameButton title="صادق أم كذاب" icon={AlertTriangle} isComingSoon={false} onClick={() => setCurrentView('TRUTH_OR_LIE')} />
+                <PremiumGameButton title="صادق أم كذاب" icon={AlertTriangle} isComingSoon={false} onClick={() => setCurrentView('TRUTH_OR_LIE')} hasOBS />
 
-                <PremiumGameButton title="تحدي الرسم" icon={PaintBucket} onClick={() => setCurrentView('DRAWING_CHALLENGE')} />
-                <PremiumGameButton title="حرب الفواكه" icon={Sword} onClick={() => setCurrentView('FRUIT_WAR')} />
-                <PremiumGameButton title="جولة الشعارات" icon={Globe} onClick={() => setCurrentView('LOGO_ROUND')} />
-                <PremiumGameButton title="تخمين الكلمات" icon={Brain} onClick={() => setCurrentView('FORBIDDEN_WORDS')} />
-                <PremiumGameButton title="لعبة التصويت" icon={Vote} onClick={() => setCurrentView('VOTING_GAME')} />
+                <PremiumGameButton title="تحدي الرسم" icon={PaintBucket} onClick={() => setCurrentView('DRAWING_CHALLENGE')} hasOBS />
+                <PremiumGameButton title="حرب الفواكه" icon={Sword} onClick={() => setCurrentView('FRUIT_WAR')} hasOBS />
+                <PremiumGameButton title="جولة الشعارات" icon={Globe} onClick={() => setCurrentView('LOGO_ROUND')} hasOBS />
+                <PremiumGameButton title="تخمين الكلمات" icon={Brain} onClick={() => setCurrentView('FORBIDDEN_WORDS')} hasOBS />
+                <PremiumGameButton title="لعبة التصويت" icon={Vote} onClick={() => setCurrentView('VOTING_GAME')} hasOBS />
               </div>
             </div>
 
