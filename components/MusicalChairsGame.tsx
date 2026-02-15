@@ -1224,7 +1224,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
                                           {/* Chair Badge (Small top-right) */}
-                                          {!config.hideNumbers && (
+                                          {!config.hideNumbers && !isOccupied && (
                                              <div className="absolute top-0 right-0 bg-black/80 text-white font-black text-[9px] px-1.5 py-0.5 rounded-bl-lg border-b border-l border-white/20 min-w-[18px] text-center">
                                                 {chair.id}
                                              </div>
@@ -1234,11 +1234,11 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                                  })()}
                               </div>
 
-                              {/* --- Layer 3: Player Name Bubble --- */}
+                              {/* --- Layer 3: Player Name Square Box --- */}
                               {isOccupied && chair.occupiedBy && (
-                                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 animate-in fade-in slide-in-from-top-2">
-                                    <div className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 shadow-lg whitespace-nowrap">
-                                       <span className="text-[9px] font-black text-white italic tracking-tighter">
+                                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 z-[60] transition-all duration-500 animate-in fade-in slide-in-from-top-4">
+                                    <div className="bg-black/90 backdrop-blur-xl px-3 py-1.5 rounded-md border-2 border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                                       <span className={`${sizes.text} font-black text-white italic tracking-tighter`}>
                                           {chair.occupiedBy}
                                        </span>
                                     </div>
@@ -1329,7 +1329,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                           `}
                                  style={{
                                     color: p.color || '#fff',
-                                    opacity: isSeated ? 0 : 1, // Name disappears immediately/during transition
+                                    opacity: 0, // Names are hidden while walking for a cleaner look
                                  }}
                               >
                                  {p.username}
