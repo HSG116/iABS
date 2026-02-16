@@ -31,38 +31,46 @@ class ChatService {
   async getChatroomId(channelSlug: string): Promise<number | null> {
     const slug = channelSlug.toLowerCase().trim();
 
+    // 1. Check Memory Cache
     if (this.KNOWN_CHATROOM_IDS[slug]) {
-      console.log(`[ChatService] Using known ID for ${slug}: ${this.KNOWN_CHATROOM_IDS[slug]}`);
       return this.KNOWN_CHATROOM_IDS[slug];
     }
 
-    // Try multiple proxy services since some might be blocked or rate-limited
+    // 2. Check Local Storage Cache (Fastest persistent)
+    const cachedId = localStorage.getItem(`kick_chatroom_id_${slug}`);
+    if (cachedId) {
+      console.log(`[ChatService] Using cached ID for ${slug}: ${cachedId}`);
+      return parseInt(cachedId);
+    }
+
+    // 3. Fetch from Proxies
     const proxies = [
+      `https://kick.com/api/v1/channels/${slug}`, // Direct (if CORS allows or via extension)
       `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
       `https://corsproxy.io/?${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
-      `https://proxy.cors.sh/https://kick.com/api/v2/channels/${slug}` // Fallback
+      `https://proxy.cors.sh/https://kick.com/api/v2/channels/${slug}`
     ];
 
     for (const proxyUrl of proxies) {
       try {
-        console.log(`[ChatService] Fetching ID from: ${proxyUrl}`);
         const response = await fetch(proxyUrl);
         if (!response.ok) continue;
 
         const rawData = await response.json();
         const data = proxyUrl.includes('allorigins') ? JSON.parse(rawData.contents) : rawData;
 
-        // Handle different API response structures
-        if (data?.chatroom?.id) {
-          console.log(`[ChatService] ✅ Found Chatroom ID: ${data.chatroom.id}`);
-          return data.chatroom.id;
-        } else if (data?.id) {
-          // Sometimes the channel object itself has the ID in v1 or other endpoints
-          console.log(`[ChatService] ✅ Found Channel ID (using as chatroom): ${data.id}`);
-          return data.id;
+        let foundId = null;
+        if (data?.chatroom?.id) foundId = data.chatroom.id;
+        else if (data?.id) foundId = data.id;
+
+        if (foundId) {
+          console.log(`[ChatService] ✅ Found ID: ${foundId}`);
+          // Cache it for future sessions
+          localStorage.setItem(`kick_chatroom_id_${slug}`, foundId.toString());
+          return foundId;
         }
       } catch (e) {
-        console.warn(`[ChatService] Proxy failed: ${proxyUrl}`, e);
+        console.warn(`[ChatService] Proxy failed: ${proxyUrl}`);
       }
     }
 
@@ -107,10 +115,10 @@ class ChatService {
 
       this.channel = this.pusher.subscribe(`chatrooms.${chatroomId}.v2`);
 
-      // DEBUG: Listen to ALL events to see if we are getting anything at all
-      this.channel.bind_global((eventName: string, data: any) => {
-        console.log(`[ChatService] GLOBAL EVENT: ${eventName}`, data);
-      });
+      // DEBUG: Listen to ALL events (Disabled for performance)
+      // this.channel.bind_global((eventName: string, data: any) => {
+      //   console.log(`[ChatService] GLOBAL EVENT: ${eventName}`, data);
+      // });
 
       this.channel.bind('App\\Events\\ChatMessageEvent', (data: any) => {
         const message: ChatMessage = {
