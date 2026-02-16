@@ -1234,16 +1234,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                                  })()}
                               </div>
 
-                              {/* --- Layer 3: Player Name Square Box --- */}
-                              {isOccupied && chair.occupiedBy && (
-                                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 z-[60] transition-all duration-500 animate-in fade-in slide-in-from-top-4">
-                                    <div className="bg-black/90 backdrop-blur-xl px-3 py-1.5 rounded-md border-2 border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.8)] whitespace-nowrap">
-                                       <span className={`${sizes.text} font-black text-white italic tracking-tighter`}>
-                                          {chair.occupiedBy}
-                                       </span>
-                                    </div>
-                                 </div>
-                              )}
+
 
                               {/* --- Floating Number (When Empty) --- */}
                               {!config.hideNumbers && phase !== 'MUSIC_ON' && !isOccupied && (
