@@ -120,7 +120,7 @@ export const GlobalAnnouncement: React.FC<GlobalAnnouncementProps> = ({ message,
             {/* Right Meta Info */}
             <div className="absolute bottom-10 right-10 flex flex-col items-end opacity-20">
                 <span className="text-xs font-black text-white italic tracking-tighter uppercase">iABS System Access 2.0</span>
-                <span className="text-[8px] font-black text-red-500 uppercase tracking-widest mt-1">Sovereign HUB Operation</span>
+                <span className="text-[8px] font-black text-red-500 uppercase tracking-widest mt-1">iABS Operation</span>
             </div>
         </div>
     );

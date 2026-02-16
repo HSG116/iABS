@@ -6,6 +6,8 @@ import { TYPING_WORDS } from '../constants';
 import { Keyboard as KeyboardIcon, Play, RotateCcw, Trophy, Zap, Timer, LogOut, Home, History, User } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+const GEMINI_API_KEY = "AIzaSyA_8V3V7D-Y9fmVYM3HtK3kIo17XpqQhhM";
+
 interface TypingRaceProps {
    channelConnected: boolean;
    onHome: () => void;
@@ -25,6 +27,7 @@ export const TypingRace: React.FC<TypingRaceProps> = ({ channelConnected, onHome
    const [startTime, setStartTime] = useState(0);
    const [elapsed, setElapsed] = useState(0);
    const [wordHistory, setWordHistory] = useState<string[]>([]);
+   const [isGenerating, setIsGenerating] = useState(false);
 
    const availableIndices = useRef<number[]>([]);
    const wordRef = useRef(currentWord);
@@ -125,20 +128,53 @@ export const TypingRace: React.FC<TypingRaceProps> = ({ channelConnected, onHome
       return cleanup;
    }, [channelConnected, startTime, winner]);
 
-   const startRound = () => {
+   const generateWordWithAI = async (): Promise<string | null> => {
+      try {
+         const prompt = `Generate ONE single difficult Arabic word for a typing race.
+         It should be challenging (uncommon letters, hamzas, etc).
+         Output ONLY the word. No json, no english.`;
+
+         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+               contents: [{ parts: [{ text: prompt }] }]
+            })
+         });
+
+         const data = await response.json();
+         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+         return text ? text.trim() : null;
+      } catch (e) {
+         console.error("Error generating word with AI:", e);
+         return null;
+      }
+   };
+
+   const startRound = async () => {
       if (availableIndices.current.length === 0) resetPool();
       setWinner(null);
       setElapsed(0);
+      setIsGenerating(true);
 
-      let nextIndex = availableIndices.current.pop();
-      if (nextIndex === undefined) {
-         resetPool();
-         nextIndex = availableIndices.current.pop() || 0;
+      // Try AI first
+      let word = await generateWordWithAI();
+
+      // Fallback to static list
+      if (!word || word.length === 0) { // Also check for empty string from AI
+         let nextIndex = availableIndices.current.pop();
+         if (nextIndex === undefined) {
+            resetPool();
+            nextIndex = availableIndices.current.pop() || 0;
+         }
+         word = TYPING_WORDS[nextIndex];
       }
 
-      setCurrentWord(TYPING_WORDS[nextIndex]);
+      setIsGenerating(false);
+      setCurrentWord(word);
       setStartTime(Date.now());
    };
+
 
    return (
       <>
@@ -151,9 +187,18 @@ export const TypingRace: React.FC<TypingRaceProps> = ({ channelConnected, onHome
                   <button onClick={onHome} className="p-2.5 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl transition-all border border-red-500/20"><LogOut size={16} /></button>
                </div>
 
-               <button onClick={startRound} className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white font-black py-5 rounded-[1.5rem] text-sm shadow-[0_10px_30px_rgba(220,38,38,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-t border-white/20 uppercase tracking-widest group">
-                  <Play fill="currentColor" size={20} className={currentWord ? '' : 'animate-pulse'} />
-                  {currentWord ? 'تجاوز الكلمة' : 'ابـدأ الـسـبـاق'}
+               <button onClick={startRound} disabled={isGenerating} className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white font-black py-5 rounded-[1.5rem] text-sm shadow-[0_10px_30px_rgba(220,38,38,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-t border-white/20 uppercase tracking-widest group disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isGenerating ? (
+                     <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        جاري التوليد...
+                     </>
+                  ) : (
+                     <>
+                        <Play fill="currentColor" size={20} className={currentWord ? '' : 'animate-pulse'} />
+                        {currentWord ? 'تجاوز الكلمة' : 'ابـدأ الـسـبـاق'}
+                     </>
+                  )}
                </button>
 
                <div className="grid grid-cols-2 gap-3">

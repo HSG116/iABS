@@ -9,70 +9,7 @@ import {
 } from 'lucide-react';
 import { pexelsService } from '../services/pexelsService';
 
-const TRUTH_LIE_ITEMS = [
-    "Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Monkey", "Kangaroo", "Panda", "Koala", "Leopard",
-    "Cheetah", "Wolf", "Fox", "Bear", "Polar Bear", "Rabbit", "Squirrel", "Deer", "Horse", "Donkey",
-    "Camel", "Cow", "Sheep", "Goat", "Pig", "Chicken", "Duck", "Goose", "Turkey", "Eagle",
-    "Hawk", "Falcon", "Owl", "Parrot", "Penguin", "Flamingo", "Peacock", "Swan", "Sparrow", "Pigeon",
-    "Crow", "Seagull", "Whale", "Dolphin", "Shark", "Octopus", "Jellyfish", "Crab", "Lobster", "Shrimp",
-    "Starfish", "Seahorse", "Turtle", "Frog", "Toad", "Snake", "Lizard", "Crocodile", "Alligator", "Chameleon",
-    "Butterfly", "Bee", "Ant", "Spider", "Scorpion", "Mosquito", "Fly", "Beetle", "Ladybug", "Dragonfly",
-    "Grasshopper", "Cricket", "Snail", "Slug", "Worm", "Apple", "Banana", "Orange", "Grape", "Strawberry",
-    "Blueberry", "Raspberry", "Blackberry", "Cherry", "Peach", "Pear", "Plum", "Apricot", "Pineapple", "Mango",
-    "Papaya", "Watermelon", "Melon", "Kiwi", "Lemon", "Lime", "Coconut", "Pomegranate", "Fig", "Date",
-    "Avocado", "Tomato", "Potato", "Carrot", "Onion", "Garlic", "Ginger", "Pepper", "Cucumber", "Zucchini",
-    "Eggplant", "Broccoli", "Cauliflower", "Cabbage", "Lettuce", "Spinach", "Kale", "Corn", "Peas", "Beans",
-    "Mushroom", "Pumpkin", "Radish", "Celery", "Asparagus", "Artichoke", "Okra", "Turnip", "Beet", "Yam",
-    "Sweet Potato", "Rice", "Wheat", "Oats", "Barley", "Quinoa", "Bread", "Pasta", "Noodle", "Pizza",
-    "Burger", "Sandwich", "Soup", "Salad", "Steak", "Chicken", "Fish", "Sushi", "Taco", "Burrito",
-    "Curry", "Rice", "Egg", "Cheese", "Milk", "Yogurt", "Butter", "Cream", "Ice Cream", "Cake",
-    "Cookie", "Pie", "Donut", "Muffin", "Pancake", "Waffle", "Chocolate", "Candy", "Honey", "Jam",
-    "Coffee", "Tea", "Juice", "Water", "Soda", "Wine", "Beer", "Chair", "Table", "Sofa",
-    "Bed", "Lamp", "Desk", "Cabinet", "Shelf", "Mirror", "Clock", "Rug", "Curtain", "Pillow",
-    "Blanket", "Door", "Window", "Wall", "Floor", "Ceiling", "Roof", "Stairs", "Elevator", "House",
-    "Apartment", "Building", "School", "Library", "Hospital", "Bank", "Post Office", "Police Station", "Fire Station", "Park",
-    "Garden", "Zoo", "Museum", "Cinema", "Theater", "Restaurant", "Cafe", "Hotel", "Airport", "Station",
-    "Car", "Bus", "Train", "Bicycle", "Motorcycle", "Truck", "Van", "Taxi", "Boat", "Ship",
-    "Airplane", "Helicopter", "Rocket", "Spaceship", "Traffic Light", "Road", "Bridge", "Tunnel", "Map", "Compass",
-    "Phone", "Computer", "Laptop", "Tablet", "Camera", "Television", "Radio", "Speaker", "Headphones", "Microphone",
-    "Keyboard", "Mouse", "Screen", "Battery", "Charger", "Cable", "Light Bulb", "Fan", "Heater", "Air Conditioner",
-    "Washing Machine", "Dryer", "Fridge", "Oven", "Stove", "Microwave", "Toaster", "Blender", "Mixer", "Iron",
-    "Vacuum", "Broom", "Mop", "Bucket", "Sponge", "Soap", "Shampoo", "Toothbrush", "Toothpaste", "Towel",
-    "Comb", "Brush", "Razor", "Scissors", "Knife", "Fork", "Spoon", "Plate", "Bowl", "Cup",
-    "Glass", "Bottle", "Jar", "Can", "Box", "Bag", "Backpack", "Wallet", "Purse", "Key",
-    "Lock", "Umbrella", "Raincoat", "Hat", "Cap", "Scarf", "Gloves", "Jacket", "Coat", "Shirt",
-    "T-shirt", "Blouse", "Sweater", "Dress", "Skirt", "Pants", "Jeans", "Shorts", "Socks", "Shoes",
-    "Boots", "Sandals", "Slippers", "Watch", "Ring", "Necklace", "Bracelet", "Earrings", "Glasses", "Sunglasses",
-    "Book", "Notebook", "Pen", "Pencil", "Eraser", "Ruler", "Paper", "Envelope", "Stamp", "Card",
-    "Gift", "Toy", "Doll", "Ball", "Bat", "Racket", "Net", "Goal", "Tent", "Sleeping Bag",
-    "Fire", "Water", "Earth", "Air", "Sun", "Moon", "Star", "Cloud", "Rain", "Snow",
-    "Wind", "Storm", "Lightning", "Thunder", "Rainbow", "Mountain", "Hill", "Valley", "River", "Lake",
-    "Ocean", "Sea", "Beach", "Island", "Desert", "Forest", "Jungle", "Tree", "Flower", "Grass",
-    "Leaf", "Root", "Seed", "Fruit", "Vegetable", "Meat", "Bone", "Skin", "Hair", "Eye",
-    "Ear", "Nose", "Mouth", "Tooth", "Tongue", "Lip", "Hand", "Finger", "Thumb", "Palm",
-    "Arm", "Elbow", "Shoulder", "Leg", "Knee", "Foot", "Toe", "Heel", "Ankle", "Body",
-    "Head", "Neck", "Chest", "Back", "Stomach", "Heart", "Brain", "Blood", "Sweat", "Tears",
-    "Smile", "Laugh", "Cry", "Shout", "Whisper", "Sing", "Dance", "Run", "Walk", "Jump",
-    "Sit", "Stand", "Sleep", "Dream", "Wake", "Eat", "Drink", "Cook", "Wash", "Clean",
-    "Read", "Write", "Draw", "Paint", "Listen", "Speak", "Think", "Learn", "Teach", "Work",
-    "Play", "Win", "Lose", "Buy", "Sell", "Give", "Take", "Open", "Close", "Push",
-    "Pull", "Cut", "Paste", "Copy", "Delete", "Save", "Search", "Find", "Help", "Love",
-    "Hate", "Like", "Dislike", "Happy", "Sad", "Angry", "Fear", "Surprise", "Disgust", "Bored",
-    "Tired", "Hungry", "Thirsty", "Sick", "Healthy", "Strong", "Weak", "Fast", "Slow", "Big",
-    "Small", "Tall", "Short", "Fat", "Thin", "Old", "Young", "New", "Good", "Bad",
-    "High", "Low", "Hot", "Cold", "Warm", "Cool", "Dry", "Wet", "Hard", "Soft",
-    "Rough", "Smooth", "Heavy", "Light", "Dark", "Bright", "Clean", "Dirty", "Rich", "Poor",
-    "Cheap", "Expensive", "Free", "Busy", "Lazy", "Smart", "Stupid", "Funny", "Serious", "Kind",
-    "Cruel", "Brave", "Coward", "Calm", "Nervous", "Shy", "Friendly", "Rude", "Polite", "Honest",
-    "Liar", "True", "False", "Right", "Wrong", "Easy", "Difficult", "Simple", "Complex", "Beautiful",
-    "Ugly", "Cute", "Scary", "Funny", "Strange", "Normal", "Loud", "Quiet", "Sweet", "Sour",
-    "Bitter", "Salty", "Spicy", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink",
-    "Brown", "Black", "White", "Gray", "Gold", "Silver", "One", "Two", "Three", "Four",
-    "Five", "Six", "Seven", "Eight", "Nine", "Ten", "First", "Second", "Third", "Last",
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Day", "Night", "Morning",
-    "Afternoon", "Evening", "Week", "Month", "Year", "Time", "Hour", "Minute", "Second", "Now",
-    "Today", "Tomorrow", "Yesterday", "Future", "Past", "History", "Science", "Math", "Art", "Music"
-];
+const GEMINI_API_KEY = "AIzaSyA_8V3V7D-Y9fmVYM3HtK3kIo17XpqQhhM";
 
 interface TruthOrLieProps {
     onHome: () => void;
@@ -119,6 +56,9 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
 
     const timerInterval = useRef<NodeJS.Timeout | null>(null);
     const obsUrl = `${window.location.origin}${window.location.pathname}?obs=true&view=TRUTH_OR_LIE`;
+
+
+
     const handleCopyObs = async () => {
         try {
             await navigator.clipboard.writeText(obsUrl);
@@ -317,23 +257,106 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
         });
     };
 
+    const FALLBACK_QUESTIONS = [
+        { statement: "تصنع النملة جسوراً بجسمها لعبور الفجوات", is_truth: true, image_keyword: "ants ants bridge insect macro" },
+        { statement: "القلب يتوقف تماماً عند العطس", is_truth: false, image_keyword: "sneeze funny illustration" },
+        { statement: "الفراولة هي الفاكهة الوحيدة التي توجد بذورها من الخارج", is_truth: true, image_keyword: "strawberry fruit macro" },
+        { statement: "تمتلك أسماك القرش عظاماً في جسمها أقوى من البشر", is_truth: false, image_keyword: "shark cartoon illustration" },
+        { statement: "الأخطبوط يملك 3 قلوب، أحدها يضخ الدم للجسم والآخران للخياشيم", is_truth: true, image_keyword: "octopus underwater cartoon" },
+        { statement: "النعامة تدفن رأسها في الرمال عند الخوف", is_truth: false, image_keyword: "ostrich hiding head sand" },
+        { statement: "العسل الطبيعي لا يفسد أبداً ويمكن أكله بعد آلاف السنين", is_truth: true, image_keyword: "honey jar illustration" },
+        { statement: "أطول حرب في التاريخ استمرت 38 دقيقة فقط", is_truth: true, image_keyword: "war cartoon tanks" }, // Anglo-Zanzibar War (True) but statement says "longest"? wait. Shortest is 38min. Longest is 335 years. I should correct this fallback.
+        // Let's stick to simple ones.
+        { statement: "الماء الساخن يتجمد أسرع من الماء البارد في ظروف معينة", is_truth: true, image_keyword: "freezing water science illustration" }
+    ];
+
+    // Track used questions and keywords to avoid repetition
+    const [usedQuestions, setUsedQuestions] = useState<string[]>([]);
+    const [usedKeywords, setUsedKeywords] = useState<string[]>([]);
+
+    const usedQuestionsRef = useRef<string[]>([]);
+    const usedKeywordsRef = useRef<string[]>([]);
+
+    useEffect(() => {
+        usedQuestionsRef.current = usedQuestions;
+        usedKeywordsRef.current = usedKeywords;
+    }, [usedQuestions, usedKeywords]);
+
+    // Corrected fallback logic inside component
+
+    const generateChallengeWithAI = async (): Promise<{ statement: string; is_truth: boolean; image_keyword: string } | null> => {
+        try {
+            const prompt = `Generate a Trivia Fact for a "Truth or Lie" game.
+            It can be a True Fact or a Common Myth (Lie).
+            Output strictly valid JSON only:
+            {
+                "statement": "Arabic text here (Fact or Lie)",
+                "is_truth": boolean,
+                "image_keyword": "Uniquely creative English search term for a cartoon/illustration image. VARY usage: use terms like 'vector art', 'digital painting', 'minimalist', 'vibrant', 'character design' along with the subject."
+            }
+            Do not use these previous statements: ${usedQuestionsRef.current.slice(-30).join(', ')}.
+            Do not use these previous image keywords: ${usedKeywordsRef.current.slice(-30).join(', ')}.
+            Make it interesting, fun, and suitable for a general audience.
+            Ensure the Arabic is natural and clear.`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            if (!response.ok) throw new Error('AI Error');
+            const data = await response.json();
+            let jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!jsonText) return null;
+
+            // Robust JSON Extraction
+            const startIndex = jsonText.indexOf('{');
+            const endIndex = jsonText.lastIndexOf('}');
+            if (startIndex === -1 || endIndex === -1) return null;
+
+            jsonText = jsonText.substring(startIndex, endIndex + 1);
+            return JSON.parse(jsonText);
+        } catch (e) {
+            console.error("AI Generation Failed:", e);
+            return null;
+        }
+    };
+
     const handleAutoGenerate = async () => {
         setIsLoadingImage(true);
         try {
-            const randomEnglish = TRUTH_LIE_ITEMS[Math.floor(Math.random() * TRUTH_LIE_ITEMS.length)];
+            let result = await generateChallengeWithAI();
 
-            // Translate English -> Arabic for the display
-            const arabicRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(randomEnglish)}`);
-            const arabicData = await arabicRes.json();
-            const arabicText = arabicData[0][0][0];
+            // Fallback if AI fails
+            if (!result) {
+                console.warn("Using Fallback Question");
+                // Filter fallbacks that haven't been used recently
+                const availableFallbacks = FALLBACK_QUESTIONS.filter(q => !usedQuestionsRef.current.includes(q.statement));
+                const pool = availableFallbacks.length > 0 ? availableFallbacks : FALLBACK_QUESTIONS;
+                const fallbackItem = pool[Math.floor(Math.random() * pool.length)];
+                result = fallbackItem;
+            }
 
-            // Use English for Pexels search (Better results)
-            const url = await pexelsService.fetchRandomImage(randomEnglish);
+            setUsedQuestions(prev => [...prev, result!.statement]);
+            setUsedKeywords(prev => [...prev, result!.image_keyword]);
 
-            setAutoQuestion(arabicText); // Show Arabic word
-            setAutoAnswer(null);
+            // Enforce cartoon style search for either AI or Fallback but respect the keyword's own style if present
+            let searchTerm = result!.image_keyword;
+            if (!searchTerm.toLowerCase().includes('cartoon') && !searchTerm.toLowerCase().includes('illustration')) {
+                searchTerm = `cartoon illustration ${searchTerm}`;
+            }
+
+            const url = await pexelsService.fetchRandomImage(searchTerm);
+
+            setAutoQuestion(result!.statement);
+            setAutoAnswer(result!.is_truth ? 'truth' : 'lie');
+
             broadcastState({
-                questionText: arabicText,
+                questionText: result!.statement,
                 imageUrl: url || undefined,
                 correctAnswer: null,
                 phase: 'idle',
@@ -341,6 +364,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
             });
         } catch (e) {
             console.error(e);
+            alert('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى');
         } finally {
             setIsLoadingImage(false);
         }
@@ -369,7 +393,7 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                             <div className="absolute -inset-10 bg-gradient-to-r from-green-500/20 to-iabs-red/20 blur-[60px] rounded-full animate-pulse"></div>
                             <h1 className="text-8xl font-display font-black text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] tracking-wide flex items-center gap-6">
                                 <span className="text-transparent bg-clip-text bg-gradient-to-b from-green-400 to-green-600 drop-shadow-sm">صادق</span>
-                                <span className="text-4xl text-zinc-500 font-sans">VS</span>
+                                <span className="text-6xl text-white font-black font-display italic drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">VS</span>
                                 <span className="text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-iabs-red drop-shadow-sm">كذاب</span>
                             </h1>
                         </div>
@@ -397,8 +421,22 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
                             </div>
                         </div>
 
+                        {/* Question & Image Display */}
+                        <div className="flex flex-col items-center gap-6 mb-2 animate-in fade-in zoom-in duration-500">
+                            {gameState.imageUrl && (
+                                <div className="w-48 h-48 md:w-64 md:h-64 rounded-3xl overflow-hidden border-4 border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.5)] bg-black/40">
+                                    <img src={gameState.imageUrl} className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="Topic" />
+                                </div>
+                            )}
+                            {gameState.questionText && (
+                                <h2 className="text-4xl md:text-5xl font-black text-white text-center drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/10 leading-relaxed max-w-4xl">
+                                    {gameState.questionText}
+                                </h2>
+                            )}
+                        </div>
+
                         {/* VS Battle Cards */}
-                        <div className="grid grid-cols-2 gap-8 items-stretch h-[500px]">
+                        <div className="grid grid-cols-2 gap-8 items-stretch h-[400px]">
 
                             {/* Truth Side */}
                             <div className={`

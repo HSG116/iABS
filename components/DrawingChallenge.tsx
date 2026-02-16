@@ -21,6 +21,8 @@ interface GameConfig { joinKeyword: string; maxPlayers: number; roundDuration: n
 type GamePhase = 'SETUP' | 'LOBBY' | 'OBS_CONNECTION' | 'SELECT_WORD' | 'DRAWING' | 'RESULTS' | 'FINALE';
 interface PlayerScore { user: ChatUser; score: number; wins: number; }
 
+const GEMINI_API_KEY = "AIzaSyA_8V3V7D-Y9fmVYM3HtK3kIo17XpqQhhM";
+
 const WORDS_TO_DRAW = [
     'سيارة', 'بيت', 'شجرة', 'شمس', 'قمر', 'بحر', 'كتاب', 'قلم', 'تفاحة', 'موزة',
     'قطة', 'كلب', 'اسد', 'فيل', 'طائرة', 'هاتف', 'كمبيوتر', 'كرسي', 'طاولة', 'خبز',
@@ -65,6 +67,7 @@ export const DrawingChallenge: React.FC<DrawingChallengeProps> = ({ onHome, isOB
     const [suggestedWords, setSuggestedWords] = useState<string[]>([]);
     const [round, setRound] = useState(1);
     const [winner, setWinner] = useState<ChatUser | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Drawing state
     const [activeTool, setActiveTool] = useState<ToolType>('pencil');
@@ -207,12 +210,46 @@ export const DrawingChallenge: React.FC<DrawingChallengeProps> = ({ onHome, isOB
         return () => clearInterval(iv!);
     }, [phase, timer]);
 
-    const prepareNextRound = () => {
-        setSuggestedWords(WORDS_TO_DRAW.sort(() => Math.random() - 0.5).slice(0, 3));
+    const prepareNextRound = async () => {
+        setIsGenerating(true);
         setPhase('SELECT_WORD');
         setWinner(null);
         engineRef.current?.clearLayer(engineRef.current.layers[1]?.id || '');
         engineRef.current?.composite();
+
+        try {
+            const prompt = `Generate 3 distinct, concrete, and easy-to-draw physical objects (nouns) for a Pictionary game in Arabic.
+            Examples: "Lion", "Pizza", "Pyramid", "Bicycle", "Headphones".
+            AVOID abstract concepts, feelings, or verbs.
+            Output STRICTLY valid JSON array of strings: ["ArabicWord1", "ArabicWord2", "ArabicWord3"].`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            if (!response.ok) throw new Error('AI Error');
+            const data = await response.json();
+            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (jsonText) {
+                const words = JSON.parse(jsonText.replace(/```json/g, '').replace(/```/g, '').trim());
+                if (Array.isArray(words) && words.length === 3) {
+                    setSuggestedWords(words);
+                    setIsGenerating(false);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.error("AI Generation Failed", e);
+        }
+
+        // Fallback
+        setSuggestedWords(WORDS_TO_DRAW.sort(() => Math.random() - 0.5).slice(0, 3));
+        setIsGenerating(false);
     };
     const startRound = () => prepareNextRound();
     const selectWord = (w: string) => { setTargetWord(w); setTimer(config.roundDuration); setPhase('DRAWING'); };
@@ -657,8 +694,42 @@ export const DrawingChallenge: React.FC<DrawingChallengeProps> = ({ onHome, isOB
         </div>
     );
 
+    const SelectPhase = () => (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-[#0d0d12] text-right select-none" dir="rtl">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#201044_0%,transparent_70%)] opacity-30" />
+            <div className="z-10 w-full max-w-5xl flex flex-col items-center animate-in zoom-in duration-500">
+                <h2 className="text-6xl font-black text-white mb-12 italic drop-shadow-2xl">اخـتـر الـتـحـدي</h2>
+
+                {isGenerating ? (
+                    <div className="flex flex-col items-center gap-6">
+                        <Loader2 className="animate-spin text-violet-500" size={64} />
+                        <p className="text-white/40 text-xl font-bold animate-pulse">جاري استحضار الأفكار...</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full px-8">
+                        {suggestedWords.map((word, i) => (
+                            <button
+                                key={i}
+                                onClick={() => selectWord(word)}
+                                className="group relative h-64 bg-white/5 hover:bg-violet-600/20 rounded-[2.5rem] border border-white/10 hover:border-violet-500/50 transition-all hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-6 overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-violet-600/0 to-violet-600/0 group-hover:from-violet-600/10 group-hover:to-indigo-600/10 transition-all" />
+                                <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg border border-white/5">
+                                    <span className="text-3xl font-black text-white/20 group-hover:text-white transition-colors">{i + 1}</span>
+                                </div>
+                                <span className="text-3xl font-black text-white italic z-10 group-hover:text-violet-300 transition-colors drop-shadow-md">{word}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+                <p className="mt-12 text-white/20 font-bold text-sm uppercase tracking-widest">اختر كلمة للبدء في الرسم</p>
+            </div>
+        </div>
+    );
+
     if (phase === 'SETUP') return <SetupPhase />;
     if (phase === 'LOBBY') return <LobbyPhase />;
+    if (phase === 'SELECT_WORD') return <SelectPhase />;
     if (phase === 'OBS_CONNECTION') return <OBSConnectionPhase />;
     if (phase === 'RESULTS') return <ResultPhase />;
     if (isOBS) {

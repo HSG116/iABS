@@ -32,6 +32,8 @@ interface GuessStat {
     lastUser: string;
 }
 
+const GEMINI_API_KEY = "AIzaSyA_8V3V7D-Y9fmVYM3HtK3kIo17XpqQhhM";
+
 const CHALLENGES: ForbiddenChallenge[] = [
     { target: 'مطر', forbidden: ['غيمة', 'شتاء', 'مياه', 'سحاب'] },
     { target: 'كرة قدم', forbidden: ['لاعب', 'هدف', 'ملعب', 'رياضة'] },
@@ -591,6 +593,7 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     const [roundWinner, setRoundWinner] = useState<ChatUser | null>(null);
     const [hasShownWarning, setHasShownWarning] = useState(false);
     const hasShownWarningRef = useRef(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Inject custom CSS
     const customStyles = `
@@ -694,16 +697,56 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
     }, [phase, participants, scores, timer, currentRound, currentChallenge, roundWinner, guessStats, closestGuess, suggestedChallenges, isOBS]);
 
 
-    const prepareNextChallenge = () => {
-        const shuffled = [...CHALLENGES].sort(() => Math.random() - 0.5).slice(0, 3);
-        setSuggestedChallenges(shuffled);
-        if (!hasShownWarningRef.current) {
+    const prepareNextChallenge = async () => {
+        setIsGenerating(true);
+        if (hasShownWarningRef.current) {
+            setPhase('SELECT_WORD');
+        } else {
             setPhase('PRE_ROUND');
             setHasShownWarning(true);
             hasShownWarningRef.current = true;
-        } else {
-            setPhase('SELECT_WORD');
         }
+
+        try {
+            const prompt = `Generate 3 "Taboo" game cards in Arabic.
+            Target words must be COMMON nouns (Objects, Animals, Food, Professions).
+            ABSOLUTELY NO Countries, NO Cities, and NO Proper Nouns (names of people/places).
+            Forbidden words must be the 4 most obvious clues for the target.
+            Output STRICTLY valid JSON array:
+            [
+              { "target": "Word", "forbidden": ["Clue1", "Clue2", "Clue3", "Clue4"] }
+            ]
+            Ensure Arabic is natural.`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            if (!response.ok) throw new Error('AI Error');
+            const data = await response.json();
+            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (jsonText) {
+                const aiChallenges = JSON.parse(jsonText.replace(/```json/g, '').replace(/```/g, '').trim());
+                if (Array.isArray(aiChallenges) && aiChallenges.length === 3) {
+                    setSuggestedChallenges(aiChallenges);
+                    setIsGenerating(false);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.error("AI Generation Failed", e);
+        }
+
+        // Fallback
+        const shuffled = [...CHALLENGES].sort(() => Math.random() - 0.5).slice(0, 3);
+        setSuggestedChallenges(shuffled);
+        setIsGenerating(false);
     };
 
     const confirmSafeToSelect = () => {
@@ -1234,18 +1277,26 @@ export const ForbiddenWords: React.FC<ForbiddenWordsProps> = ({ onHome, isOBS })
             {phase === 'SELECT_WORD' && (
                 <div className="w-full h-full flex flex-col items-center justify-center p-10 animate-in zoom-in duration-500">
                     <h2 className="text-6xl font-black text-white mb-16 italic tracking-tighter">اخـتـر الـتـحدي الـقادم</h2>
-                    <div className="flex gap-10">
-                        {suggestedChallenges.map((c, i) => (
-                            <button
-                                key={i}
-                                onClick={() => selectChallenge(c)}
-                                className="px-16 py-12 bg-white/5 hover:bg-amber-600 rounded-[4rem] border-2 border-white/10 hover:border-white text-5xl font-black text-white transition-all hover:scale-110 shadow-2xl flex flex-col items-center gap-4"
-                            >
-                                <span>{c.target}</span>
-                                <span className="text-xs text-white/50">{c.forbidden.join(' - ')}</span>
-                            </button>
-                        ))}
-                    </div>
+
+                    {isGenerating ? (
+                        <div className="flex flex-col items-center gap-6">
+                            <Loader2 className="animate-spin text-amber-500" size={64} />
+                            <p className="text-white/40 text-xl font-bold animate-pulse">جاري استحضار التحديات...</p>
+                        </div>
+                    ) : (
+                        <div className="flex gap-10">
+                            {suggestedChallenges.map((c, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => selectChallenge(c)}
+                                    className="px-16 py-12 bg-white/5 hover:bg-amber-600 rounded-[4rem] border-2 border-white/10 hover:border-white text-5xl font-black text-white transition-all hover:scale-110 shadow-2xl flex flex-col items-center gap-4 group"
+                                >
+                                    <span className="group-hover:text-white transition-colors">{c.target}</span>
+                                    <span className="text-xs text-white/50 group-hover:text-white/80">{c.forbidden.join(' - ')}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     <button
                         onClick={copyOBSLink}

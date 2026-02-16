@@ -69,13 +69,23 @@ class ChatService {
     return null;
   }
 
+  private connectionId = 0;
+
   async connect(channelSlug: string = 'iabs') {
     const slug = channelSlug.toLowerCase().trim();
     this.disconnect();
+    const myConnectionId = this.connectionId;
+
     this.notifyStatus(false, false, `جاري البحث عن قناة ${slug}...`);
 
     try {
       let chatroomId = await this.getChatroomId(slug);
+
+      // Check if this connection attempt is still valid
+      if (this.connectionId !== myConnectionId) {
+        console.warn(`[ChatService] Connection attempt ${myConnectionId} aborted (superseded).`);
+        return;
+      }
 
       // If iabs look up fails, log it clearly but don't auto-switch to xeid unless user asked.
       // We will stick to the requested channel to avoid confusion.
@@ -135,12 +145,16 @@ class ChatService {
       });
 
       this.pusher.connection.bind('connected', () => {
+        // Double check validity (though less likely to race here if pusher instance is exclusive)
+        if (this.connectionId !== myConnectionId) return;
+
         console.log("[ChatService] WebSocket Connected!");
         this.isConnected = true;
         this.notifyStatus(true, false, `متصل (ID: ${chatroomId})`);
       });
 
       this.pusher.connection.bind('error', (err: any) => {
+        if (this.connectionId !== myConnectionId) return;
         console.error("[ChatService] Pusher Error:", err);
         this.notifyStatus(false, true, "خطأ في الاتصال بسيرفر الشات");
       });
@@ -150,6 +164,7 @@ class ChatService {
       });
 
     } catch (error: any) {
+      if (this.connectionId !== myConnectionId) return;
       console.error("[ChatService] Fatal Error:", error);
       this.notifyStatus(false, true, error.message);
     }
@@ -208,6 +223,7 @@ class ChatService {
   }
 
   disconnect() {
+    this.connectionId++; // Invalidate pending connections
     if (this.channel) {
       this.channel.unbind_all();
       this.channel.unsubscribe();

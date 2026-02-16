@@ -21,6 +21,11 @@ import { FruitWar } from './components/FruitWar';
 import { LogoRound } from './components/LogoRound';
 import { ForbiddenWords } from './components/ForbiddenWords';
 import { VotingGame } from './components/VotingGame';
+import { TimeBomb } from './components/TimeBomb';
+import { WordBuilder } from './components/WordBuilder';
+import { GlassBridgeV2 } from './components/GlassBridgeV2';
+import { FloorIsLava } from './components/FloorIsLava';
+import { EmojiCode } from './components/EmojiCode';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GlobalAnnouncement } from './components/GlobalAnnouncement';
 import { ViewState } from './types';
@@ -31,7 +36,7 @@ import {
   PaintBucket, Sparkles, ShieldCheck, Zap, Armchair,
   Maximize2, MonitorOff, CheckCircle2, AlertTriangle,
   Crown, Medal, Loader2, RefreshCw, ChevronRight, Video,
-  Sword, Globe, Brain, Vote
+  Sword, Globe, Brain, Vote, Bomb, Type, Footprints, Flame, Smile
 } from 'lucide-react';
 import { chatService } from './services/chatService';
 import { supabase, leaderboardService } from './services/supabase';
@@ -337,6 +342,11 @@ const App: React.FC = () => {
       case 'LOGO_ROUND': return <LogoRound onHome={handleGoHome} isOBS={obsMode} />;
       case 'FORBIDDEN_WORDS': return <ForbiddenWords onHome={handleGoHome} isOBS={obsMode} />;
       case 'VOTING_GAME': return <VotingGame onHome={handleGoHome} isOBS={obsMode} />;
+      case 'TIME_BOMB': return <TimeBomb onHome={handleGoHome} isOBS={obsMode} />;
+      case 'WORD_BUILDER': return <WordBuilder onHome={handleGoHome} isOBS={obsMode} />;
+      case 'GLASS_BRIDGE_V2': return <GlassBridgeV2 onHome={handleGoHome} isOBS={obsMode} />;
+      case 'FLOOR_IS_LAVA': return <FloorIsLava onHome={handleGoHome} isOBS={obsMode} />;
+      case 'EMOJI_CODE': return <EmojiCode onHome={handleGoHome} isOBS={obsMode} />;
 
       case 'LEADERBOARD': return (
         <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto w-full pt-10 px-6 h-full flex flex-col items-center">
@@ -492,10 +502,27 @@ const App: React.FC = () => {
                 <h1 className="text-7xl md:text-[10rem] font-black red-neon-text leading-none italic tracking-tighter select-none drop-shadow-[0_20px_60px_rgba(255,0,0,0.6)]">
                   iABS ARENA
                 </h1>
-                <div className="mt-8 flex items-center justify-center gap-12">
-                  <div className="h-[4px] w-64 bg-gradient-to-l from-transparent via-iabs-red to-transparent"></div>
-                  <span className="text-sm font-black tracking-[2em] text-white/40 uppercase italic">Sovereign HUB</span>
-                  <div className="h-[4px] w-64 bg-gradient-to-r from-transparent via-iabs-red to-transparent"></div>
+                <div className="mt-10 flex flex-col items-center gap-8 animate-in slide-in-from-bottom duration-1000 delay-300">
+                  <div className="h-[1px] w-full max-w-lg bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+
+                  <h2 className="text-2xl md:text-4xl font-black text-white px-4 text-center leading-relaxed drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-wide">
+                    اكبر منصة ألعاب تفاعلية للبثوث المباشرة <br />
+                    <span className="text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.6)]">بالعاب اكثر من 23 لعبة</span>
+                  </h2>
+
+                  <div className="relative bg-zinc-900/80 px-12 py-5 rounded-full border-2 border-white/10 hover:border-violet-500/50 transition-all hover:scale-110 group backdrop-blur-xl shadow-2xl">
+                    <div className="flex items-center gap-6 text-3xl md:text-5xl font-black text-white italic">
+                      <span className="opacity-80">أكبر من منصة</span>
+                      <span className="text-violet-500 relative px-6 inline-block drop-shadow-[0_0_25px_rgba(139,92,246,0.6)] animate-pulse">
+                        جولة
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                          <span className="text-red-600 text-[1.8em] font-black drop-shadow-[0_0_20px_rgba(220,38,38,1)]" style={{ transform: 'rotate(-15deg) translateY(-5%)' }}>X</span>
+                        </div>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-[1px] w-full max-w-lg bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
                 </div>
               </div>
             </div>
@@ -537,6 +564,11 @@ const App: React.FC = () => {
                 <PremiumGameButton title="جولة الشعارات" icon={Globe} onClick={() => setCurrentView('LOGO_ROUND')} hasOBS />
                 <PremiumGameButton title="تخمين الكلمات" icon={Brain} onClick={() => setCurrentView('FORBIDDEN_WORDS')} hasOBS />
                 <PremiumGameButton title="لعبة التصويت" icon={Vote} onClick={() => setCurrentView('VOTING_GAME')} hasOBS />
+                <PremiumGameButton title="القنبلة الموقوتة" icon={Bomb} onClick={() => setCurrentView('TIME_BOMB')} />
+                <PremiumGameButton title="السكرابل السريع" icon={Type} onClick={() => setCurrentView('WORD_BUILDER')} />
+                <PremiumGameButton title="جسر الزجاج" icon={Footprints} onClick={() => setCurrentView('GLASS_BRIDGE_V2')} />
+                <PremiumGameButton title="أرضية الحمم" icon={Flame} onClick={() => setCurrentView('FLOOR_IS_LAVA')} />
+                <PremiumGameButton title="فك الشفرة" icon={Smile} onClick={() => setCurrentView('EMOJI_CODE')} />
               </div>
             </div>
 

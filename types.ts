@@ -45,7 +45,12 @@ export type ViewState =
   | 'ZOMBIE_ESCAPE'
   | 'GLASS_BRIDGE'
   | 'SECRET_AUCTION'
-  | 'WORD_BOMB';
+  | 'WORD_BOMB'
+  | 'TIME_BOMB'
+  | 'WORD_BUILDER'
+  | 'GLASS_BRIDGE_V2'
+  | 'FLOOR_IS_LAVA'
+  | 'EMOJI_CODE';
 
 // Added GameType to fix import error in TournamentManager.tsx
 export type GameType = 'TRIVIA' | 'BLUR' | 'FLAGS' | 'TYPING' | 'CUPS' | 'GRID' | 'WHEEL' | 'PAINT' | 'BATTLE' | 'BOMB' | 'VOTE' | 'DRAW' | 'FRUIT' | 'LOGO' | 'FORBIDDEN' | 'BOSS' | 'ROULETTE' | 'ZOMBIE' | 'BRIDGE' | 'AUCTION';
