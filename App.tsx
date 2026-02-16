@@ -560,8 +560,8 @@ const App: React.FC = () => {
                 <PremiumGameButton title="صادق أم كذاب" icon={AlertTriangle} isComingSoon={false} onClick={() => setCurrentView('TRUTH_OR_LIE')} hasOBS />
 
                 <PremiumGameButton title="تحدي الرسم" icon={PaintBucket} onClick={() => setCurrentView('DRAWING_CHALLENGE')} hasOBS />
-                <PremiumGameButton title="حرب الفواكه" icon={Sword} onClick={() => setCurrentView('FRUIT_WAR')} hasOBS />
-                <PremiumGameButton title="جولة الشعارات" icon={Globe} onClick={() => setCurrentView('LOGO_ROUND')} hasOBS />
+                <PremiumGameButton title="حرب الفواكه" icon={Sword} onClick={() => setCurrentView('FRUIT_WAR')} />
+                <PremiumGameButton title="جولة الشعارات" icon={Globe} onClick={() => setCurrentView('LOGO_ROUND')} />
                 <PremiumGameButton title="تخمين الكلمات" icon={Brain} onClick={() => setCurrentView('FORBIDDEN_WORDS')} hasOBS />
                 <PremiumGameButton title="لعبة التصويت" icon={Vote} onClick={() => setCurrentView('VOTING_GAME')} hasOBS />
                 <PremiumGameButton title="القنبلة الموقوتة" icon={Bomb} onClick={() => setCurrentView('TIME_BOMB')} />

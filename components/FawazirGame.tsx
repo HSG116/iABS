@@ -139,8 +139,15 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
   const normalizeArabic = (text: string) => {
     if (!text) return "";
     return text.trim().toLowerCase()
-      .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي')
-      .replace(/[ًٌٍَُِّْ]/g, '');
+      .replace(/\u0640/g, '') // Remove Tatweel (ـ)
+      .replace(/[أإآٱ]/g, 'ا') // Normalize Alef
+      .replace(/ة/g, 'ه') // Normalize Ta Marbuta
+      .replace(/ى/g, 'ي') // Normalize Alif Maqsura
+      .replace(/ؤ/g, 'و') // Normalize Waw Hamza (optional, but helps)
+      .replace(/ئ/g, 'ي') // Normalize Ya Hamza
+      .replace(/[ًٌٍَُِّْ]/g, '') // Remove Tashkeel
+      .replace(/[^\w\s\u0600-\u06FF]/g, '') // Remove special chars (optional, keeps Arabic & English)
+      .replace(/\s+/g, ' '); // Normalize spaces
   };
 
   useEffect(() => {
@@ -494,6 +501,13 @@ export const FawazirGame: React.FC<FawazirGameProps> = ({ category, onFinish, on
                       <span className="text-2xl md:text-3xl font-black text-white/90 group-hover:text-white transition-colors italic text-center relative z-10">{opt}</span>
                     </div>
                   ))}
+                </div>
+
+                <div className="mt-8 flex justify-center">
+                  <div className="flex items-center gap-3 text-red-400 font-bold bg-black/60 px-6 py-2 rounded-full border border-red-500/30 shadow-lg backdrop-blur-md">
+                    <span className="animate-pulse">⚠️</span>
+                    <span className="tracking-wide">نظام منع السبام: محاولة واحدة فقط لكل لاعب</span>
+                  </div>
                 </div>
 
                 {/* Decorative Elements */}
