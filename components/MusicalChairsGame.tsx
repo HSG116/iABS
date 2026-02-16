@@ -1320,7 +1320,7 @@ export const MusicalChairsGame: React.FC<MusicalChairsGameProps> = ({ onHome, is
                           `}
                                  style={{
                                     color: p.color || '#fff',
-                                    opacity: 0, // Names are hidden while walking for a cleaner look
+                                    opacity: 1, // Show names while walking/choosing
                                  }}
                               >
                                  {p.username}
