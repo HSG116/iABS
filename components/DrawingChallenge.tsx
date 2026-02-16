@@ -103,9 +103,9 @@ export const DrawingChallenge: React.FC<DrawingChallengeProps> = ({ onHome, isOB
         phaseRef.current = phase; configRef.current = config;
         targetWordRef.current = targetWord; participantsRef.current = participants;
         if (broadcastChannel && !isOBS) {
-            broadcastChannel.send({ type: 'broadcast', event: 'state_sync', payload: { phase, timer, targetWord, round, score: scores } });
+            broadcastChannel.send({ type: 'broadcast', event: 'state_sync', payload: { phase, timer, targetWord, round, score: scores, winner } });
         }
-    }, [phase, config, targetWord, participants, timer, scores, round]);
+    }, [phase, config, targetWord, participants, timer, scores, round, winner]);
 
     // Init engine
     useEffect(() => {
@@ -130,7 +130,14 @@ export const DrawingChallenge: React.FC<DrawingChallengeProps> = ({ onHome, isOB
         const channel = supabase.channel('drawing_sync', { config: { broadcast: { self: true } } });
         channel
             .on('broadcast', { event: 'state_sync' }, ({ payload }) => {
-                if (isOBS) { setPhase(payload.phase); setTimer(payload.timer); setTargetWord(payload.targetWord); setRound(payload.round); setScores(payload.score); }
+                if (isOBS) {
+                    setPhase(payload.phase);
+                    setTimer(payload.timer);
+                    setTargetWord(payload.targetWord);
+                    setRound(payload.round);
+                    setScores(payload.score);
+                    setWinner(payload.winner);
+                }
             })
             .on('broadcast', { event: 'canvas_data' }, ({ payload }) => {
                 if (isOBS && canvasRef.current) {
