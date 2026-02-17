@@ -40,16 +40,35 @@ export const SponsorsWidget: React.FC = () => {
     });
     const injected = useRef(false);
 
+    const fixAvatar = async (sp: Sponsor) => {
+        if (!sp.kickUsername || sp.isFixing) return;
+        setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: true } : s));
+        try {
+            const freshAvatar = await chatService.fetchKickAvatar(sp.kickUsername);
+            if (freshAvatar) {
+                await supabase.from('sponsors').update({ avatar_url: freshAvatar }).eq('id', sp.id);
+                setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, avatarUrl: freshAvatar, isFixing: false } : s));
+            } else {
+                setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: false } : s));
+            }
+        } catch (e) {
+            setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: false } : s));
+        }
+    };
+
     // Initial Load & Realtime Sync
     useEffect(() => {
         const load = async () => {
             const { data } = await supabase.from('sponsors').select('*').order('created_at', { ascending: true });
-            if (data) setSponsors(data.map(d => ({
-                id: d.id,
-                name: d.name,
-                kickUsername: d.kick_username,
-                avatarUrl: d.avatar_url
-            })));
+            if (data) {
+                const loadedSponsors = data.map(d => ({
+                    id: d.id,
+                    name: d.name,
+                    kickUsername: d.kick_username,
+                    avatarUrl: d.avatar_url
+                }));
+                setSponsors(loadedSponsors);
+            }
         };
         load();
 
@@ -69,23 +88,16 @@ export const SponsorsWidget: React.FC = () => {
         return () => { supabase.removeChannel(channel); };
     }, []);
 
-    useEffect(() => { localStorage.setItem('iabs_sp_scale', String(scale)); }, [scale]);
-
-    const fixAvatar = async (sp: Sponsor) => {
-        if (!sp.kickUsername || sp.isFixing) return;
-        setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: true } : s));
-        try {
-            const freshAvatar = await chatService.fetchKickAvatar(sp.kickUsername);
-            if (freshAvatar) {
-                await supabase.from('sponsors').update({ avatar_url: freshAvatar }).eq('id', sp.id);
-                setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, avatarUrl: freshAvatar, isFixing: false } : s));
-            } else {
-                setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: false } : s));
+    // AUTO-FIX: watch sponsors and fix those missing avatars immediately
+    useEffect(() => {
+        sponsors.forEach(sp => {
+            if (sp.kickUsername && !sp.avatarUrl && !sp.isFixing) {
+                fixAvatar(sp);
             }
-        } catch (e) {
-            setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: false } : s));
-        }
-    };
+        });
+    }, [sponsors]);
+
+    useEffect(() => { localStorage.setItem('iabs_sp_scale', String(scale)); }, [scale]);
 
     const addSponsor = async () => {
         if (!newName.trim() && !newKick.trim()) return;
