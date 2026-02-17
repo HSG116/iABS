@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Plus, X, Trash2, Loader2, Star, Minus, ExternalLink } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 interface Sponsor {
     id: string;
     name: string;
     kickUsername: string;
     avatarUrl: string;
-    isLoading: boolean;
+    isLoading?: boolean;
 }
 
 async function fetchKickAvatar(username: string): Promise<string> {
@@ -46,9 +47,7 @@ const CSS = `
 `;
 
 export const SponsorsWidget: React.FC = () => {
-    const [sponsors, setSponsors] = useState<Sponsor[]>(() => {
-        try { return JSON.parse(localStorage.getItem('iabs_sponsors') || '[]'); } catch { return []; }
-    });
+    const [sponsors, setSponsors] = useState<Sponsor[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [newName, setNewName] = useState('');
     const [newKick, setNewKick] = useState('');
@@ -59,31 +58,63 @@ export const SponsorsWidget: React.FC = () => {
     });
     const injected = useRef(false);
 
+    // Initial Load & Realtime Sync
     useEffect(() => {
-        if (injected.current) return;
-        injected.current = true;
-        const s = document.createElement('style');
-        s.textContent = CSS;
-        document.head.appendChild(s);
-        return () => { document.head.removeChild(s); };
+        const load = async () => {
+            const { data } = await supabase.from('sponsors').select('*').order('created_at', { ascending: true });
+            if (data) setSponsors(data.map(d => ({
+                id: d.id,
+                name: d.name,
+                kickUsername: d.kick_username,
+                avatarUrl: d.avatar_url
+            })));
+        };
+        load();
+
+        const channel = supabase.channel('sp_sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'sponsors' }, () => {
+                load();
+            })
+            .subscribe();
+
+        if (!injected.current) {
+            injected.current = true;
+            const s = document.createElement('style');
+            s.textContent = CSS;
+            document.head.appendChild(s);
+        }
+
+        return () => { supabase.removeChannel(channel); };
     }, []);
 
-    useEffect(() => { localStorage.setItem('iabs_sponsors', JSON.stringify(sponsors)); }, [sponsors]);
     useEffect(() => { localStorage.setItem('iabs_sp_scale', String(scale)); }, [scale]);
 
     const addSponsor = async () => {
         if (!newName.trim() && !newKick.trim()) return;
-        const id = `sp_${Date.now()}`;
-        const sp: Sponsor = { id, name: newName.trim() || newKick.trim(), kickUsername: newKick.trim(), avatarUrl: '', isLoading: true };
         setIsAdding(true);
-        setSponsors(p => [...p, sp]);
-        if (newKick.trim()) {
-            const av = await fetchKickAvatar(newKick.trim());
-            setSponsors(p => p.map(s => s.id === id ? { ...s, avatarUrl: av, isLoading: false } : s));
-        } else {
-            setSponsors(p => p.map(s => s.id === id ? { ...s, isLoading: false } : s));
+
+        try {
+            let avatar = '';
+            if (newKick.trim()) {
+                avatar = await fetchKickAvatar(newKick.trim());
+            }
+
+            await supabase.from('sponsors').insert({
+                name: newName.trim() || newKick.trim(),
+                kick_username: newKick.trim(),
+                avatar_url: avatar
+            });
+
+            setNewName(''); setNewKick(''); setShowForm(false);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsAdding(false);
         }
-        setNewName(''); setNewKick(''); setShowForm(false); setIsAdding(false);
+    };
+
+    const deleteSponsor = async (id: string) => {
+        await supabase.from('sponsors').delete().eq('id', id);
     };
 
     const doMarquee = sponsors.length > 4;
@@ -251,7 +282,7 @@ export const SponsorsWidget: React.FC = () => {
 
                                                 {/* Delete */}
                                                 {i < sponsors.length && (
-                                                    <button onClick={() => setSponsors(p => p.filter(s => s.id !== sp.id))} title="حذف"
+                                                    <button onClick={() => deleteSponsor(sp.id)} title="حذف"
                                                         style={{
                                                             flexShrink: 0, width: '18px', height: '18px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                             background: 'transparent', border: 'none', color: '#c42020', cursor: 'pointer',
