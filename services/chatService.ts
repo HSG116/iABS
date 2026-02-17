@@ -205,27 +205,43 @@ class ChatService {
 
   async fetchKickAvatar(username: string): Promise<string> {
     try {
-      const slug = username.toLowerCase().trim();
+      const slug = username.toLowerCase().trim().replace('@', '');
 
+      // Proxies list in order of reliability
       const proxies = [
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
         `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
         `https://corsproxy.io/?${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`
       ];
 
       for (const proxyUrl of proxies) {
         try {
-          const response = await fetch(proxyUrl);
+          const response = await fetch(proxyUrl, { cache: 'no-store' });
           if (!response.ok) continue;
 
           const rawData = await response.json();
-          const data = proxyUrl.includes('allorigins') ? JSON.parse(rawData.contents) : rawData;
+          let data: any;
 
-          const avatar = data.user?.profile_pic || data.profile_pic || '';
-          if (avatar) return avatar;
-        } catch (e) { }
+          if (proxyUrl.includes('allorigins')) {
+            if (!rawData.contents) continue;
+            data = JSON.parse(rawData.contents);
+          } else {
+            data = rawData;
+          }
+
+          // Check all possible locations for avatar in Kick API v2
+          const avatar = data.user?.profile_pic || data.profile_pic || data.user?.profilepic || '';
+
+          if (avatar && avatar.includes('http')) {
+            console.log(`[ChatService] Successfully fetched avatar for ${slug}`);
+            return avatar;
+          }
+        } catch (e) {
+          console.warn(`[ChatService] Failed with proxy: ${proxyUrl.split('?')[0]}`);
+        }
       }
     } catch (e) {
-      console.warn(`[ChatService] Failed to fetch avatar for ${username}`, e);
+      console.error(`[ChatService] Fatal error fetching avatar for ${username}`, e);
     }
     return '';
   }
