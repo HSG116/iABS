@@ -41,6 +41,10 @@ import {
 import { chatService } from './services/chatService';
 import { supabase, leaderboardService } from './services/supabase';
 import { OBSLinksModal } from './components/OBSLinksModal';
+<<<<<<< HEAD
+=======
+import { SponsorsWidget } from './components/SponsorsWidget';
+>>>>>>> 5b0bad3 (Deploy to main)
 
 // Premium Avatar Component with Auto-Fix for Kick Images
 const ProAvatar = ({ url, username, size = "w-14 h-14" }: { url?: string, username: string, size?: string }) => {
@@ -605,6 +609,10 @@ const App: React.FC = () => {
       onOBSLinks={() => setShowOBSModal(true)}
     >
       <OBSLinksModal isOpen={showOBSModal} onClose={() => setShowOBSModal(false)} />
+<<<<<<< HEAD
+=======
+      <SponsorsWidget />
+>>>>>>> 5b0bad3 (Deploy to main)
       {!isAuthorized && <GlobalPasswordPage onSuccess={() => setIsAuthorized(true)} />}
 
       {/* Only show content if authorized */}
