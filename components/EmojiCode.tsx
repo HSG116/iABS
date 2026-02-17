@@ -542,7 +542,7 @@ export const EmojiCode: React.FC<EmojiCodeProps> = ({ onHome, isOBS }) => {
                         <div className="bg-black/60 backdrop-blur-2xl border-4 border-purple-500/30 rounded-[4rem] p-12 mb-8 shadow-[0_0_80px_rgba(147,51,234,0.3)] relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent"></div>
                             <div className="relative z-10 flex items-center gap-6" style={{ transform: `scale(${emojiScale})`, transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
-                                {Array.from(currentPuzzle.emojis).filter(c => c.trim()).map((emoji, i) => (
+                                {Array.from(currentPuzzle.emojis).filter((c: string) => c.trim()).map((emoji, i) => (
                                     <span key={i} className={`text-[80px] ${showEmojis ? 'emoji-enter' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.15}s` }}>
                                         {emoji}
                                     </span>

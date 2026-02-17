@@ -150,7 +150,8 @@ export const CupShuffle: React.FC<CupShuffleProps> = ({ channelConnected, onHome
     const ns = { ...scores };
     let winnersCount = 0;
 
-    for (const [u, data] of Object.entries(roundVotesRef.current)) {
+    for (const [u, rawData] of Object.entries(roundVotesRef.current)) {
+      const data = rawData as { vote: number, avatar?: string };
       if (data.vote === finalBallPos) {
         ns[u] = (ns[u] || 0) + 1;
         winnersCount++;
