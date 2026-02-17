@@ -2,33 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, Plus, X, Trash2, Loader2, Star, Minus, ExternalLink } from 'lucide-react';
 import { supabase } from '../services/supabase';
 
+import { chatService } from '../services/chatService';
+
 interface Sponsor {
     id: string;
     name: string;
     kickUsername: string;
     avatarUrl: string;
     isLoading?: boolean;
-}
-
-async function fetchKickAvatar(username: string): Promise<string> {
-    try {
-        const slug = username.toLowerCase().trim();
-        const proxies = [
-            `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
-            `https://corsproxy.io/?${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`
-        ];
-        for (const proxyUrl of proxies) {
-            try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) continue;
-                const rawData = await response.json();
-                const data = proxyUrl.includes('allorigins') ? JSON.parse(rawData.contents) : rawData;
-                const avatar = data.user?.profile_pic || data.profile_pic || '';
-                if (avatar) return avatar;
-            } catch (e) { }
-        }
-    } catch (e) { }
-    return '';
+    isFixing?: boolean;
 }
 
 const CSS = `
@@ -89,6 +71,22 @@ export const SponsorsWidget: React.FC = () => {
 
     useEffect(() => { localStorage.setItem('iabs_sp_scale', String(scale)); }, [scale]);
 
+    const fixAvatar = async (sp: Sponsor) => {
+        if (!sp.kickUsername || sp.isFixing) return;
+        setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: true } : s));
+        try {
+            const freshAvatar = await chatService.fetchKickAvatar(sp.kickUsername);
+            if (freshAvatar) {
+                await supabase.from('sponsors').update({ avatar_url: freshAvatar }).eq('id', sp.id);
+                setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, avatarUrl: freshAvatar, isFixing: false } : s));
+            } else {
+                setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: false } : s));
+            }
+        } catch (e) {
+            setSponsors(prev => prev.map(s => s.id === sp.id ? { ...s, isFixing: false } : s));
+        }
+    };
+
     const addSponsor = async () => {
         if (!newName.trim() && !newKick.trim()) return;
         setIsAdding(true);
@@ -96,7 +94,7 @@ export const SponsorsWidget: React.FC = () => {
         try {
             let avatar = '';
             if (newKick.trim()) {
-                avatar = await fetchKickAvatar(newKick.trim());
+                avatar = await chatService.fetchKickAvatar(newKick.trim());
             }
 
             await supabase.from('sponsors').insert({
@@ -242,15 +240,21 @@ export const SponsorsWidget: React.FC = () => {
                                                         border: hov ? '1.5px solid rgba(196,32,32,0.4)' : '1.5px solid rgba(255,255,255,0.06)',
                                                         transition: 'border-color 0.25s',
                                                     }}>
-                                                        {sp.isLoading ? (
+                                                        {sp.isLoading || sp.isFixing ? (
                                                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
                                                                 <Loader2 size={12} className="animate-spin" color="#c42020" />
                                                             </div>
                                                         ) : sp.avatarUrl ? (
-                                                            <img src={sp.avatarUrl} alt={sp.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} referrerPolicy="no-referrer" />
+                                                            <img
+                                                                src={sp.avatarUrl}
+                                                                alt={sp.name}
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                                                referrerPolicy="no-referrer"
+                                                                onError={() => fixAvatar(sp)}
+                                                            />
                                                         ) : (
                                                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#151515' }}>
-                                                                <User size={14} color="#444" />
+                                                                <User size={14} color="#444" onClick={() => fixAvatar(sp)} style={{ cursor: sp.kickUsername ? 'pointer' : 'default' }} />
                                                             </div>
                                                         )}
                                                     </div>
