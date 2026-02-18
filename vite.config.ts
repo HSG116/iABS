@@ -15,9 +15,12 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
     },
     plugins: [react()],
+    envPrefix: ['VITE_', 'EXPO_PUBLIC_'],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.EXPO_PUBLIC_SUPABASE_URL': JSON.stringify(env.EXPO_PUBLIC_SUPABASE_URL),
+      'process.env.EXPO_PUBLIC_SUPABASE_KEY': JSON.stringify(env.EXPO_PUBLIC_SUPABASE_KEY)
     },
     resolve: {
       alias: {
