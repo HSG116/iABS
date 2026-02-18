@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Plus, X, Trash2, Loader2, Star, Minus, ExternalLink } from 'lucide-react';
 import { supabase } from '../services/supabase';
-
 import { chatService } from '../services/chatService';
 
 interface Sponsor {
@@ -139,7 +138,7 @@ export const SponsorsWidget: React.FC = () => {
                 maxHeight: showForm ? '260px' : '0', opacity: showForm ? 1 : 0,
                 transform: showForm ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.95)',
                 transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)', overflow: 'hidden',
-                pointerEvents: showForm ? 'auto' as const : 'none' as const, transformOrigin: 'bottom left',
+                pointerEvents: showForm ? 'auto' : 'none', transformOrigin: 'bottom left',
             }}>
                 <div style={{
                     padding: '14px', minWidth: '260px', direction: 'rtl',
@@ -178,7 +177,6 @@ export const SponsorsWidget: React.FC = () => {
                     background: 'linear-gradient(180deg, #c42020 0%, #8b1515 100%)',
                     clipPath: 'polygon(12% 0%, 100% 0%, 100% 100%, 0% 100%)',
                 }}>
-                    {/* Gleam */}
                     <div style={{ position: 'absolute', top: 0, width: '30%', height: '100%', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)', animation: 'spw-gleam 3s ease-in-out infinite', pointerEvents: 'none' }} />
                     <span style={{ fontSize: '14px', fontWeight: 900, color: '#fff', position: 'relative', zIndex: 1, textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>الرعاة</span>
                     <span style={{ fontSize: '6px', fontWeight: 800, color: 'rgba(255,200,200,0.45)', letterSpacing: '2.5px', position: 'relative', zIndex: 1, marginTop: '1px' }}>SPONSORS</span>
@@ -189,7 +187,7 @@ export const SponsorsWidget: React.FC = () => {
                     position: 'relative', display: 'flex', alignItems: 'center', flex: 1,
                     minWidth: '280px', maxWidth: '70vw',
                     background: 'linear-gradient(180deg, #111 0%, #090909 100%)',
-                    borderTop: '2px solid #c42020',
+                    borderTop: '2px solid #dc2626',
                     borderRadius: '0 12px 0 0',
                     overflow: 'hidden',
                 }}>
@@ -220,11 +218,11 @@ export const SponsorsWidget: React.FC = () => {
                         ) : (
                             <div
                                 style={{
-                                    display: 'flex', alignItems: 'center', gap: '6px', padding: '0 12px', height: '100%',
+                                    display: 'flex', alignItems: 'center', gap: '8px', padding: '0 12px', height: '100%',
                                     ...(doMarquee ? { width: 'max-content', animation: `spw-scroll ${sponsors.length * 5}s linear infinite` } : {}),
                                 }}
-                                onMouseEnter={e => { if (doMarquee) (e.currentTarget).style.animationPlayState = 'paused'; }}
-                                onMouseLeave={e => { if (doMarquee) (e.currentTarget).style.animationPlayState = 'running'; }}
+                                onMouseEnter={e => { if (doMarquee) (e.currentTarget as HTMLElement).style.animationPlayState = 'paused'; }}
+                                onMouseLeave={e => { if (doMarquee) (e.currentTarget as HTMLElement).style.animationPlayState = 'running'; }}
                             >
                                 {cards.map((sp, i) => {
                                     const uid = `${sp.id}_${i}`;
@@ -235,26 +233,34 @@ export const SponsorsWidget: React.FC = () => {
                                                 onMouseEnter={() => setHovId(uid)}
                                                 onMouseLeave={() => setHovId(null)}
                                                 style={{
-                                                    display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
-                                                    padding: '5px 10px', height: '38px', borderRadius: '10px',
-                                                    background: hov ? 'rgba(196,32,32,0.1)' : 'rgba(255,255,255,0.02)',
-                                                    border: hov ? '1px solid rgba(196,32,32,0.25)' : '1px solid rgba(255,255,255,0.04)',
-                                                    transform: hov ? 'translateY(-1px)' : 'none',
-                                                    transition: 'all 0.25s ease',
+                                                    display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0,
+                                                    padding: '6px 14px', height: '42px', borderRadius: '14px',
+                                                    background: hov ? 'rgba(220,38,38,0.15)' : 'rgba(255,255,255,0.03)',
+                                                    border: hov ? '1.5px solid rgba(220,38,38,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                                                    boxShadow: hov ? '0 0 20px rgba(220,38,38,0.2)' : 'none',
+                                                    transform: hov ? 'translateY(-2px) scale(1.02)' : 'none',
+                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                                     cursor: 'default',
-                                                    animation: !doMarquee ? `spw-enter 0.4s ease ${i * 100}ms both` : undefined,
+                                                    position: 'relative',
+                                                    overflow: 'hidden',
+                                                    animation: !doMarquee ? `spw-enter 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${i * 100}ms both` : undefined,
                                                 }}
                                             >
-                                                {/* Avatar */}
+                                                <div style={{
+                                                    position: 'absolute', top: 0, left: 0, width: '2px', height: '100%',
+                                                    background: '#dc2626', opacity: hov ? 1 : 0.3, transition: 'opacity 0.3s'
+                                                }} />
+
                                                 <div style={{ position: 'relative', flexShrink: 0 }}>
                                                     <div style={{
-                                                        width: '28px', height: '28px', borderRadius: '8px', overflow: 'hidden',
-                                                        border: hov ? '1.5px solid rgba(196,32,32,0.4)' : '1.5px solid rgba(255,255,255,0.06)',
-                                                        transition: 'border-color 0.25s',
+                                                        width: '30px', height: '30px', borderRadius: '10px', overflow: 'hidden',
+                                                        border: hov ? '1.5px solid #dc2626' : '1.5px solid rgba(255,255,255,0.1)',
+                                                        boxShadow: hov ? '0 0 10px rgba(220,38,38,0.4)' : 'none',
+                                                        transition: 'all 0.3s',
                                                     }}>
                                                         {sp.isLoading || sp.isFixing ? (
-                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
-                                                                <Loader2 size={12} className="animate-spin" color="#c42020" />
+                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a' }}>
+                                                                <Loader2 size={12} className="animate-spin" color="#dc2626" />
                                                             </div>
                                                         ) : sp.avatarUrl ? (
                                                             <img
@@ -265,52 +271,58 @@ export const SponsorsWidget: React.FC = () => {
                                                                 onError={() => fixAvatar(sp)}
                                                             />
                                                         ) : (
-                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#151515' }}>
-                                                                <User size={14} color="#444" onClick={() => fixAvatar(sp)} style={{ cursor: sp.kickUsername ? 'pointer' : 'default' }} />
+                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
+                                                                <User size={16} color="#444" onClick={() => fixAvatar(sp)} style={{ cursor: sp.kickUsername ? 'pointer' : 'default' }} />
                                                             </div>
                                                         )}
                                                     </div>
                                                     {sp.kickUsername && (
                                                         <div style={{
                                                             position: 'absolute', bottom: '-2px', right: '-2px',
-                                                            width: '12px', height: '12px', borderRadius: '3px',
-                                                            background: '#53fc18', border: '1.5px solid #090909',
+                                                            width: '14px', height: '14px', borderRadius: '4px',
+                                                            background: '#53fc18', border: '2px solid #050505',
                                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                            fontSize: '6px', fontWeight: 900, color: '#000',
+                                                            fontSize: '7px', fontWeight: 900, color: '#000',
+                                                            boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
                                                         }}>K</div>
                                                     )}
                                                 </div>
 
-                                                {/* Name & Link */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '100px' }}>
-                                                    <span style={{
-                                                        fontSize: '11px', fontWeight: 800, color: hov ? '#eee' : '#bbb',
-                                                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                                                        transition: 'color 0.25s', lineHeight: 1.2, direction: 'rtl', textAlign: 'right',
-                                                    }}>{sp.name}</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '120px', gap: '1px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <span style={{
+                                                            fontSize: '12px', fontWeight: 900, color: hov ? '#fff' : '#eee',
+                                                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                                            transition: 'color 0.3s', lineHeight: 1.1, direction: 'rtl', textAlign: 'right',
+                                                            textShadow: hov ? '0 0 8px rgba(255,255,255,0.3)' : 'none'
+                                                        }}>{sp.name}</span>
+                                                        {hov && <Star size={8} fill="#dc2626" color="#dc2626" className="animate-pulse" />}
+                                                    </div>
                                                     {sp.kickUsername && (
                                                         <a href={`https://kick.com/${sp.kickUsername}`} target="_blank" rel="noopener noreferrer"
                                                             onClick={e => e.stopPropagation()}
-                                                            style={{ fontSize: '8px', fontWeight: 600, color: 'rgba(83,252,24,0.35)', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2, marginTop: '1px' }}
+                                                            style={{
+                                                                fontSize: '9px', fontWeight: 700, color: hov ? '#53fc18' : 'rgba(83,252,24,0.4)',
+                                                                textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                                                lineHeight: 1, transition: 'color 0.3s', fontFamily: 'monospace'
+                                                            }}
                                                         >kick.com/{sp.kickUsername}</a>
                                                     )}
                                                 </div>
 
-                                                {/* Delete */}
                                                 {i < sponsors.length && (
                                                     <button onClick={() => deleteSponsor(sp.id)} title="حذف"
                                                         style={{
                                                             flexShrink: 0, width: '18px', height: '18px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                            background: 'transparent', border: 'none', color: '#c42020', cursor: 'pointer',
+                                                            background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer',
                                                             opacity: hov ? 0.8 : 0, transition: 'opacity 0.2s',
                                                         }}
                                                     ><Trash2 size={10} /></button>
                                                 )}
                                             </div>
 
-                                            {/* Separator */}
                                             {i < cards.length - 1 && (
-                                                <div style={{ width: '3px', height: '3px', borderRadius: '50%', flexShrink: 0, background: 'rgba(196,32,32,0.2)' }} />
+                                                <div style={{ width: '3px', height: '3px', borderRadius: '50%', flexShrink: 0, background: 'rgba(220,38,38,0.2)' }} />
                                             )}
                                         </React.Fragment>
                                     );
@@ -319,11 +331,10 @@ export const SponsorsWidget: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Add button */}
                     <button onClick={() => setShowForm(!showForm)}
                         style={{
                             flexShrink: 0, width: '36px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: showForm ? 'rgba(196,32,32,0.12)' : 'transparent',
+                            background: showForm ? 'rgba(220,38,38,0.12)' : 'transparent',
                             border: 'none', borderLeft: '1px solid rgba(255,255,255,0.04)',
                             color: showForm ? '#e88' : 'rgba(255,255,255,0.12)', cursor: 'pointer', transition: 'all 0.25s',
                         }}

@@ -594,6 +594,7 @@ const App: React.FC = () => {
   if (isOBSMode) {
     return (
       <div className="fixed inset-0 bg-transparent overflow-hidden flex items-center justify-center z-[99999]">
+        {(currentView === 'FAWAZIR_GAME' || currentView === 'FAWAZIR_SELECT') && <SponsorsWidget />}
         {renderContent(true)}
       </div>
     );
@@ -606,7 +607,7 @@ const App: React.FC = () => {
       onOBSLinks={() => setShowOBSModal(true)}
     >
       <OBSLinksModal isOpen={showOBSModal} onClose={() => setShowOBSModal(false)} />
-      <SponsorsWidget />
+      {(currentView === 'FAWAZIR_GAME' || currentView === 'FAWAZIR_SELECT') && <SponsorsWidget />}
       {!isAuthorized && <GlobalPasswordPage onSuccess={() => setIsAuthorized(true)} />}
 
       {/* Only show content if authorized */}
