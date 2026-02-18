@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Unlock, Fingerprint, Sparkles } from 'lucide-react';
+import { Lock, Unlock, Fingerprint, Sparkles, UserPlus } from 'lucide-react';
 import { supabase } from '../services/supabase';
+import { UserAuthPage } from './UserAuthPage';
+
+const hashPassword = async (pin: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin + 'iABS_salt_2024');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
 
 interface GlobalPasswordPageProps {
-    onSuccess: () => void;
+    onSuccess: (role: 'admin' | 'user') => void;
     storageKey?: string;
     title?: string;
     subtitle?: string;
@@ -12,7 +21,7 @@ interface GlobalPasswordPageProps {
     configKey?: string;
 }
 
-type AuthStep = 'LOADING' | 'PASSWORD' | 'FINGERPRINT' | 'SCANNING' | 'SUCCESS' | 'WELCOME';
+type AuthStep = 'LOADING' | 'PASSWORD' | 'FINGERPRINT' | 'SCANNING' | 'SUCCESS' | 'WELCOME' | 'USER_AUTH';
 
 export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
     onSuccess,
@@ -28,6 +37,7 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
     const [targetPin, setTargetPin] = useState<string | null>(null);
     const [error, setError] = useState(false);
     const [shake, setShake] = useState(false);
+    const [role, setRole] = useState<'admin' | 'user'>('admin');
     const inputs = useRef<(HTMLInputElement | null)[]>([]);
     const [userType, setUserType] = useState<'NEW' | 'RETURNING'>('NEW');
 
@@ -50,10 +60,10 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
 
             try {
                 if (storedSession) {
-                    // Try parsing as JSON first (new format)
                     const parsed = JSON.parse(storedSession);
                     if (parsed && parsed.token) {
                         storedToken = parsed.token;
+                        if (parsed.role) setRole(parsed.role as 'admin' | 'user');
                         hasStoredSession = true;
                     }
                 } else {
@@ -141,22 +151,55 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
         }
     };
 
-    const verifyPin = (enteredPin: string) => {
+    const verifyPin = async (enteredPin: string) => {
+        // 1. Check admin password first
         if (enteredPin === targetPin) {
-            // Transition to Fingerprint setup
             setError(false);
+            setRole('admin');
             setStep('FINGERPRINT');
-        } else {
-            setError(true);
-            setShake(true);
-            setTimeout(() => {
-                setShake(false);
-                setPin(new Array(pin.length).fill(''));
-                inputs.current[0]?.focus();
-                setError(false);
-            }, 600);
+            return;
         }
+
+        // 2. Check if it matches any registered user's password
+        try {
+            const hashedPin = await hashPassword(enteredPin);
+            const { data } = await supabase
+                .from('users')
+                .select('*')
+                .eq('password_hash', hashedPin)
+                .limit(1)
+                .maybeSingle();
+
+            if (data) {
+                // Found a user! Save to localStorage and proceed
+                localStorage.setItem('iabs_user', JSON.stringify({
+                    name: data.display_name,
+                    kickUsername: data.kick_username,
+                    discord: data.discord || undefined,
+                    avatar: data.avatar || undefined
+                }));
+                setError(false);
+                setRole('user');
+                setUserType('RETURNING');
+                setStep('FINGERPRINT');
+                return;
+            }
+        } catch (e) {
+            console.error('[Auth] User check error:', e);
+        }
+
+        // 3. Neither admin nor user — deny
+        setError(true);
+        setShake(true);
+        setTimeout(() => {
+            setShake(false);
+            setPin(new Array(pin.length).fill(''));
+            inputs.current[0]?.focus();
+            setError(false);
+        }, 600);
     };
+
+
 
     const startScan = () => {
         if (step !== 'FINGERPRINT') return;
@@ -183,12 +226,13 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
         localStorage.setItem(storageKey, JSON.stringify({
             token: targetPin,
             timestamp: Date.now(),
-            valid: true
+            valid: true,
+            role: role
         }));
 
         // Wait for "Access Granted" / "Welcome Back" message
         setTimeout(() => {
-            onSuccess();
+            onSuccess(role);
         }, 2000);
     };
 
@@ -261,8 +305,20 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                         </div>
 
                         {error && <div className="text-red-500 font-black tracking-[0.5em] animate-bounce text-lg drop-shadow-[0_0_10px_red]">ACCESS DENIED</div>}
+
+                        {/* Registration Link */}
+                        <div className="mt-8 text-center">
+                            <p className="text-gray-600 text-sm font-bold mb-2">ليس لديك حساب؟</p>
+                            <button
+                                onClick={() => setStep('USER_AUTH')}
+                                className="inline-flex items-center gap-2 text-red-500 hover:text-red-400 font-black text-sm uppercase tracking-widest transition-colors bg-red-500/5 hover:bg-red-500/10 px-6 py-3 rounded-xl border border-red-500/20 hover:border-red-500/30"
+                            >
+                                <UserPlus size={16} /> سجّل الآن
+                            </button>
+                        </div>
                     </div>
                 )}
+
 
                 {/* --- FINGERPRINT / SCANNING STEP --- */}
                 {(step === 'FINGERPRINT' || step === 'SCANNING') && (
@@ -388,6 +444,16 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                             ACCESS AUTHORIZED
                         </p>
                     </div>
+                )}
+
+                {/* --- USER AUTH / REGISTRATION STEP --- */}
+                {step === 'USER_AUTH' && (
+                    <UserAuthPage
+                        onSuccess={(userData) => {
+                            console.log('User registered:', userData);
+                            // For now, just stay on under dev page inside UserAuthPage
+                        }}
+                    />
                 )}
 
             </div>

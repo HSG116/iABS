@@ -114,10 +114,17 @@ const App: React.FC = () => {
   const [showOBSModal, setShowOBSModal] = useState(false);
 
   // Authorization State - bypass for OBS
-  // We default to FALSE to ensure the GlobalPasswordPage always mounts.
-  // The GlobalPasswordPage itself will check localStorage and skip the password input if valid,
-  // but it will FORCE the biometric scan for the visual effect.
   const [isAuthorized, setIsAuthorized] = useState<boolean>(initialParams.obs);
+  const [userRole, setUserRole] = useState<'admin' | 'user'>(() => {
+    try {
+      const stored = localStorage.getItem('site_access_granted');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.role || 'admin';
+      }
+    } catch (e) { }
+    return 'admin';
+  });
 
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
@@ -599,7 +606,16 @@ const App: React.FC = () => {
     return (
       <div className="fixed inset-0 bg-transparent overflow-hidden flex items-center justify-center z-[99999]">
         {(currentView === 'FAWAZIR_GAME' || currentView === 'FAWAZIR_SELECT') && <SponsorsWidget />}
-        {renderContent(true)}
+        {userRole === 'user' ? (
+          <div className="flex flex-col items-center justify-center text-center p-8 bg-black/90 backdrop-blur-xl border border-red-500/20 rounded-3xl max-w-md">
+            <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6 animate-pulse">
+              <Zap className="text-red-500" size={40} />
+            </div>
+            <h2 className="text-3xl font-black italic text-white mb-2">قريباً..</h2>
+            <p className="text-gray-400 font-bold leading-relaxed mb-6">هذه الصفحة تحت التطوير حالياً وشكراً لصبرك!</p>
+            <div className="h-1 w-24 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
+          </div>
+        ) : renderContent(true)}
       </div>
     );
   }
@@ -612,11 +628,29 @@ const App: React.FC = () => {
     >
       <OBSLinksModal isOpen={showOBSModal} onClose={() => setShowOBSModal(false)} />
       {(currentView === 'FAWAZIR_GAME' || currentView === 'FAWAZIR_SELECT') && <SponsorsWidget />}
-      {!isAuthorized && <GlobalPasswordPage onSuccess={() => setIsAuthorized(true)} />}
+      {!isAuthorized && <GlobalPasswordPage onSuccess={(role) => {
+        setUserRole(role);
+        setIsAuthorized(true);
+      }} />}
 
       {/* Only show content if authorized */}
-      {isAuthorized && showWelcome && <WelcomeGate />}
-      {isAuthorized && renderContent(false)}
+      {isAuthorized && showWelcome && userRole === 'admin' && <WelcomeGate />}
+      {isAuthorized && (
+        userRole === 'user' ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 slide-up">
+            <div className="w-24 h-24 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-8 glow-pulse">
+              <ShieldCheck className="text-red-500" size={48} />
+            </div>
+            <h2 className="text-5xl font-black italic text-white mb-4 tracking-tighter">تحت التطوير</h2>
+            <p className="text-gray-500 font-bold text-xl max-w-lg mx-auto leading-relaxed">أهلاً بك! حسابك مفعل ولكن لوحة التحكم الخاصة بالمستخدمين لا تزال قيد البرمجة حالياً.</p>
+            <div className="mt-12 flex items-center gap-4">
+              <div className="h-[2px] w-12 bg-zinc-800"></div>
+              <Sparkles className="text-zinc-700" size={20} />
+              <div className="h-[2px] w-12 bg-zinc-800"></div>
+            </div>
+          </div>
+        ) : renderContent(false)
+      )}
 
       {activeAnnouncement && (
         <GlobalAnnouncement
