@@ -170,11 +170,11 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const loadLeaderboard = () => {
-    setIsLoadingLeaderboard(true);
+  const loadLeaderboard = (silent: boolean = false) => {
+    if (!silent) setIsLoadingLeaderboard(true);
     leaderboardService.getAllRankedPlayers().then(data => {
       setLeaderboardData(data);
-      setIsLoadingLeaderboard(false);
+      if (!silent) setIsLoadingLeaderboard(false);
     });
   };
 
@@ -186,10 +186,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentView === 'LEADERBOARD') {
-      const t = setInterval(() => {
-        loadLeaderboard();
-      }, 5000);
-      return () => clearInterval(t);
+      const channel = supabase.channel('leaderboard_updates')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'leaderboard' }, () => loadLeaderboard(true))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadLeaderboard(true))
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
 
     // Security Check for Admin Panel
