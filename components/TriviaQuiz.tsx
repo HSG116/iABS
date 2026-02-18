@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { chatService } from '../services/chatService';
+import { leaderboardService } from '../services/supabase';
 import { getQuestions, Question, QuestionCategory } from '../data/questions';
 import { BrainCircuit, Play, RotateCcw, Trophy, Clock, CheckCircle, Eye, EyeOff, Trash2, User } from 'lucide-react';
 
@@ -137,6 +138,9 @@ export const TriviaQuiz: React.FC<TriviaQuizProps> = ({ channelConnected }) => {
                ...prev,
                [user]: (prev[user] || 0) + points
             }));
+
+            // Global Leaderboard
+            leaderboardService.recordWin(user, msg.user.avatar || '', points);
          }
       });
       return cleanup;

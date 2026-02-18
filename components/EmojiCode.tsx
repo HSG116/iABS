@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { chatService } from '../services/chatService';
+import { leaderboardService } from '../services/supabase';
 import { ChatUser } from '../types';
 import { Smile, Play, Settings, Users, Trophy, LogOut, User, Crown, ChevronRight, Sparkles, Star, Award, Zap, Eye, RotateCcw, Brain, Timer } from 'lucide-react';
 
@@ -179,6 +180,9 @@ export const EmojiCode: React.FC<EmojiCodeProps> = ({ onHome, isOBS }) => {
 
                     setAnsweredThisRound(true);
                     setWinner({ user: msg.user, time: timeTaken });
+
+                    // Record win in leaderboard
+                    leaderboardService.recordWin(msg.user.username, msg.user.avatar || '', points);
 
                     // Update score
                     setPlayerScores(prev => {

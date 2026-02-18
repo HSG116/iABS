@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatService } from '../services/chatService';
-import { supabase } from '../services/supabase';
+import { supabase, leaderboardService } from '../services/supabase';
 import {
     Timer, Sparkles, Trophy, Play, Home,
     CheckCircle, XCircle, Users, Volume2, VolumeX,
@@ -242,6 +242,14 @@ export const TruthOrLie: React.FC<TruthOrLieProps> = ({ onHome, isOBS = false })
             event: 'game_update',
             payload: { type: 'PLAY_SOUND', sound }
         });
+
+        // Record wins for correct voters
+        if (gameState.correctAnswer) {
+            const winners = votes.filter(v => v.vote === gameState.correctAnswer);
+            winners.forEach(w => {
+                leaderboardService.recordWin(w.username, w.avatar_url || '', 20);
+            });
+        }
     };
 
     const handleReset = () => {
