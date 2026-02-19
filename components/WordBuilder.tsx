@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { chatService } from '../services/chatService';
+import { leaderboardService, supabase } from '../services/supabase';
 import { ChatUser } from '../types';
 import { Type, Play, Settings, Users, Trophy, Clock, LogOut, RotateCcw, User, Zap, Crown, Star, Award, Sparkles, ChevronRight, RefreshCw } from 'lucide-react';
 
@@ -31,13 +32,15 @@ const ARABIC_LETTERS = ['ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', '�
 const FREQUENT_LETTERS = ['ا', 'ب', 'ت', 'ر', 'س', 'ل', 'م', 'ن', 'ه', 'و', 'ي', 'ع', 'ف', 'ق', 'ك', 'د', 'ج', 'ح', 'خ'];
 
 const normalizeArabic = (text: string) => {
+    if (!text) return '';
     return text
         .replace(/[\u064B-\u065F]/g, '') // Remove diacritics (Tashkeel)
         .replace(/[إأآء]/g, 'ا')        // Normalize variants of Alif/Hamza to bare Alif
         .replace(/ؤ/g, 'و')             // Waw Hamza -> Waw
         .replace(/ئ/g, 'ي')             // Ya Hamza -> Ya
-        .replace(/ة/g, 'ه')             // Taa Marbuta -> Ha
+        .replace(/ة/g, 'ت')             // Taa Marbuta -> Taa (Common in games)
         .replace(/ى/g, 'ي')             // Alif Maqsura -> Ya
+        .replace(/[^\u0621-\u064A]/g, '') // Strip everything except Arabic letters (No spaces, no dots)
         .trim();
 };
 
@@ -51,12 +54,12 @@ const validateWithAI = async (word: string): Promise<boolean> => {
             body: JSON.stringify({
                 contents: [{
                     parts: [{
-                        text: `Is the text "${word}" a valid Arabic word? Accept common spelling variations and informal spellings. Answer ONLY with YES or NO.`
+                        text: `Check if "${word}" is a valid Arabic word/phrase. Return ONLY "Y" or "N". Be very fast.`
                     }]
                 }],
                 generationConfig: {
                     temperature: 0.1,
-                    maxOutputTokens: 5
+                    maxOutputTokens: 2
                 }
             })
         });
@@ -65,7 +68,7 @@ const validateWithAI = async (word: string): Promise<boolean> => {
 
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.toUpperCase() || "";
-        return text.includes("YES");
+        return text.includes("Y");
     } catch (e) {
         console.error("AI Validation Error:", e);
         return false;
@@ -246,18 +249,13 @@ const COMMON_WORDS_STR = `
 
 // Clean up and create dictionary set
 const VALID_ARABIC_WORDS = new Set(
-    COMMON_WORDS_STR
-        .replace(/\n/g, ' ')
-        .split(' ')
-        .map(w => w.trim())
-        .filter(w => w.length > 0)
-        .map(normalizeArabic)
+    COMMON_WORDS_STR.split(/\s+/).filter(w => w.length > 0).map(w => normalizeArabic(w))
 );
 
 
 export const WordBuilder: React.FC<WordBuilderProps> = ({ onHome, isOBS }) => {
     const [config, setConfig] = useState<GameConfig>({
-        joinKeyword: 'كلم',
+        joinKeyword: 'كلمة',
         maxPlayers: 100,
         roundDuration: 60,
         letterCount: 6,
@@ -273,7 +271,10 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({ onHome, isOBS }) => {
     const [currentRound, setCurrentRound] = useState(0);
     const [recentWords, setRecentWords] = useState<{ username: string; word: string; points: number }[]>([]);
     const [usedWordsThisRound, setUsedWordsThisRound] = useState<Set<string>>(new Set());
+    const [pendingWords, setPendingWords] = useState<Set<string>>(new Set());
     const [letterAnimations, setLetterAnimations] = useState<boolean[]>([]);
+    const [lastMsg, setLastMsg] = useState<string>('');
+    const [isConnected, setIsConnected] = useState(false);
 
     const phaseRef = useRef(phase);
     const configRef = useRef(config);
@@ -289,18 +290,30 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({ onHome, isOBS }) => {
     useEffect(() => { usedWordsRef.current = usedWordsThisRound; }, [usedWordsThisRound]);
     useEffect(() => { playerScoresRef.current = playerScores; }, [playerScores]);
 
+    // Chat Status
+    useEffect(() => {
+        const unbind = chatService.onStatusChange((connected) => setIsConnected(connected));
+        return () => unbind();
+    }, []);
+
     // Chat listener
     useEffect(() => {
         const unsubscribe = chatService.onMessage(async (msg) => {
             const content = msg.content.trim();
+            setLastMsg(`${msg.user.username}: ${content}`);
 
             // Join
             if (phaseRef.current === 'LOBBY') {
-                const keyword = configRef.current.joinKeyword.toLowerCase();
-                if (content.toLowerCase().includes(keyword)) {
+                const keyword = configRef.current.joinKeyword;
+                const normalizedKeyword = normalizeArabic(keyword).toLowerCase();
+                const normalizedContent = normalizeArabic(content).toLowerCase();
+
+                if (normalizedContent.includes(normalizedKeyword)) {
                     setParticipants(prev => {
                         if (prev.length >= configRef.current.maxPlayers) return prev;
                         if (prev.some(p => p.username.toLowerCase() === msg.user.username.toLowerCase())) return prev;
+
+                        console.log(`[WordBuilder] User joined: ${msg.user.username}`);
                         const newUser = { ...msg.user };
                         chatService.fetchKickAvatar(newUser.username).then(avatar => {
                             if (avatar) setParticipants(curr => curr.map(p => p.username.toLowerCase() === newUser.username.toLowerCase() ? { ...p, avatar } : p));
@@ -316,51 +329,72 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({ onHome, isOBS }) => {
                 const normalizedWord = normalizeArabic(word);
 
                 // 1. Basic Eligibility Check (Length & Letters) - Sync & Fast
-                if (word.length >= configRef.current.minWordLength && isValidLetters(normalizedWord, currentLettersRef.current)) {
+                if (normalizedWord.length >= configRef.current.minWordLength && isValidLetters(normalizedWord, currentLettersRef.current)) {
+                    console.log(`[WordBuilder] Processing word: ${word}`);
                     const wordKey = normalizedWord.toLowerCase();
 
-                    // Prevent duplicate words in the same round
+                    // Prevent duplicate words or words currently being checked
                     if (!usedWordsRef.current.has(wordKey)) {
 
+                        // Use a local ref-like check for pending to be thread-safe in async
+                        if ((window as any)._pendingWords?.has(wordKey)) {
+                            console.log(`[WordBuilder] Word already pending AI check: ${word}`);
+                            return;
+                        }
+                        if (!(window as any)._pendingWords) (window as any)._pendingWords = new Set();
+                        (window as any)._pendingWords.add(wordKey);
+
                         // 2. Dictionary Validation
+                        console.log(`[WordBuilder] Validating: ${word}`);
                         let isValid = false;
 
-                        // Check Local Cache first (Instant)
+                        // Step 2a: Check Local Dictionary (Instant)
                         if (VALID_ARABIC_WORDS.has(normalizedWord)) {
+                            console.log(`[WordBuilder] Found in Local Dictionary: ${word}`);
                             isValid = true;
                         } else {
-                            // Check AI (Async Fallback)
+                            // Step 2b: Request AI validation (High-speed fallback)
+                            console.log(`[WordBuilder] Not in dictionary, requesting AI: ${word}`);
                             isValid = await validateWithAI(word);
-                            if (isValid) {
-                                VALID_ARABIC_WORDS.add(normalizedWord); // Cache for future
-                            }
+                            console.log(`[WordBuilder] AI Result for "${word}": ${isValid ? 'VALID' : 'INVALID'}`);
                         }
 
-                        if (isValid) {
-                            // Double check usedWords in case of race condition during await
-                            if (!usedWordsRef.current.has(wordKey)) {
-                                const points = calculatePoints(word);
-                                setUsedWordsThisRound(prev => new Set([...prev, wordKey]));
+                        (window as any)._pendingWords.delete(wordKey);
 
-                                // Update player score
-                                setPlayerScores(prev => {
-                                    const key = msg.user.username.toLowerCase();
-                                    const existing = prev[key] || { user: msg.user, score: 0, wordsFound: [], roundScore: 0 };
-                                    return {
-                                        ...prev,
-                                        [key]: {
-                                            ...existing,
-                                            user: msg.user,
-                                            score: existing.score + points,
-                                            wordsFound: [...existing.wordsFound, word],
-                                            roundScore: existing.roundScore + points,
-                                        }
-                                    };
-                                });
+                        if (isValid && !usedWordsRef.current.has(wordKey)) {
+                            const points = calculatePoints(word);
+                            setUsedWordsThisRound(prev => new Set([...prev, wordKey]));
+                            console.log(`[WordBuilder] Word accepted! Points: ${points}`);
 
-                                setRecentWords(prev => [{ username: msg.user.username, word, points }, ...prev].slice(0, 8));
-                            }
+                            // Record win in leaderboard immediately
+                            leaderboardService.recordWin(msg.user.username, msg.user.avatar || '', points);
+
+                            // Update player score
+                            setPlayerScores(prev => {
+                                const key = msg.user.username.toLowerCase();
+                                const existing = prev[key] || { user: msg.user, score: 0, wordsFound: [], roundScore: 0 };
+                                return {
+                                    ...prev,
+                                    [key]: {
+                                        ...existing,
+                                        user: msg.user,
+                                        score: existing.score + points,
+                                        wordsFound: [...existing.wordsFound, word],
+                                        roundScore: existing.roundScore + points,
+                                    }
+                                };
+                            });
+
+                            setRecentWords(prev => [{ username: msg.user.username, word, points }, ...prev].slice(0, 8));
                         }
+                    } else {
+                        console.log(`[WordBuilder] Word already used: ${word}`);
+                    }
+                } else {
+                    if (normalizedWord.length < configRef.current.minWordLength) {
+                        console.log(`[WordBuilder] Word too short: ${word}`);
+                    } else {
+                        console.log(`[WordBuilder] Word uses invalid letters: ${word}`);
                     }
                 }
             }
@@ -385,8 +419,8 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({ onHome, isOBS }) => {
     }, [phase, timeLeft]);
 
     const isValidLetters = (normalizedWord: string, letters: string[]): boolean => {
-        // Letter Formation Check (Strict - No Reuse unless multiple tiles exist)
-        const letterPool = [...letters];
+        // Normalize the pool too to ensure consistent check
+        const letterPool = letters.map(l => normalizeArabic(l));
         for (const char of normalizedWord) {
             const idx = letterPool.indexOf(char);
             if (idx === -1) {
@@ -438,6 +472,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({ onHome, isOBS }) => {
         setRecentWords([]);
         setUsedWordsThisRound(new Set());
         setLetterAnimations(letters.map(() => false));
+        console.log(`[WordBuilder] Round started with letters: ${letters.join(', ')}`);
 
         // Reset round scores
         setPlayerScores(prev => {
@@ -509,9 +544,23 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({ onHome, isOBS }) => {
             {phase === 'SETUP' && (
                 <div className="w-full max-w-5xl animate-in fade-in zoom-in duration-700 py-6 px-4 pb-20 overflow-y-auto custom-scrollbar h-full">
                     <div className="flex items-center justify-between mb-8">
-                        <button onClick={onHome} className="p-4 bg-red-600/10 rounded-3xl hover:bg-red-600/20 text-red-500 transition-all border border-red-500/20">
-                            <LogOut size={24} />
-                        </button>
+                        <div className="flex items-center gap-6">
+                            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isConnected ? 'bg-kick-green/10 border-kick-green/30 text-kick-green' : 'bg-red-500/10 border-red-500/30 text-red-500'}`}>
+                                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-kick-green shadow-[0_0_8px_#53fc18]' : 'bg-red-500 animate-pulse'}`}></div>
+                                <span className="text-[10px] font-black uppercase tracking-widest">{isConnected ? 'LIVE_CHAT' : 'DISCONNECTED'}</span>
+                            </div>
+
+                            {lastMsg && (
+                                <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2 animate-in fade-in zoom-in h-10">
+                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">LAST:</span>
+                                    <span className="text-[10px] font-bold text-zinc-300 truncate max-w-[150px]">{lastMsg}</span>
+                                </div>
+                            )}
+
+                            <button onClick={onHome} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-zinc-400">
+                                <LogOut size={24} />
+                            </button>
+                        </div>
                         <div className="text-center">
                             <h1 className="text-6xl font-black text-white italic tracking-tighter uppercase">السكرابل السريع</h1>
                             <p className="text-emerald-600 font-black tracking-[0.4em] text-[10px] uppercase">WORD BUILDER • iABS</p>

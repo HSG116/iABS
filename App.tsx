@@ -156,6 +156,20 @@ const App: React.FC = () => {
     }
   }, [isOBSMode]);
 
+  // Global Chat Connection
+  useEffect(() => {
+    const channel = localStorage.getItem('kick_channel_name') || 'iabs';
+    console.log(`[App] Initializing Chat Connection for: ${channel}`);
+    chatService.connect(channel);
+
+    // Cleanup is not strictly necessary here as we want it persistent, 
+    // but good practice if App unmounts (rare)
+    return () => {
+      // We don't disconnect here to keep it alive for OBS/GAMES
+      // unless we really want a clean exit.
+    };
+  }, []);
+
   useEffect(() => {
     // Better Real-time listener
     const channel = supabase
@@ -237,7 +251,7 @@ const App: React.FC = () => {
 
   const handleGoHome = () => setCurrentView('HOME');
 
-  const PremiumGameButton = ({ title, icon: Icon, onClick, isPrimary = false, isComingSoon = false, hasOBS = false }: any) => (
+  const PremiumGameButton = ({ title, icon: Icon, onClick, isPrimary = false, isComingSoon = false, comingSoonText = "قريباً", hasOBS = false }: any) => (
     <button
       onClick={isComingSoon ? undefined : onClick}
       disabled={isComingSoon}
@@ -269,7 +283,7 @@ const App: React.FC = () => {
       {isComingSoon && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
           <div className="bg-yellow-500 text-black px-6 py-1 rounded-full font-black text-sm -rotate-12 shadow-[0_0_20px_rgba(234,179,8,0.5)] animate-pulse">
-            قريباً
+            {comingSoonText}
           </div>
         </div>
       )}
@@ -577,7 +591,7 @@ const App: React.FC = () => {
                 <PremiumGameButton title="تخمين الكلمات" icon={Brain} onClick={() => setCurrentView('FORBIDDEN_WORDS')} hasOBS />
                 <PremiumGameButton title="لعبة التصويت" icon={Vote} onClick={() => setCurrentView('VOTING_GAME')} hasOBS />
                 <PremiumGameButton title="القنبلة الموقوتة" icon={Bomb} onClick={() => setCurrentView('TIME_BOMB')} />
-                <PremiumGameButton title="السكرابل السريع" icon={Type} onClick={() => setCurrentView('WORD_BUILDER')} />
+                <PremiumGameButton title="السكرابل السريع" icon={Type} isComingSoon={true} comingSoonText="تحت التطوير" />
                 <PremiumGameButton title="جسر الزجاج" icon={Footprints} onClick={() => setCurrentView('GLASS_BRIDGE_V2')} />
                 <PremiumGameButton title="أرضية الحمم" icon={Flame} onClick={() => setCurrentView('FLOOR_IS_LAVA')} />
                 <PremiumGameButton title="فك الشفرة" icon={Smile} onClick={() => setCurrentView('EMOJI_CODE')} />
