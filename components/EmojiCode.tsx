@@ -245,13 +245,13 @@ export const EmojiCode: React.FC<EmojiCodeProps> = ({ onHome, isOBS }) => {
             const prompt = `Generate a unique emoji puzzle for a game. 
             Topic: ${category === 'الكل' ? 'Popular Movie, Brand, Food, or Famous Person' : category}.
             Output strict JSON with fields: 
-            - "emojis" (string only emojis)
+            - "emojis" (string containing ONLY 2-4 emoji characters, NO LETTERS, NO PUNCTUATION, NO TEXT)
             - "answers" (array of strings, include English and Arabic names/spellings)
             - "category" (string based on Topic)
             - "difficulty" ("easy"|"medium"|"hard")
             - "topic_name" (main answer for uniqueness check)
             
-            DO NOT USE these topics: ${excludeTopics.slice(-30).join(', ')}.
+            DO NOT USE English letters in the "emojis" field. DO NOT repeat these topics: ${excludeTopics.slice(-30).join(', ')}.
             `;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -306,7 +306,12 @@ export const EmojiCode: React.FC<EmojiCodeProps> = ({ onHome, isOBS }) => {
         // Fallback or retry logic could go here, but for simplicity we rely on AI or fallback if null
         if (!puzzle) {
             // Fallback to random hardcoded if AI fails
-            puzzle = EMOJI_PUZZLES[Math.floor(Math.random() * EMOJI_PUZZLES.length)];
+            const available = EMOJI_PUZZLES.filter(p =>
+                !usedTopics.includes(p.answers[0]) &&
+                (config.category === 'الكل' || p.category === config.category)
+            );
+            const pool = available.length > 0 ? available : EMOJI_PUZZLES;
+            puzzle = pool[Math.floor(Math.random() * pool.length)];
         }
 
         if (puzzle) {
@@ -546,11 +551,17 @@ export const EmojiCode: React.FC<EmojiCodeProps> = ({ onHome, isOBS }) => {
                         <div className="bg-black/60 backdrop-blur-2xl border-4 border-purple-500/30 rounded-[4rem] p-12 mb-8 shadow-[0_0_80px_rgba(147,51,234,0.3)] relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent"></div>
                             <div className="relative z-10 flex items-center gap-6" style={{ transform: `scale(${emojiScale})`, transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
-                                {Array.from(currentPuzzle.emojis).filter((c: string) => c.trim()).map((emoji, i) => (
-                                    <span key={i} className={`text-[80px] ${showEmojis ? 'emoji-enter' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.15}s` }}>
-                                        {emoji}
-                                    </span>
-                                ))}
+                                {Array.from(currentPuzzle.emojis)
+                                    .filter((c: string) => {
+                                        const code = c.charCodeAt(0);
+                                        // Filter out English letters and numbers that might creep in from AI
+                                        return !(/[a-zA-Z0-9]/.test(c)) && c.trim();
+                                    })
+                                    .map((emoji, i) => (
+                                        <span key={i} className={`text-[80px] ${showEmojis ? 'emoji-enter' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.15}s` }}>
+                                            {emoji}
+                                        </span>
+                                    ))}
                             </div>
                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-purple-400 font-bold uppercase tracking-widest">
                                 = ؟

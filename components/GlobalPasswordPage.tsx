@@ -171,12 +171,23 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                 .maybeSingle();
 
             if (data) {
-                // Found a user! Save to localStorage and proceed
+                // Fetch points from leaderboard
+                const { data: lbData } = await supabase
+                    .from('leaderboard')
+                    .select('score')
+                    .eq('username', data.kick_username)
+                    .maybeSingle();
+
+                const points = lbData?.score || 0;
+
+                // Found a user! Save rendered data to localStorage
                 localStorage.setItem('iabs_user', JSON.stringify({
-                    name: data.display_name,
-                    kickUsername: data.kick_username,
+                    id: data.id,
+                    display_name: data.display_name,
+                    kick_username: data.kick_username,
                     discord: data.discord || undefined,
-                    avatar: data.avatar || undefined
+                    avatar: data.avatar || undefined,
+                    points: points
                 }));
                 setError(false);
                 setRole('user');

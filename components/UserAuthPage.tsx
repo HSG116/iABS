@@ -168,12 +168,25 @@ export const UserAuthPage: React.FC<UserAuthPageProps> = ({ onSuccess, onBack })
                 }
             }
 
+            // Initialize Leaderboard record
+            try {
+                await supabase.from('leaderboard').insert([{
+                    username: kickUsername.trim().toLowerCase(),
+                    score: 0,
+                    wins: 0
+                }]);
+            } catch (err) {
+                console.error('[UserAuth] Leaderboard init error:', err);
+            }
+
             // Save to localStorage too
             const userData = {
-                name: name.trim(),
-                kickUsername: kickUsername.trim(),
+                id: (await supabase.from('users').select('id').eq('kick_username', kickUsername.trim().toLowerCase()).single()).data?.id || '',
+                display_name: name.trim(),
+                kick_username: kickUsername.trim(),
                 discord: discord.trim() || undefined,
-                avatar: finalAvatar || undefined
+                avatar: finalAvatar || undefined,
+                points: 0
             };
             localStorage.setItem('iabs_user', JSON.stringify(userData));
 

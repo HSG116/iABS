@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { CategorySelect } from './components/CategorySelect';
@@ -30,6 +29,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { GlobalAnnouncement } from './components/GlobalAnnouncement';
 import { ViewState } from './types';
 import { GlobalPasswordPage } from './components/GlobalPasswordPage';
+import { UserDashboard } from './components/UserDashboard';
 import {
   Trophy, Play, Lock, User, Swords, Image as ImageIcon,
   RotateCw, Gift, Flag, Users2, Keyboard, Gem, Coffee,
@@ -246,7 +246,7 @@ const App: React.FC = () => {
         ${isPrimary
           ? "px-10 py-5 text-2xl md:text-3xl rounded-[2.5rem] hover:scale-105 w-full lg:max-w-md shadow-[0_20px_50px_rgba(255,0,0,0.4)]"
           : "px-4 py-4 text-lg md:text-xl rounded-[2rem] hover:scale-110 w-full"
-        }`}
+        } `}
     >
       <div className="absolute inset-0 bg-white/30 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000 skew-x-[-35deg] pointer-events-none z-20"></div>
       <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/30 to-transparent pointer-events-none z-10"></div>
@@ -258,11 +258,11 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <div className={`relative z-30 flex-shrink-0 transition-transform duration-500 transform group-hover:scale-115 group-hover:rotate-6 flex items-center justify-center ${isPrimary ? 'w-12 h-12' : 'w-10 h-10'} ${isComingSoon ? 'opacity-30' : ''}`}>
+      <div className={`relative z - 30 flex - shrink - 0 transition - transform duration - 500 transform group - hover: scale - 115 group - hover: rotate - 6 flex items - center justify - center ${isPrimary ? 'w-12 h-12' : 'w-10 h-10'} ${isComingSoon ? 'opacity-30' : ''} `}>
         <Icon size={isPrimary ? 40 : 28} color="#FFFFFF" strokeWidth={2.5} className="drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
       </div>
 
-      <span className={`relative z-30 drop-shadow-[0_3px_6px_rgba(0,0,0,0.5)] tracking-tighter uppercase leading-tight ${isComingSoon ? 'opacity-30' : ''}`} style={{ color: '#FFFFFF' }}>
+      <span className={`relative z - 30 drop - shadow - [0_3px_6px_rgba(0, 0, 0, 0.5)] tracking - tighter uppercase leading - tight ${isComingSoon ? 'opacity-30' : ''} `} style={{ color: '#FFFFFF' }}>
         {title}
       </span>
 
@@ -455,7 +455,7 @@ const App: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {leaderboardData.slice(3).map((user, index) => (
-                        <tr key={user.id} className="hover:bg-white/10 transition-all group animate-in slide-in-from-right duration-500" style={{ animationDelay: `${index * 50}ms` }}>
+                        <tr key={user.id} className="hover:bg-white/10 transition-all group animate-in slide-in-from-right duration-500" style={{ animationDelay: `${index * 50} ms` }}>
                           <td className="p-6 text-center">
                             <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-black text-gray-500 group-hover:text-white group-hover:bg-iabs-red/20 transition-all transition-colors border border-white/5">
                               {index + 4}
@@ -607,13 +607,13 @@ const App: React.FC = () => {
       <div className="fixed inset-0 bg-transparent overflow-hidden flex items-center justify-center z-[99999]">
         {(currentView === 'FAWAZIR_GAME' || currentView === 'FAWAZIR_SELECT') && <SponsorsWidget />}
         {userRole === 'user' ? (
-          <div className="flex flex-col items-center justify-center text-center p-8 bg-black/90 backdrop-blur-xl border border-red-500/20 rounded-3xl max-w-md">
-            <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6 animate-pulse">
-              <Zap className="text-red-500" size={40} />
-            </div>
-            <h2 className="text-3xl font-black italic text-white mb-2">قريباً..</h2>
-            <p className="text-gray-400 font-bold leading-relaxed mb-6">هذه الصفحة تحت التطوير حالياً وشكراً لصبرك!</p>
-            <div className="h-1 w-24 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
+          <div className="w-full h-full max-w-6xl animate-in fade-in duration-1000">
+            <UserDashboard
+              userData={(() => {
+                const stored = localStorage.getItem('iabs_user');
+                return stored ? JSON.parse(stored) : { id: '', display_name: 'Guest', kick_username: 'guest' };
+              })()}
+            />
           </div>
         ) : renderContent(true)}
       </div>
@@ -625,6 +625,7 @@ const App: React.FC = () => {
       currentView={currentView as ViewState}
       onChangeView={(v) => setCurrentView(v)}
       onOBSLinks={() => setShowOBSModal(true)}
+      isAuthorized={isAuthorized}
     >
       <OBSLinksModal isOpen={showOBSModal} onClose={() => setShowOBSModal(false)} />
       {(currentView === 'FAWAZIR_GAME' || currentView === 'FAWAZIR_SELECT') && <SponsorsWidget />}
@@ -637,17 +638,13 @@ const App: React.FC = () => {
       {isAuthorized && showWelcome && userRole === 'admin' && <WelcomeGate />}
       {isAuthorized && (
         userRole === 'user' ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 slide-up">
-            <div className="w-24 h-24 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-8 glow-pulse">
-              <ShieldCheck className="text-red-500" size={48} />
-            </div>
-            <h2 className="text-5xl font-black italic text-white mb-4 tracking-tighter">تحت التطوير</h2>
-            <p className="text-gray-500 font-bold text-xl max-w-lg mx-auto leading-relaxed">أهلاً بك! حسابك مفعل ولكن لوحة التحكم الخاصة بالمستخدمين لا تزال قيد البرمجة حالياً.</p>
-            <div className="mt-12 flex items-center gap-4">
-              <div className="h-[2px] w-12 bg-zinc-800"></div>
-              <Sparkles className="text-zinc-700" size={20} />
-              <div className="h-[2px] w-12 bg-zinc-800"></div>
-            </div>
+          <div className="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-8 animate-in slide-in-from-bottom-20 duration-1000">
+            <UserDashboard
+              userData={(() => {
+                const stored = localStorage.getItem('iabs_user');
+                return stored ? JSON.parse(stored) : { id: '', display_name: 'Guest', kick_username: 'guest' };
+              })()}
+            />
           </div>
         ) : renderContent(false)
       )}
