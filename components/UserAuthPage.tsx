@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase';
 
 interface UserAuthPageProps {
     onSuccess: (userData: { name: string; kickUsername: string; discord?: string; avatar?: string }) => void;
+    onBack?: () => void;
 }
 
 type AuthStep = 'REGISTER' | 'KICK_VERIFY' | 'VERIFYING' | 'VERIFIED' | 'UNDER_DEV';
@@ -27,7 +28,7 @@ const hashPassword = async (pin: string): Promise<string> => {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
-export const UserAuthPage: React.FC<UserAuthPageProps> = ({ onSuccess }) => {
+export const UserAuthPage: React.FC<UserAuthPageProps> = ({ onSuccess, onBack }) => {
     const [step, setStep] = useState<AuthStep>('REGISTER');
 
     // Form fields
@@ -257,7 +258,17 @@ export const UserAuthPage: React.FC<UserAuthPageProps> = ({ onSuccess }) => {
     // ========= RENDER =========
 
     return (
-        <div className="fixed inset-0 z-[9998] bg-black text-white font-sans overflow-hidden flex flex-col items-center justify-center" dir="rtl">
+        <div className="fixed inset-0 z-50 bg-black text-white font-sans overflow-hidden flex flex-col items-center justify-center" dir="rtl">
+            {/* Global Back Button */}
+            {onBack && step !== 'VERIFIED' && step !== 'VERIFYING' && (
+                <button
+                    onClick={onBack}
+                    className="fixed top-8 right-8 z-[100] flex items-center gap-2 text-gray-400 hover:text-white transition-all bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl font-bold uppercase tracking-widest text-[10px] group shadow-2xl"
+                >
+                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    العودة لبروتوكول الأمان
+                </button>
+            )}
 
             {/* Dynamic Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
@@ -282,6 +293,7 @@ export const UserAuthPage: React.FC<UserAuthPageProps> = ({ onSuccess }) => {
             {/* ====== REGISTER STEP ====== */}
             {step === 'REGISTER' && (
                 <div className={`relative z-10 w-full max-w-lg mx-auto px-6 slide-up ${shake ? 'animate-shake' : ''}`}>
+
 
                     {/* Header */}
                     <div className="text-center mb-8">
@@ -447,12 +459,14 @@ export const UserAuthPage: React.FC<UserAuthPageProps> = ({ onSuccess }) => {
                         )}
 
                         {/* Continue Button */}
-                        <button
-                            onClick={handleContinue}
-                            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-black py-4 rounded-2xl text-lg shadow-[0_10px_30px_rgba(220,38,38,0.3)] hover:shadow-[0_15px_40px_rgba(220,38,38,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 border-t border-white/10 uppercase tracking-widest"
-                        >
-                            متابعة <ArrowRight size={20} />
-                        </button>
+                        <div className="space-y-4">
+                            <button
+                                onClick={handleContinue}
+                                className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black py-4 rounded-2xl text-base italic uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 shadow-xl shadow-red-900/20"
+                            >
+                                <ArrowRight size={20} /> متابعة
+                            </button>
+                        </div>
                     </div>
 
                     {/* Footer */}
@@ -513,6 +527,7 @@ export const UserAuthPage: React.FC<UserAuthPageProps> = ({ onSuccess }) => {
                         {/* Verification Code Display */}
                         <div className="bg-black/60 border-2 border-green-500/30 rounded-2xl p-6 text-center glow-pulse relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent"></div>
+
                             <p className="text-green-500/60 text-[10px] font-bold uppercase tracking-[0.5em] mb-3 relative z-10">كـود الـتـحـقـق</p>
                             <div className="relative z-10 flex items-center justify-center gap-1" dir="ltr">
                                 <span className="text-red-500 font-black text-2xl md:text-4xl tracking-widest">ABS-</span>

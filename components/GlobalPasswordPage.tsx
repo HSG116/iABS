@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Unlock, Fingerprint, Sparkles, UserPlus } from 'lucide-react';
+import { Lock, Unlock, Fingerprint, Sparkles, UserPlus, ArrowRight } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { UserAuthPage } from './UserAuthPage';
 
@@ -324,6 +324,24 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                 {(step === 'FINGERPRINT' || step === 'SCANNING') && (
                     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-black relative overflow-hidden">
 
+                        {/* Return to Password Button */}
+                        {step === 'FINGERPRINT' && (
+                            <button
+                                onClick={() => {
+                                    setStep('PASSWORD');
+                                    // Reset PIN state
+                                    const length = targetPin?.length || 6;
+                                    setPin(new Array(length).fill(''));
+                                    // Small delay to ensure inputs are rendered
+                                    setTimeout(() => inputs.current[0]?.focus(), 100);
+                                }}
+                                className="absolute top-10 right-10 z-[100] flex items-center gap-2 text-gray-500 hover:text-white transition-all bg-white/5 border border-white/10 px-6 py-3 rounded-2xl font-bold uppercase tracking-widest text-xs group"
+                            >
+                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                العودة للوحة الأرقام
+                            </button>
+                        )}
+
                         {/* High-Tech Background Grid */}
                         <div className="absolute inset-0 pointer-events-none">
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/10 via-black to-black"></div>
@@ -451,8 +469,8 @@ export const GlobalPasswordPage: React.FC<GlobalPasswordPageProps> = ({
                     <UserAuthPage
                         onSuccess={(userData) => {
                             console.log('User registered:', userData);
-                            // For now, just stay on under dev page inside UserAuthPage
                         }}
+                        onBack={() => setStep('PASSWORD')}
                     />
                 )}
 
